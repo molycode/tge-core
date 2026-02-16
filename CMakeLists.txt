@@ -82,7 +82,7 @@ if(PROJECT_IS_TOP_LEVEL)
 endif() # PROJECT_IS_TOP_LEVEL
 
 # External dependencies
-add_subdirectory(external/rpmalloc EXCLUDE_FROM_ALL)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpmalloc.cmake)
 suppress_external_warnings(rpmalloc)
 
 # ============================================================================
