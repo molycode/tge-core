@@ -1,0 +1,17 @@
+# Logging Configuration
+#
+# Flags: e=error, w=warning, i=info, a=all, n=none
+#
+# Default level for all channels:
+default=a
+#
+# Per-channel overrides:
+# <channel>=<flags>
+#
+# Examples:
+# MyChannel=ew
+# SomeOtherChannel=n
+#
+# To focus on a single channel (silence all others):
+# default=n
+# MyChannel=ew

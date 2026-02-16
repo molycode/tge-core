@@ -1,0 +1,61 @@
+# Build directories
+build/
+cmake-build-*/
+
+# IDE and editor files
+.vscode/
+.idea/
+.vs/
+.claude/
+.qtcreator/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Session documentation (project-specific, not for repo)
+CLAUDE.md
+docs/
+
+# QtCreator files
+CMakeLists.txt.user
+*.autosave
+*.user
+*.creator.user*
+
+# Object files
+*.o
+*.obj
+*.lo
+*.slo
+*.ko
+
+# Libraries
+*.lib
+*.a
+*.la
+*.so
+*.so.*
+*.dll
+*.dylib
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+CMakeUserPresets.json
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# System files
+Thumbs.db
