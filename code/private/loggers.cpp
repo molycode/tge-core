@@ -2,7 +2,7 @@
 
 namespace Tge
 {
-Logging::CLog gLog{"Core"};
+Logging::CLog gLog{"Tge"};
 
 namespace Memory
 {
