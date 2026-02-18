@@ -35,6 +35,8 @@
 
 #include <atomic>
 
+namespace Tge::Threading
+{
 template<typename T>
 class CMpscQueue final
 {
@@ -104,3 +106,4 @@ private:
 	alignas(CacheLineSize) std::atomic<SBufferNode*> m_head;
 	alignas(CacheLineSize) std::atomic<SBufferNode*> m_tail;
 };
+} // namespace Tge::Threading

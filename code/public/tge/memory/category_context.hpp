@@ -7,33 +7,33 @@ namespace Tge::Memory
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 
 // Get/Set thread-local current category (tracking enabled)
-ECategory GetCurrentCategory();
-void SetCurrentCategory(ECategory category);
+CategoryId GetCurrentCategory();
+void SetCurrentCategory(CategoryId category);
 
 // RAII helper for scoped category tracking (tracking enabled)
 class CScopedCategory final
 {
 public:
 
-	explicit CScopedCategory(ECategory category);
+	explicit CScopedCategory(CategoryId category);
 	~CScopedCategory();
 
 private:
 
-	ECategory m_previousCategory;
+	CategoryId m_previousCategory;
 };
 
 #else
 
 // No-op implementations when tracking disabled (zero overhead)
-inline ECategory GetCurrentCategory() { return ECategory::Global; }
-inline void SetCurrentCategory(ECategory) {}
+inline CategoryId GetCurrentCategory() { return Category::Global; }
+inline void SetCurrentCategory(CategoryId) {}
 
 class CScopedCategory final
 {
 public:
 
-	explicit CScopedCategory(ECategory) {}
+	explicit CScopedCategory(CategoryId) {}
 	~CScopedCategory() {}
 };
 

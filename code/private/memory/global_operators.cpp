@@ -12,9 +12,9 @@ namespace
 	// Allocation header stored before each allocation to track category
 	struct SAllocationHeader
 	{
-		Tge::Memory::ECategory category;  // 1 byte
-		uint8_t padding[7];                      // 7 bytes padding (align size_t)
-		size_t size;                             // 8 bytes (requested size, offset 8)
+		Tge::Memory::CategoryId category;  // 2 bytes (uint16_t)
+		uint8_t padding[6];                // 6 bytes padding (align size_t)
+		size_t size;                       // 8 bytes (requested size, offset 8)
 	};
 	static_assert(sizeof(SAllocationHeader) == 16);
 
@@ -180,6 +180,7 @@ void* operator new(size_t size, [[maybe_unused]] std::nothrow_t const& tag) noex
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 	size_t const totalSize = sizeof(SAllocationHeader) + size;
 	void* rawPtr = rpmalloc(totalSize);
+	void* userPtr = nullptr;
 
 	if (rawPtr != nullptr)
 	{
@@ -187,11 +188,11 @@ void* operator new(size_t size, [[maybe_unused]] std::nothrow_t const& tag) noex
 		header->category = Tge::Memory::GetCurrentCategory();
 		header->size = size;
 
-		void* userPtr = GetUserPtr(rawPtr);
+		userPtr = GetUserPtr(rawPtr);
 		Tge::Memory::TrackAllocation(header->category, size);
-		return userPtr;
 	}
-	return nullptr;
+
+	return userPtr;
 #else
 	return rpmalloc(size);
 #endif // TGE_MEMORY_TRACKING_ENABLED
@@ -212,6 +213,7 @@ void* operator new(size_t size, std::align_val_t align, [[maybe_unused]] std::no
 	size_t const totalSize = headerSize + size;
 
 	void* rawPtr = rpaligned_alloc(alignment, totalSize);
+	void* userPtr = nullptr;
 
 	if (rawPtr != nullptr)
 	{
@@ -219,11 +221,11 @@ void* operator new(size_t size, std::align_val_t align, [[maybe_unused]] std::no
 		header->category = Tge::Memory::GetCurrentCategory();
 		header->size = size;
 
-		void* userPtr = static_cast<char*>(rawPtr) + headerSize;
+		userPtr = static_cast<char*>(rawPtr) + headerSize;
 		Tge::Memory::TrackAllocation(header->category, size);
-		return userPtr;
 	}
-	return nullptr;
+
+	return userPtr;
 #else
 	return rpaligned_alloc(static_cast<size_t>(align), size);
 #endif // TGE_MEMORY_TRACKING_ENABLED

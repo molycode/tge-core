@@ -6,33 +6,14 @@
 
 namespace Tge::Memory
 {
-enum class ECategory : uint8_t
+using CategoryId = uint16_t;
+
+namespace Category
 {
-	// CPU Memory (global operators)
-	Global,           // Uncategorized allocations through global new/delete
-	STLContainers,    // std::vector/string/map with scoped category
-	GameObjects,      // Mesh instances, entities
-	AssetLoading,     // Model loading, texture decoding
-
-	// GPU Memory
-	VertexBuffers,
-	IndexBuffers,
-	UniformBuffers,
-	StagingBuffers,
-	Textures,
-	RenderTargets,
-
-	// System
-	AssetCache,
-	ObjectPools,
-	DescriptorPools,
-	CommandPools,
-	Console,
-	Debug,
-	Other,
-
-	Count
-};
+	constexpr CategoryId Global       = 0;
+	constexpr CategoryId Other        = 1;
+	constexpr CategoryId BuiltInCount = 2;
+} // namespace Category
 
 struct SStats final
 {
@@ -48,14 +29,18 @@ struct SStats final
 	}
 };
 
-std::string_view GetCategoryName(ECategory category);
+// Register a project-specific category. Name must have static lifetime (use string literals).
+// Returns a CategoryId for use with TrackAllocation/TrackDeallocation.
+CategoryId RegisterCategory(std::string_view name);
 
-// Unified tracker - tracks all memory (global operators + explicit allocators + GPU)
-void TrackAllocation(ECategory category, size_t bytes);
-void TrackDeallocation(ECategory category, size_t bytes);
+std::string_view GetCategoryName(CategoryId category);
+
+// Unified tracker - tracks all memory (global operators + explicit allocators)
+void TrackAllocation(CategoryId category, size_t bytes);
+void TrackDeallocation(CategoryId category, size_t bytes);
 
 // Query functions
-SStats GetStats(ECategory category);
+SStats GetStats(CategoryId category);
 size_t GetTotalAllocated();
 size_t GetTotalDeallocated();
 size_t GetCurrentUsage();

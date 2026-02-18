@@ -4,14 +4,16 @@
 
 namespace Tge::Math
 {
-struct STransform final
+class CTransform final
 {
+public:
+
 	Vec3 position{0.0f};
 	Quat rotation{1.0f, 0.0f, 0.0f, 0.0f};  // Identity quaternion (w, x, y, z)
 	Vec3 scale{1.0f};
 
 	Mat4 ToMatrix() const;
-	static STransform FromMatrix(Mat4 const& matrix);
+	static CTransform FromMatrix(Mat4 const& matrix);
 };
 
 // Matrix construction functions

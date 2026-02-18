@@ -9,15 +9,12 @@
 
 namespace Tge::Threading
 {
-class CJobGroup final : private SNoCopyNoMove
+class CJobGroup final : private Tge::SNoCopyNoMove
 {
 public:
 
 	CJobGroup() = default;
 	~CJobGroup() = default;
-
-	CJobGroup(CJobGroup&& other) noexcept;
-	CJobGroup& operator=(CJobGroup&& other) noexcept;
 
 	void SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority = EJobPriority::Normal);
 

@@ -1,12 +1,12 @@
 #pragma once
 
-#include "allocator.hpp"
+#include "tracked_allocator.hpp"
 
 namespace Tge::Memory
 {
 
 // General-purpose free-list allocator with first-fit strategy
-class CFreeListAllocator final : public IAllocator
+class CFreeListAllocator final : public CTrackedAllocator
 {
 public:
 
@@ -17,9 +17,6 @@ public:
 	void Deallocate(void* ptr) override;
 
 	std::string_view GetName() const override { return "FreeListAllocator"; }
-	size_t GetTotalAllocated() const override { return m_totalAllocated.load(); }
-	size_t GetCurrentUsage() const override { return m_currentUsage.load(); }
-	size_t GetNumAllocations() const override { return m_numAllocations.load(); }
 
 	size_t GetCapacity() const { return m_capacity; }
 

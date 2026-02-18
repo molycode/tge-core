@@ -1,8 +1,8 @@
 #include <tge/logging/log_system.hpp>
 #include <tge/logging/log.hpp>
+#include <tge/color.hpp>
 
 #ifdef TGE_LOGGING_ENABLED
-#include <tge/color.hpp>
 #include <algorithm>
 #include <cassert>
 #include <ctime>
@@ -500,9 +500,9 @@ std::vector<std::string_view> CLogSystem::GetChannelNames() const
 //////////////////////////////////////////////////////////////////////////
 void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std::string_view message)
 {
-	// Fallback to stderr if logging system not yet initialized
 	if (!m_initialized)
 	{
+		// Fallback to stderr before logging system is initialized
 		switch (level)
 		{
 			case ELogLevel::Info:
@@ -519,61 +519,57 @@ void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std:
 				assert(false && "Invalid log level for message");
 				break;
 		}
-		return;
 	}
-
-	std::lock_guard lock(GetMutex());
-
-	auto it = GetChannels().find(channelId);
-
-	if (it == GetChannels().end())
+	else
 	{
-		return;
-	}
+		std::lock_guard lock(GetMutex());
 
-	SChannelData const& channel = it->second;
+		auto it = GetChannels().find(channelId);
+		bool const channelFound = it != GetChannels().end();
 
-	// Check filtering (bitmask: message level must be in channel's allowed levels)
-	if ((level & channel.levelMask) == ELogLevel::None)
-	{
-		return;
-	}
+		if (channelFound)
+		{
+			SChannelData const& channel = it->second;
 
-	// Create message
-	auto const now = std::chrono::system_clock::now();
-	auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - GetStartTime());
+			// Check filtering (bitmask: message level must be in channel's allowed levels)
+			if ((level & channel.levelMask) != ELogLevel::None)
+			{
+				auto const now = std::chrono::system_clock::now();
+				auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - GetStartTime());
 
-	SLogMessage const& msg = GetMessages().emplace_back(
-		now,
-		static_cast<uint64_t>(elapsed.count()),
-		level,
-		target,
-		channel.name,
-		std::string{message},
-		channel.color.r,
-		channel.color.g,
-		channel.color.b
-	);
+				SLogMessage const& msg = GetMessages().emplace_back(
+					now,
+					static_cast<uint64_t>(elapsed.count()),
+					level,
+					target,
+					channel.name,
+					std::string{message},
+					channel.color.r,
+					channel.color.g,
+					channel.color.b
+				);
 
-	if (GetMessages().size() > MaxMessages)
-	{
-		GetMessages().pop_front();
-	}
+				if (GetMessages().size() > MaxMessages)
+				{
+					GetMessages().pop_front();
+				}
 
-	// Output to requested targets
-	if ((target & ETarget::Terminal) != ETarget::None)
-	{
-		WriteToTerminal(msg);
-	}
+				if ((target & ETarget::Terminal) != ETarget::None)
+				{
+					WriteToTerminal(msg);
+				}
 
-	if ((target & ETarget::File) != ETarget::None)
-	{
-		WriteToFile(msg);
-	}
+				if ((target & ETarget::File) != ETarget::None)
+				{
+					WriteToFile(msg);
+				}
 
-	if ((target & ETarget::Console) != ETarget::None)
-	{
-		NotifyListeners(msg);
+				if ((target & ETarget::Console) != ETarget::None)
+				{
+					NotifyListeners(msg);
+				}
+			}
+		}
 	}
 }
 
@@ -653,4 +649,23 @@ CLogSystem& GetLogSystem()
 	static CLogSystem logSystem;
 	return logSystem;
 }
+#ifndef TGE_LOGGING_ENABLED
+void CLogSystem::Initialize() {}
+void CLogSystem::Terminate() {}
+bool CLogSystem::IsInitialized() const { return false; }
+uint64_t CLogSystem::Register(std::string_view, SColor const&) { return 0; }
+bool CLogSystem::SetLogLevel(std::string_view, ELogLevel) { return false; }
+void CLogSystem::SetAllLogLevels(ELogLevel) {}
+ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::All; }
+std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
+void CLogSystem::Write(uint64_t, ELogLevel, ETarget, std::string_view) {}
+std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
+void CLogSystem::RegisterListener(void*, LogMessageCallback) {}
+void CLogSystem::FlushTo(void*) {}
+void CLogSystem::UnregisterListener(void*) {}
+
+CLog::CLog(std::string_view, SColor const&) {}
+std::string_view CLog::GetName() const { return ""; }
+void CLog::Write(ELogLevel, ETarget, std::string_view) const {}
+#endif // !TGE_LOGGING_ENABLED
 } // namespace Tge::Logging

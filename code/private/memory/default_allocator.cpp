@@ -44,7 +44,7 @@ void* CDefaultAllocator::Allocate(size_t size, size_t alignment)
 			m_numAllocations.fetch_add(1, std::memory_order_relaxed);
 
 #ifdef TGE_MEMORY_TRACKING_ENABLED
-			TrackAllocation(ECategory::Other, usableSize);
+			TrackAllocation(Category::Other, usableSize);
 #endif // TGE_MEMORY_TRACKING_ENABLED
 		}
 	}
@@ -64,7 +64,7 @@ void CDefaultAllocator::Deallocate(void* ptr)
 		m_numDeallocations.fetch_add(1, std::memory_order_relaxed);
 
 #ifdef TGE_MEMORY_TRACKING_ENABLED
-		TrackDeallocation(ECategory::Other, usableSize);
+		TrackDeallocation(Category::Other, usableSize);
 #endif // TGE_MEMORY_TRACKING_ENABLED
 	}
 }

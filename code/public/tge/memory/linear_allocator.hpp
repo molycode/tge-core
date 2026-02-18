@@ -1,11 +1,11 @@
 #pragma once
 
-#include "allocator.hpp"
+#include "tracked_allocator.hpp"
 
 namespace Tge::Memory
 {
 // Fast bump allocator - allocates linearly, resets all at once (perfect for per-frame temp allocations)
-class CLinearAllocator final : public IAllocator
+class CLinearAllocator final : public CTrackedAllocator
 {
 public:
 
@@ -16,9 +16,6 @@ public:
 	void Deallocate(void* ptr) override; // No-op
 
 	std::string_view GetName() const override { return "LinearAllocator"; }
-	size_t GetTotalAllocated() const override { return m_totalAllocated.load(); }
-	size_t GetCurrentUsage() const override { return m_currentUsage.load(); }
-	size_t GetNumAllocations() const override { return m_numAllocations.load(); }
 
 	void Reset();
 	size_t GetCapacity() const { return m_capacity; }

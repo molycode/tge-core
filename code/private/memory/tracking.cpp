@@ -1,6 +1,7 @@
 #include "../loggers.hpp"
 #include <tge/memory/tracking.hpp>
 #include <array>
+#include <cassert>
 #include <mutex>
 
 #ifndef TGE_LOGGING_ENABLED
@@ -11,42 +12,66 @@ namespace Tge::Memory
 {
 namespace
 {
+	constexpr size_t MaxCategories = 256;
+
 	std::mutex g_trackingMutex;
-	std::array<SStats, static_cast<size_t>(ECategory::Count)> g_categoryStats = {};
-}
+	std::array<SStats, MaxCategories> g_categoryStats = {};
+	std::array<std::string_view, MaxCategories> g_categoryNames = {};
+	size_t g_numCategories = Category::BuiltInCount;
+
+	struct SBuiltInInit
+	{
+		SBuiltInInit()
+		{
+			g_categoryNames[Category::Global] = "Global";
+			g_categoryNames[Category::Other]  = "Other";
+		}
+	} g_builtInInit;
+} // namespace
 
 //////////////////////////////////////////////////////////////////////////
-void TrackAllocation(ECategory category, size_t bytes)
+CategoryId RegisterCategory(std::string_view name)
 {
 	std::lock_guard<std::mutex> lock(g_trackingMutex);
 
-	size_t const catIndex = static_cast<size_t>(category);
-	g_categoryStats[catIndex].allocated += bytes;
-	g_categoryStats[catIndex].allocationCount++;
+	assert(g_numCategories < MaxCategories && "RegisterCategory: maximum category limit reached");
 
-	size_t const currentUsage = g_categoryStats[catIndex].GetCurrentUsage();
+	CategoryId const id = static_cast<CategoryId>(g_numCategories);
+	g_categoryNames[g_numCategories] = name;
+	g_numCategories++;
+	return id;
+}
 
-	if (currentUsage > g_categoryStats[catIndex].peakUsage)
+//////////////////////////////////////////////////////////////////////////
+void TrackAllocation(CategoryId category, size_t bytes)
+{
+	std::lock_guard<std::mutex> lock(g_trackingMutex);
+
+	g_categoryStats[category].allocated += bytes;
+	g_categoryStats[category].allocationCount++;
+
+	size_t const currentUsage = g_categoryStats[category].GetCurrentUsage();
+
+	if (currentUsage > g_categoryStats[category].peakUsage)
 	{
-		g_categoryStats[catIndex].peakUsage = currentUsage;
+		g_categoryStats[category].peakUsage = currentUsage;
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////
-void TrackDeallocation(ECategory category, size_t bytes)
+void TrackDeallocation(CategoryId category, size_t bytes)
 {
 	std::lock_guard<std::mutex> lock(g_trackingMutex);
 
-	size_t const catIndex = static_cast<size_t>(category);
-	g_categoryStats[catIndex].deallocated += bytes;
-	g_categoryStats[catIndex].deallocationCount++;
+	g_categoryStats[category].deallocated += bytes;
+	g_categoryStats[category].deallocationCount++;
 }
 
 //////////////////////////////////////////////////////////////////////////
-SStats GetStats(ECategory category)
+SStats GetStats(CategoryId category)
 {
 	std::lock_guard<std::mutex> lock(g_trackingMutex);
-	return g_categoryStats[static_cast<size_t>(category)];
+	return g_categoryStats[category];
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -56,9 +81,9 @@ size_t GetTotalAllocated()
 
 	size_t total = 0;
 
-	for (auto const& stat : g_categoryStats)
+	for (size_t i = 0; i < g_numCategories; ++i)
 	{
-		total += stat.allocated;
+		total += g_categoryStats[i].allocated;
 	}
 
 	return total;
@@ -71,9 +96,9 @@ size_t GetTotalDeallocated()
 
 	size_t total = 0;
 
-	for (auto const& stat : g_categoryStats)
+	for (size_t i = 0; i < g_numCategories; ++i)
 	{
-		total += stat.deallocated;
+		total += g_categoryStats[i].deallocated;
 	}
 
 	return total;
@@ -86,9 +111,9 @@ size_t GetCurrentUsage()
 
 	size_t total = 0;
 
-	for (auto const& stat : g_categoryStats)
+	for (size_t i = 0; i < g_numCategories; ++i)
 	{
-		total += stat.GetCurrentUsage();
+		total += g_categoryStats[i].GetCurrentUsage();
 	}
 
 	return total;
@@ -101,40 +126,19 @@ size_t GetNumAllocations()
 
 	size_t total = 0;
 
-	for (auto const& stat : g_categoryStats)
+	for (size_t i = 0; i < g_numCategories; ++i)
 	{
-		total += stat.allocationCount;
+		total += g_categoryStats[i].allocationCount;
 	}
 
 	return total;
 }
 
 //////////////////////////////////////////////////////////////////////////
-std::string_view GetCategoryName(ECategory category)
+std::string_view GetCategoryName(CategoryId category)
 {
-	switch (category)
-	{
-		case ECategory::Global:           return "Global";
-		case ECategory::STLContainers:    return "STL Containers";
-		case ECategory::GameObjects:      return "Game Objects";
-		case ECategory::AssetLoading:     return "Asset Loading";
-		case ECategory::VertexBuffers:    return "Vertex Buffers";
-		case ECategory::IndexBuffers:     return "Index Buffers";
-		case ECategory::UniformBuffers:   return "Uniform Buffers";
-		case ECategory::StagingBuffers:   return "Staging Buffers";
-		case ECategory::Textures:         return "Textures";
-		case ECategory::RenderTargets:    return "Render Targets";
-		case ECategory::AssetCache:       return "Asset Cache";
-		case ECategory::ObjectPools:      return "Object Pools";
-		case ECategory::DescriptorPools:  return "Descriptor Pools";
-		case ECategory::CommandPools:     return "Command Pools";
-		case ECategory::Console:          return "Console";
-		case ECategory::Debug:            return "Debug";
-		case ECategory::Other:            return "Other";
-		case ECategory::Count:            return "Invalid";
-	}
-
-	return "Unknown";
+	std::lock_guard<std::mutex> lock(g_trackingMutex);
+	return g_categoryNames[category];
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -148,15 +152,13 @@ void PrintStats()
 	constexpr float MiB = 1024.0f * 1024.0f;
 	constexpr float KiB = 1024.0f;
 
-	// Print per-category breakdown (only categories with allocations)
-	for (size_t i = 0; i < static_cast<size_t>(ECategory::Count); ++i)
+	for (size_t i = 0; i < g_numCategories; ++i)
 	{
 		auto const& stat = g_categoryStats[i];
 
 		if (stat.allocated > 0)
 		{
-			ECategory cat = static_cast<ECategory>(i);
-			float const currentUsage = stat.GetCurrentUsage();
+			float const currentUsage = static_cast<float>(stat.GetCurrentUsage());
 
 			std::string sizeStr;
 
@@ -170,20 +172,19 @@ void PrintStats()
 			}
 
 			gLog.Info("  {:<20}: {} ({} allocs)",
-				GetCategoryName(cat), sizeStr, stat.allocationCount);
+				g_categoryNames[i], sizeStr, stat.allocationCount);
 		}
 	}
 
-	// Print totals
 	size_t totalCurrent = 0;
 	size_t totalAllocated = 0;
 	size_t totalAllocations = 0;
 
-	for (auto const& stat : g_categoryStats)
+	for (size_t i = 0; i < g_numCategories; ++i)
 	{
-		totalCurrent += stat.GetCurrentUsage();
-		totalAllocated += stat.allocated;
-		totalAllocations += stat.allocationCount;
+		totalCurrent += g_categoryStats[i].GetCurrentUsage();
+		totalAllocated += g_categoryStats[i].allocated;
+		totalAllocations += g_categoryStats[i].allocationCount;
 	}
 
 	gLog.Info("");
@@ -191,13 +192,13 @@ void PrintStats()
 
 	if (totalCurrent < MiB)
 	{
-		gLog.Info("  Current Usage:   {:.2f} KiB", totalCurrent / KiB);
-		gLog.Info("  Total Allocated: {:.2f} KiB", totalAllocated / KiB);
+		gLog.Info("  Current Usage:   {:.2f} KiB", static_cast<float>(totalCurrent) / KiB);
+		gLog.Info("  Total Allocated: {:.2f} KiB", static_cast<float>(totalAllocated) / KiB);
 	}
 	else
 	{
-		gLog.Info("  Current Usage:   {:.2f} MiB", totalCurrent / MiB);
-		gLog.Info("  Total Allocated: {:.2f} MiB", totalAllocated / MiB);
+		gLog.Info("  Current Usage:   {:.2f} MiB", static_cast<float>(totalCurrent) / MiB);
+		gLog.Info("  Total Allocated: {:.2f} MiB", static_cast<float>(totalAllocated) / MiB);
 	}
 
 	gLog.Info("  Allocations:     {}", totalAllocations);

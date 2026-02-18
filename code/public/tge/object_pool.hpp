@@ -3,23 +3,22 @@
 #include "non_copyable.hpp"
 #include <tge/assert.hpp>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <vector>
-#include <utility>
 #include <mutex>
+#include <vector>
 
 namespace Tge
 {
 
-template<typename T, size_t InitialCapacity = 64>
-class CObjectPool final : public SNoCopyNoMove
+template<typename T, size_t Capacity = 64>
+class CObjectPool final : private SNoCopyNoMove
 {
 public:
 
-	static constexpr size_t MinCapacity = InitialCapacity;
-	static constexpr size_t MaxCapacity = 1'048'576;
+	static constexpr size_t PoolCapacity = Capacity;
 
-	CObjectPool() = default;
+	CObjectPool();
 	~CObjectPool();
 
 	template<typename... Args>
@@ -27,92 +26,97 @@ public:
 
 	void Free(T* object);
 
-	[[nodiscard]] size_t GetCapacity() const;
-	[[nodiscard]] size_t GetNumFree() const;
-	[[nodiscard]] size_t GetNumUsed() const;
+	size_t GetCapacity() const { return Capacity; }
+	size_t GetNumFree() const;
+	size_t GetNumUsed() const;
 
 private:
 
-	std::vector<std::unique_ptr<T>> m_objects;
-	std::vector<size_t> m_freeIndices;
-	mutable std::mutex m_mutex;
+	struct alignas(alignof(T)) SSlot
+	{
+		std::byte storage[sizeof(T)];
+	};
+
+	std::unique_ptr<SSlot[]> m_slots;
+	std::unique_ptr<bool[]>  m_alive;
+	std::vector<size_t>      m_freeIndices;
+	mutable std::mutex       m_mutex;
 };
 
 //////////////////////////////////////////////////////////////////////////
-template<typename T, size_t InitialCapacity>
-CObjectPool<T, InitialCapacity>::~CObjectPool()
+template<typename T, size_t Capacity>
+CObjectPool<T, Capacity>::CObjectPool()
+	: m_slots(std::make_unique<SSlot[]>(Capacity))
+	, m_alive(std::make_unique<bool[]>(Capacity))
 {
-	std::lock_guard<std::mutex> lock(m_mutex);
-	m_objects.clear();  // unique_ptr handles deletion
-}
+	m_freeIndices.reserve(Capacity);
 
-//////////////////////////////////////////////////////////////////////////
-template<typename T, size_t InitialCapacity>
-template<typename... Args>
-T* CObjectPool<T, InitialCapacity>::Allocate(Args&&... args)
-{
-	std::lock_guard<std::mutex> lock(m_mutex);
-
-	// Try to reuse freed slot first
-	if (!m_freeIndices.empty())
+	for (size_t i = Capacity; i > 0; --i)
 	{
-		size_t idx = m_freeIndices.back();
-		m_freeIndices.pop_back();
-
-		m_objects[idx] = std::make_unique<T>(std::forward<Args>(args)...);
-		return m_objects[idx].get();
+		m_freeIndices.push_back(i - 1);
 	}
-
-	// Check if we can grow
-	TGE_ASSERT(m_objects.size() < MaxCapacity, "ObjectPool exhausted");
-
-	// Grow: add new allocation
-	m_objects.push_back(std::make_unique<T>(std::forward<Args>(args)...));
-	return m_objects.back().get();
 }
 
 //////////////////////////////////////////////////////////////////////////
-template<typename T, size_t InitialCapacity>
-void CObjectPool<T, InitialCapacity>::Free(T* object)
+template<typename T, size_t Capacity>
+CObjectPool<T, Capacity>::~CObjectPool()
 {
-	if (object != nullptr)
+	for (size_t i = 0; i < Capacity; ++i)
 	{
-	 std::lock_guard<std::mutex> lock(m_mutex);
-
-		// Find the object
-		for (size_t i = 0; i < m_objects.size(); ++i)
+		if (m_alive[i])
 		{
-			if (m_objects[i] && m_objects[i].get() == object)
-			{
-				m_objects[i].reset();  // Delete the object
-				m_freeIndices.push_back(i);  // Mark slot as free
-				return;
-			}
+			reinterpret_cast<T*>(m_slots[i].storage)->~T();
 		}
 	}
 }
 
 //////////////////////////////////////////////////////////////////////////
-template<typename T, size_t InitialCapacity>
-size_t CObjectPool<T, InitialCapacity>::GetCapacity() const
+template<typename T, size_t Capacity>
+template<typename... Args>
+T* CObjectPool<T, Capacity>::Allocate(Args&&... args)
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
-	return m_objects.size();
+
+	TGE_ASSERT(!m_freeIndices.empty(), "CObjectPool exhausted: no free slots remaining");
+
+	size_t const idx = m_freeIndices.back();
+	m_freeIndices.pop_back();
+
+	T* obj = new(m_slots[idx].storage) T(std::forward<Args>(args)...);
+	m_alive[idx] = true;
+	return obj;
 }
 
 //////////////////////////////////////////////////////////////////////////
-template<typename T, size_t InitialCapacity>
-size_t CObjectPool<T, InitialCapacity>::GetNumFree() const
+template<typename T, size_t Capacity>
+void CObjectPool<T, Capacity>::Free(T* object)
+{
+	if (object != nullptr)
+	{
+		std::lock_guard<std::mutex> lock(m_mutex);
+
+		size_t const idx = reinterpret_cast<SSlot*>(object) - m_slots.get();
+		TGE_ASSERT(idx < Capacity && m_alive[idx], "CObjectPool::Free: pointer does not belong to this pool or slot is not alive");
+
+		object->~T();
+		m_alive[idx] = false;
+		m_freeIndices.push_back(idx);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+template<typename T, size_t Capacity>
+size_t CObjectPool<T, Capacity>::GetNumFree() const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
 	return m_freeIndices.size();
 }
 
 //////////////////////////////////////////////////////////////////////////
-template<typename T, size_t InitialCapacity>
-size_t CObjectPool<T, InitialCapacity>::GetNumUsed() const
+template<typename T, size_t Capacity>
+size_t CObjectPool<T, Capacity>::GetNumUsed() const
 {
 	std::lock_guard<std::mutex> lock(m_mutex);
-	return m_objects.size() - m_freeIndices.size();
+	return Capacity - m_freeIndices.size();
 }
 } // namespace Tge

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "allocator.hpp"
+#include "tracked_allocator.hpp"
 #include <vector>
 
 namespace Tge::Memory
 {
 
 // Fixed-size object pool allocator
-class CPoolAllocator final : public IAllocator
+class CPoolAllocator final : public CTrackedAllocator
 {
 public:
 
@@ -18,9 +18,6 @@ public:
 	void Deallocate(void* ptr) override;
 
 	std::string_view GetName() const override { return "PoolAllocator"; }
-	size_t GetTotalAllocated() const override { return m_totalAllocated.load(); }
-	size_t GetCurrentUsage() const override { return m_currentUsage.load(); }
-	size_t GetNumAllocations() const override { return m_numAllocations.load(); }
 
 	size_t GetObjectSize() const { return m_objectSize; }
 	size_t GetObjectCount() const { return m_objectCount; }

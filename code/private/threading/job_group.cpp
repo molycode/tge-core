@@ -6,33 +6,11 @@ namespace Tge::Threading
 CJobGroup g_defaultJobGroup;
 
 //////////////////////////////////////////////////////////////////////////
-CJobGroup::CJobGroup(CJobGroup&& other) noexcept
-	: m_activeJobs(other.m_activeJobs.load(std::memory_order_relaxed))
-{
-	other.m_activeJobs.store(0, std::memory_order_relaxed);
-}
-
-//////////////////////////////////////////////////////////////////////////
-CJobGroup& CJobGroup::operator=(CJobGroup&& other) noexcept
-{
-	if (this != &other)
-	{
-		m_activeJobs.store(other.m_activeJobs.load(std::memory_order_relaxed), std::memory_order_relaxed);
-		other.m_activeJobs.store(0, std::memory_order_relaxed);
-	}
-
-	return *this;
-}
-
-//////////////////////////////////////////////////////////////////////////
 void CJobGroup::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 {
-	if (!job || !g_jobScheduler)
+	if (job && g_jobScheduler)
 	{
-		return;
-	}
-
-	m_activeJobs.fetch_add(1, std::memory_order_relaxed);
+		m_activeJobs.fetch_add(1, std::memory_order_relaxed);
 
 	class CWrappedJob final : public IJob
 	{
@@ -58,8 +36,9 @@ void CJobGroup::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 		CJobGroup* m_group;
 	};
 
-	std::unique_ptr<IJob> wrappedJob(new CWrappedJob(std::move(job), this));
-	g_jobScheduler->SubmitJob(std::move(wrappedJob), priority);
+		std::unique_ptr<IJob> wrappedJob(new CWrappedJob(std::move(job), this));
+		g_jobScheduler->SubmitJob(std::move(wrappedJob), priority);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

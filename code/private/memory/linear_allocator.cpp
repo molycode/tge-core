@@ -49,7 +49,7 @@ void* CLinearAllocator::Allocate(size_t size, size_t alignment)
 			m_numAllocations.fetch_add(1, std::memory_order_relaxed);
 
 #ifdef TGE_MEMORY_TRACKING_ENABLED
-			TrackAllocation(ECategory::Other, size);
+			TrackAllocation(Category::Other, size);
 #endif // TGE_MEMORY_TRACKING_ENABLED
 		}
 	}
@@ -70,7 +70,7 @@ void CLinearAllocator::Reset()
 
 	if (currentUsage > 0)
 	{
-		TrackDeallocation(ECategory::Other, currentUsage);
+		TrackDeallocation(Category::Other, currentUsage);
 	}
 #endif // TGE_MEMORY_TRACKING_ENABLED
 

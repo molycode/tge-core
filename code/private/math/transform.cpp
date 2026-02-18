@@ -4,7 +4,7 @@
 namespace Tge::Math
 {
 //////////////////////////////////////////////////////////////////////////
-Mat4 STransform::ToMatrix() const
+Mat4 CTransform::ToMatrix() const
 {
 	Mat4 const translationMatrix = Translate(position);
 	Mat4 const rotationMatrix = QuaternionToMatrix(rotation);
@@ -14,9 +14,9 @@ Mat4 STransform::ToMatrix() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-STransform STransform::FromMatrix(Mat4 const& matrix)
+CTransform CTransform::FromMatrix(Mat4 const& matrix)
 {
-	STransform transform;
+	CTransform transform;
 
 	// Extract translation (last column)
 	transform.position = Vec3(matrix[3]);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstddef>
-#include <atomic>
 #include <string_view>
 
 namespace Tge::Memory
@@ -21,10 +20,5 @@ public:
 protected:
 
 	~IAllocator() = default;
-
-	std::atomic<size_t> m_totalAllocated{0};
-	std::atomic<size_t> m_currentUsage{0};
-	std::atomic<size_t> m_numAllocations{0};
-	std::atomic<size_t> m_numDeallocations{0};
 };
 } // namespace Tge::Memory

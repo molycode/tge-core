@@ -6,10 +6,12 @@
 namespace Tge::Math
 {
 //////////////////////////////////////////////////////////////////////////
-bool Intersects(SRay const& ray, SAABB const& aabb, float& tMin, float& tMax)
+bool Intersects(SRay const& ray, CAABB const& aabb, float& tMin, float& tMax)
 {
 	tMin = 0.0f;
 	tMax = Infinity;
+
+	bool hit = true;
 
 	for (int i = 0; i < 3; ++i)
 	{
@@ -23,19 +25,19 @@ bool Intersects(SRay const& ray, SAABB const& aabb, float& tMin, float& tMax)
 
 			if (tMax < tMin)
 			{
-				return false;
+				hit = false;
 			}
 		}
 		else
 		{
 			if (ray.origin[i] < aabb.min[i] || ray.origin[i] > aabb.max[i])
 			{
-				return false;
+				hit = false;
 			}
 		}
 	}
 
-	return true;
+	return hit;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -47,28 +49,27 @@ bool Intersects(SRay const& ray, SSphere const& sphere, float& t)
 	float const c = Dot(oc, oc) - sphere.radius * sphere.radius;
 	float const discriminant = b * b - 4.0f * a * c;
 
-	if (discriminant < 0.0f)
+	bool hit = false;
+
+	if (discriminant >= 0.0f)
 	{
-		return false;
+		float const sqrtDiscriminant = std::sqrt(discriminant);
+		float const t0 = (-b - sqrtDiscriminant) / (2.0f * a);
+		float const t1 = (-b + sqrtDiscriminant) / (2.0f * a);
+
+		if (t0 > Epsilon)
+		{
+			t = t0;
+			hit = true;
+		}
+		else if (t1 > Epsilon)
+		{
+			t = t1;
+			hit = true;
+		}
 	}
 
-	float const sqrtDiscriminant = std::sqrt(discriminant);
-	float const t0 = (-b - sqrtDiscriminant) / (2.0f * a);
-	float const t1 = (-b + sqrtDiscriminant) / (2.0f * a);
-
-	if (t0 > Epsilon)
-	{
-		t = t0;
-		return true;
-	}
-
-	if (t1 > Epsilon)
-	{
-		t = t1;
-		return true;
-	}
-
-	return false;
+	return hit;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -76,34 +77,23 @@ bool Intersects(SRay const& ray, SPlane const& plane, float& t)
 {
 	float const denom = Dot(ray.direction, plane.normal);
 
+	bool hit = false;
+
 	if (std::abs(denom) > Epsilon)
 	{
 		t = -(Dot(ray.origin, plane.normal) + plane.distance) / denom;
-		return t >= 0.0f;
+		hit = t >= 0.0f;
 	}
 
-	return false;
+	return hit;
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool Intersects(SAABB const& a, SAABB const& b)
+bool Intersects(CAABB const& a, CAABB const& b)
 {
-	if (a.max.x < b.min.x || a.min.x > b.max.x)
-	{
-		return false;
-	}
-
-	if (a.max.y < b.min.y || a.min.y > b.max.y)
-	{
-		return false;
-	}
-
-	if (a.max.z < b.min.z || a.min.z > b.max.z)
-	{
-		return false;
-	}
-
-	return true;
+	return a.max.x >= b.min.x && a.min.x <= b.max.x
+	    && a.max.y >= b.min.y && a.min.y <= b.max.y
+	    && a.max.z >= b.min.z && a.min.z <= b.max.z;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -115,7 +105,7 @@ bool Intersects(SSphere const& a, SSphere const& b)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool Intersects(SAABB const& aabb, SSphere const& sphere)
+bool Intersects(CAABB const& aabb, SSphere const& sphere)
 {
 	Vec3 const closestPoint = Math::Clamp(sphere.center, aabb.min, aabb.max);
 	float const distanceSquared = Distance(sphere.center, closestPoint);
@@ -123,24 +113,11 @@ bool Intersects(SAABB const& aabb, SSphere const& sphere)
 }
 
 //////////////////////////////////////////////////////////////////////////
-bool Contains(SAABB const& aabb, Vec3 const& point)
+bool Contains(CAABB const& aabb, Vec3 const& point)
 {
-	if (point.x < aabb.min.x || point.x > aabb.max.x)
-	{
-		return false;
-	}
-
-	if (point.y < aabb.min.y || point.y > aabb.max.y)
-	{
-		return false;
-	}
-
-	if (point.z < aabb.min.z || point.z > aabb.max.z)
-	{
-		return false;
-	}
-
-	return true;
+	return point.x >= aabb.min.x && point.x <= aabb.max.x
+	    && point.y >= aabb.min.y && point.y <= aabb.max.y
+	    && point.z >= aabb.min.z && point.z <= aabb.max.z;
 }
 
 //////////////////////////////////////////////////////////////////////////
