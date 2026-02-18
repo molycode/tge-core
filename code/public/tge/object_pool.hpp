@@ -1,7 +1,7 @@
 #pragma once
 
 #include "non_copyable.hpp"
-#include <tge/assert.hpp>
+#include <tge/init/assert.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <memory>

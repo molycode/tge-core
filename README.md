@@ -56,11 +56,11 @@ Debug builds automatically define `TGE_DEBUG_ENABLED`, which enables assertions 
 All public headers use the `<tge/...>` include prefix.
 
 ```cpp
-#include <tge/init.hpp>
+#include <tge/init/init.hpp>
 
 int main()
 {
-    Tge::Initialize();      // Initializes memory → threading → IO → logging
+    Tge::Initialize();      // Initializes memory → threading → IO
 
     // Per-frame update (resets the frame allocator)
     while (running)
@@ -82,7 +82,7 @@ int main()
 
 ### Base Utilities
 
-#### Assertions — `<tge/assert.hpp>`
+#### Assertions — `<tge/init/assert.hpp>`
 
 ```cpp
 TGE_ASSERT(condition, "message")   // Checked in debug builds only
@@ -186,12 +186,12 @@ Tge::Logging::GetLogSystem().FlushTo(this);
 Tge::Logging::GetLogSystem().UnregisterListener(this);
 ```
 
-#### Pre-declared loggers — `<tge/loggers.hpp>`
+#### Pre-declared loggers — `<tge/logging/loggers.hpp>`
 
 A global `gLog` instance is available for quick use without declaring your own:
 
 ```cpp
-#include <tge/loggers.hpp>
+#include <tge/logging/loggers.hpp>
 
 Tge::gLog.Info("Application version {}", version);
 ```
@@ -257,8 +257,21 @@ Tge::Memory::CategoryId const catUI      = Tge::Memory::RegisterCategory("UI");
 Tge::Memory::SStats stats = Tge::Memory::GetStats(catEnemies);
 size_t current = stats.GetCurrentUsage();
 
+// Query category metadata
+size_t           numCats = Tge::Memory::GetNumCategories();
+std::string_view name    = Tge::Memory::GetCategoryName(catEnemies);
+
+// Global totals across all categories
+size_t totalAllocated   = Tge::Memory::GetTotalAllocated();
+size_t totalDeallocated = Tge::Memory::GetTotalDeallocated();
+size_t currentUsage     = Tge::Memory::GetCurrentUsage();
+size_t numAllocations   = Tge::Memory::GetNumAllocations();
+
 // Print all categories to the log
 Tge::Memory::PrintStats();
+
+// Reset all counters (e.g. between test runs)
+Tge::Memory::Reset();
 ```
 
 #### Scoped category context — `<tge/memory/category_context.hpp>`

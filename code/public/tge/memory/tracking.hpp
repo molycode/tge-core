@@ -41,6 +41,7 @@ void TrackDeallocation(CategoryId category, size_t bytes);
 
 // Query functions
 SStats GetStats(CategoryId category);
+size_t GetNumCategories();
 size_t GetTotalAllocated();
 size_t GetTotalDeallocated();
 size_t GetCurrentUsage();

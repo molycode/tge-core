@@ -1,4 +1,4 @@
-#include "../loggers.hpp"
+#include "../logging/loggers.hpp"
 #include <tge/memory/tracking.hpp>
 #include <array>
 #include <cassert>
@@ -40,6 +40,13 @@ CategoryId RegisterCategory(std::string_view name)
 	g_categoryNames[g_numCategories] = name;
 	g_numCategories++;
 	return id;
+}
+
+//////////////////////////////////////////////////////////////////////////
+size_t GetNumCategories()
+{
+	std::lock_guard<std::mutex> lock(g_trackingMutex);
+	return g_numCategories;
 }
 
 //////////////////////////////////////////////////////////////////////////
