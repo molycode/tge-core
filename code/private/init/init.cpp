@@ -1,4 +1,4 @@
-#include <tge/init.hpp>
+#include <tge/init/init.hpp>
 #include <tge/memory/linear_allocator.hpp>
 
 namespace Tge

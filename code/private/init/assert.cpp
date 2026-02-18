@@ -1,5 +1,5 @@
-#include "loggers.hpp"
-#include <tge/assert.hpp>
+#include "logging/loggers.hpp"
+#include <tge/init/assert.hpp>
 
 namespace Tge
 {

@@ -88,7 +88,13 @@ suppress_external_warnings(rpmalloc)
 # ============================================================================
 # TgeBase (INTERFACE - header-only base utilities)
 # ============================================================================
+file(GLOB TgeBase_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/*.hpp
+)
+
 add_library(TgeBase INTERFACE)
+
+target_sources(TgeBase INTERFACE ${TgeBase_HEADERS})
 
 target_include_directories(TgeBase INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/code/public
@@ -97,10 +103,13 @@ target_include_directories(TgeBase INTERFACE
 # ============================================================================
 # TgeLogging (STATIC - logging system)
 # ============================================================================
-add_library(TgeLogging STATIC
-	code/private/loggers.cpp
-	code/private/logging/log_system.cpp
+file(GLOB TgeLogging_FILES CONFIGURE_DEPENDS
+	code/private/logging/*.cpp
+	code/private/logging/*.hpp
+	code/public/tge/logging/*.hpp
 )
+
+add_library(TgeLogging STATIC ${TgeLogging_FILES})
 
 target_link_libraries(TgeLogging
 	PUBLIC TgeBase
@@ -120,17 +129,13 @@ configure_file(
 # ============================================================================
 # TgeMemory (STATIC - memory management with rpmalloc)
 # ============================================================================
-add_library(TgeMemory STATIC
-	code/private/memory/default_allocator.cpp
-	code/private/memory/linear_allocator.cpp
-	code/private/memory/pool_allocator.cpp
-	code/private/memory/stack_allocator.cpp
-	code/private/memory/free_list_allocator.cpp
-	code/private/memory/memory.cpp
-	code/private/memory/global_operators.cpp
-	code/private/memory/tracking.cpp
-	code/private/memory/category_context.cpp
+file(GLOB TgeMemory_FILES CONFIGURE_DEPENDS
+	code/private/memory/*.cpp
+	code/private/memory/*.hpp
+	code/public/tge/memory/*.hpp
 )
+
+add_library(TgeMemory STATIC ${TgeMemory_FILES})
 
 target_link_libraries(TgeMemory
 	PUBLIC TgeBase
@@ -144,10 +149,13 @@ target_include_directories(TgeMemory
 # ============================================================================
 # TgeMath (STATIC - math library)
 # ============================================================================
-add_library(TgeMath STATIC
-	code/private/math/transform.cpp
-	code/private/math/intersection.cpp
+file(GLOB TgeMath_FILES CONFIGURE_DEPENDS
+	code/private/math/*.cpp
+	code/private/math/*.hpp
+	code/public/tge/math/*.hpp
 )
+
+add_library(TgeMath STATIC ${TgeMath_FILES})
 
 target_link_libraries(TgeMath
 	PUBLIC TgeBase
@@ -160,12 +168,13 @@ target_include_directories(TgeMath
 # ============================================================================
 # TgeThreading (STATIC - job system and thread pool)
 # ============================================================================
-add_library(TgeThreading STATIC
-	code/private/threading/job_system.cpp
-	code/private/threading/job_scheduler.cpp
-	code/private/threading/thread_pool.cpp
-	code/private/threading/job_group.cpp
+file(GLOB TgeThreading_FILES CONFIGURE_DEPENDS
+	code/private/threading/*.cpp
+	code/private/threading/*.hpp
+	code/public/tge/threading/*.hpp
 )
+
+add_library(TgeThreading STATIC ${TgeThreading_FILES})
 
 target_link_libraries(TgeThreading
 	PUBLIC TgeBase
@@ -179,13 +188,13 @@ target_include_directories(TgeThreading
 # ============================================================================
 # TgeIO (STATIC - file and path operations)
 # ============================================================================
-add_library(TgeIO STATIC
-	code/private/io/file.cpp
-	code/private/io/path.cpp
-	code/private/io/directory.cpp
-	code/private/io/stream.cpp
-	code/private/io/io.cpp
+file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
+	code/private/io/*.cpp
+	code/private/io/*.hpp
+	code/public/tge/io/*.hpp
 )
+
+add_library(TgeIO STATIC ${TgeIO_FILES})
 
 target_link_libraries(TgeIO
 	PUBLIC TgeBase
@@ -198,10 +207,13 @@ target_include_directories(TgeIO
 # ============================================================================
 # TgeInit (STATIC - initialization/termination)
 # ============================================================================
-add_library(TgeInit STATIC
-	code/private/init.cpp
-	code/private/assert.cpp
+file(GLOB TgeInit_FILES CONFIGURE_DEPENDS
+	code/private/init/*.cpp
+	code/private/init/*.hpp
+	code/public/tge/init/*.hpp
 )
+
+add_library(TgeInit STATIC ${TgeInit_FILES})
 
 target_link_libraries(TgeInit
 	PUBLIC TgeBase
