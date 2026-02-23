@@ -31,7 +31,12 @@ protected:
 };
 
 // Inherit from SNoCopyNoMove to disable both copy and move operations
+// MSVC requires __declspec(empty_bases) to enable EBO for multiple empty base inheritance
+#ifdef _MSC_VER
+struct __declspec(empty_bases) SNoCopyNoMove : private SNoCopy, private SNoMove
+#else
 struct SNoCopyNoMove : private SNoCopy, private SNoMove
+#endif
 {
 protected:
 

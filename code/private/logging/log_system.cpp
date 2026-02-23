@@ -377,7 +377,11 @@ void CLogSystem::Initialize(std::string_view prefix)
 	auto now = std::chrono::system_clock::now();
 	auto time_t = std::chrono::system_clock::to_time_t(now);
 	std::tm tm;
+#ifdef _WIN32
+	localtime_s(&tm, &time_t);
+#else
 	localtime_r(&time_t, &tm);
+#endif
 
 	std::string const format = std::string("logs/") + std::string(prefix) + "_%Y-%m-%d_%H-%M-%S.log";
 	char filename[256];
