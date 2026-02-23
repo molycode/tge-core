@@ -365,7 +365,7 @@ void NotifyListeners(SLogMessage const& msg)
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
-void CLogSystem::Initialize()
+void CLogSystem::Initialize(std::string_view prefix)
 {
 	std::lock_guard lock(GetMutex());
 
@@ -379,8 +379,9 @@ void CLogSystem::Initialize()
 	std::tm tm;
 	localtime_r(&time_t, &tm);
 
+	std::string const format = std::string("logs/") + std::string(prefix) + "_%Y-%m-%d_%H-%M-%S.log";
 	char filename[256];
-	std::strftime(filename, sizeof(filename), "logs/tge_%Y-%m-%d_%H-%M-%S.log", &tm);
+	std::strftime(filename, sizeof(filename), format.c_str(), &tm);
 
 	GetLogFile().open(filename, std::ios::out | std::ios::app);
 
@@ -650,7 +651,7 @@ CLogSystem& GetLogSystem()
 	return logSystem;
 }
 #ifndef TGE_LOGGING_ENABLED
-void CLogSystem::Initialize() {}
+void CLogSystem::Initialize(std::string_view) {}
 void CLogSystem::Terminate() {}
 bool CLogSystem::IsInitialized() const { return false; }
 uint64_t CLogSystem::Register(std::string_view, SColor const&) { return 0; }

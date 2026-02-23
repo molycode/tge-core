@@ -19,7 +19,7 @@ public:
 	CLogSystem() = default;
 	~CLogSystem() = default;
 
-	void Initialize();
+	void Initialize(std::string_view prefix = "tge");
 	void Terminate();
 	bool IsInitialized() const;
 
