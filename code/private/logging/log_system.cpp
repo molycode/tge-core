@@ -369,6 +369,9 @@ void CLogSystem::Initialize(std::string_view prefix)
 {
 	std::lock_guard lock(GetMutex());
 
+	// Prime start time now so timestamps are relative to app startup, not first log message
+	GetStartTime();
+
 	// Load config before any logging (applies to already-registered channels)
 	LoadConfig("configs/logging.cfg");
 
