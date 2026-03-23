@@ -365,32 +365,38 @@ void NotifyListeners(SLogMessage const& msg)
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
-void CLogSystem::Initialize(std::string_view prefix)
+void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, std::string_view configDir)
 {
 	std::lock_guard lock(GetMutex());
 
 	// Prime start time now so timestamps are relative to app startup, not first log message
 	GetStartTime();
 
-	// Load config before any logging (applies to already-registered channels)
-	LoadConfig("configs/logging.cfg");
+	if (!configDir.empty())
+	{
+		std::string configPath{ std::string(configDir) + "/logging.cfg" };
+		LoadConfig(configPath);
+	}
 
-	std::filesystem::create_directories("logs");
+	if (!logsDir.empty())
+	{
+		std::filesystem::create_directories(logsDir);
 
-	auto now = std::chrono::system_clock::now();
-	auto time_t = std::chrono::system_clock::to_time_t(now);
-	std::tm tm;
+		auto now = std::chrono::system_clock::now();
+		auto time_t = std::chrono::system_clock::to_time_t(now);
+		std::tm tm;
 #ifdef _WIN32
-	localtime_s(&tm, &time_t);
+		localtime_s(&tm, &time_t);
 #else
-	localtime_r(&time_t, &tm);
+		localtime_r(&time_t, &tm);
 #endif
 
-	std::string const format = std::string("logs/") + std::string(prefix) + "_%Y-%m-%d_%H-%M-%S.log";
-	char filename[256];
-	std::strftime(filename, sizeof(filename), format.c_str(), &tm);
+		std::string const format = std::string(logsDir) + "/" + std::string(prefix) + "_%Y-%m-%d_%H-%M-%S.log";
+		char filename[256];
+		std::strftime(filename, sizeof(filename), format.c_str(), &tm);
 
-	GetLogFile().open(filename, std::ios::out | std::ios::app);
+		GetLogFile().open(filename, std::ios::out | std::ios::app);
+	}
 
 	m_initialized = true;
 }
@@ -658,7 +664,7 @@ CLogSystem& GetLogSystem()
 	return logSystem;
 }
 #ifndef TGE_LOGGING_ENABLED
-void CLogSystem::Initialize(std::string_view) {}
+void CLogSystem::Initialize(std::string_view, std::string_view, std::string_view) {}
 void CLogSystem::Terminate() {}
 bool CLogSystem::IsInitialized() const { return false; }
 uint64_t CLogSystem::Register(std::string_view, SColor const&) { return 0; }

@@ -19,7 +19,7 @@ public:
 	CLogSystem() = default;
 	~CLogSystem() = default;
 
-	void Initialize(std::string_view prefix = "tge");
+	void Initialize(std::string_view prefix = "tge", std::string_view logsDir = "logs", std::string_view configDir = "configs");
 	void Terminate();
 	bool IsInitialized() const;
 
