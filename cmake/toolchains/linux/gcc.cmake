@@ -20,6 +20,9 @@ endif()
 add_compile_definitions(TGE_PLATFORM_LINUX)
 
 if(DEFINED ENV{TGE_GCC_PATH})
+	# Bake in the RPATH so the binary finds the custom libstdc++ at runtime
+	set(CMAKE_BUILD_RPATH "$ENV{TGE_GCC_PATH}/lib64")
+	set(CMAKE_INSTALL_RPATH "$ENV{TGE_GCC_PATH}/lib64")
 	message(STATUS "Using GCC from TGE_GCC_PATH: $ENV{TGE_GCC_PATH}")
 else()
 	message(STATUS "Using system GCC (set TGE_GCC_PATH to use custom GCC)")
