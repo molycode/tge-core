@@ -4,6 +4,7 @@
 #include <tge/color.hpp>
 #include <cstdint>
 #include <format>
+#include <string>
 #include <string_view>
 
 namespace Tge::Logging
@@ -65,21 +66,21 @@ public:
 	void Error(ETarget target, std::string_view message) const
 	{
 #ifdef TGE_LOGGING_ENABLED
-		Write(ELogLevel::Error, target, message);
+		Write(ELogLevel::Error, target, std::string{message});
 #endif // TGE_LOGGING_ENABLED
 	}
 
 	void Warning(ETarget target, std::string_view message) const
 	{
 #ifdef TGE_LOGGING_ENABLED
-		Write(ELogLevel::Warning, target, message);
+		Write(ELogLevel::Warning, target, std::string{message});
 #endif // TGE_LOGGING_ENABLED
 	}
 
 	void Info(ETarget target, std::string_view message) const
 	{
 #ifdef TGE_LOGGING_ENABLED
-		Write(ELogLevel::Info, target, message);
+		Write(ELogLevel::Info, target, std::string{message});
 #endif // TGE_LOGGING_ENABLED
 	}
 
@@ -94,6 +95,6 @@ private:
 
 	uint64_t m_id = 0;
 
-	void Write(ELogLevel level, ETarget target, std::string_view message) const;
+	void Write(ELogLevel level, ETarget target, std::string message) const;
 };
 } // namespace Tge::Logging

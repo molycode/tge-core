@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -47,9 +48,9 @@ std::unordered_map<uint64_t, SChannelData>& GetChannels()
 }
 
 //////////////////////////////////////////////////////////////////////////
-std::deque<SLogMessage>& GetMessages()
+std::deque<std::shared_ptr<SLogMessage>>& GetMessages()
 {
-	static std::deque<SLogMessage> messages;
+	static std::deque<std::shared_ptr<SLogMessage>> messages;
 	return messages;
 }
 
@@ -58,6 +59,13 @@ std::vector<SListener>& GetListeners()
 {
 	static std::vector<SListener> listeners;
 	return listeners;
+}
+
+//////////////////////////////////////////////////////////////////////////
+std::vector<std::shared_ptr<SLogMessage>>& GetPendingDispatch()
+{
+	static std::vector<std::shared_ptr<SLogMessage>> pendingDispatch;
+	return pendingDispatch;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -290,13 +298,13 @@ std::string FormatMessageForTerminal(SLogMessage const& msg)
 	if (msg.level == ELogLevel::Info)
 	{
 		std::snprintf(buffer, sizeof(buffer), "[%s] [%s] %s",
-			msg.formattedTimestamp.c_str(), msg.channelName.c_str(), msg.message.c_str());
+			msg.formattedTimestamp.c_str(), msg.channelName.data(), msg.message.c_str());
 	}
 	else
 	{
 		std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
 			msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
-			msg.channelName.c_str(), msg.message.c_str());
+			msg.channelName.data(), msg.message.c_str());
 	}
 
 	return buffer;
@@ -310,7 +318,7 @@ std::string FormatMessageForFile(SLogMessage const& msg)
 	// File has no colors, so always include level prefix
 	std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
 		msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
-		msg.channelName.c_str(), msg.message.c_str());
+		msg.channelName.data(), msg.message.c_str());
 
 	return buffer;
 }
@@ -365,14 +373,6 @@ void WriteToFile(SLogMessage const& msg)
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-void NotifyListeners(SLogMessage const& msg)
-{
-	for (auto const& listener : GetListeners())
-	{
-		listener.callback(msg);
-	}
-}
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
@@ -525,7 +525,7 @@ std::vector<std::string_view> CLogSystem::GetChannelNames() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std::string_view message)
+void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std::string message)
 {
 	if (!m_initialized)
 	{
@@ -564,52 +564,78 @@ void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std:
 				auto const now = std::chrono::system_clock::now();
 				auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - GetStartTime());
 
-				SLogMessage& msg = GetMessages().emplace_back(
-					now,
-					static_cast<uint64_t>(elapsed.count()),
-					level,
-					target,
-					channel.name,
-					std::string{message},
-					std::string{},
-					channel.color.r,
-					channel.color.g,
-					channel.color.b
-				);
+				char tsBuf[32];
 
-				if (GetMessages().size() > MaxMessages)
+				if (m_timestampMode == ETimestampMode::WallClock)
 				{
-					GetMessages().pop_front();
+					FormatWallClockTimestamp(now, tsBuf, sizeof(tsBuf));
 				}
-
+				else
 				{
-					char tsBuf[32];
-
-					if (m_timestampMode == ETimestampMode::WallClock)
-					{
-						FormatWallClockTimestamp(msg.timestamp, tsBuf, sizeof(tsBuf));
-					}
-					else
-					{
-						FormatTimestamp(msg.elapsedMs, tsBuf, sizeof(tsBuf));
-					}
-
-					msg.formattedTimestamp = tsBuf;
-				}
-
-				if ((target & ETarget::Terminal) != ETarget::None)
-				{
-					WriteToTerminal(msg);
-				}
-
-				if ((target & ETarget::File) != ETarget::None)
-				{
-					WriteToFile(msg);
+					FormatTimestamp(static_cast<uint64_t>(elapsed.count()), tsBuf, sizeof(tsBuf));
 				}
 
 				if ((target & ETarget::Console) != ETarget::None)
 				{
-					NotifyListeners(msg);
+					// Console path: heap-allocate a shared SLogMessage so both the history
+					// deque and the pending-dispatch queue own it without copying strings.
+					auto msg = std::make_shared<SLogMessage>(SLogMessage{
+						now,
+						static_cast<uint64_t>(elapsed.count()),
+						level,
+						target,
+						std::string_view{channel.name},
+						std::move(message),
+						std::string{tsBuf},
+						channel.color.r,
+						channel.color.g,
+						channel.color.b
+					});
+
+					if ((target & ETarget::Terminal) != ETarget::None)
+					{
+						WriteToTerminal(*msg);
+					}
+
+					if ((target & ETarget::File) != ETarget::None)
+					{
+						WriteToFile(*msg);
+					}
+
+					GetPendingDispatch().push_back(msg);
+					GetMessages().push_back(std::move(msg));
+
+					if (GetMessages().size() > MaxMessages)
+					{
+						GetMessages().pop_front();
+					}
+				}
+				else
+				{
+					// Terminal/File only: build a local SLogMessage (stack-allocated struct,
+					// no heap for channelName or timestamp — SSO covers both).
+					SLogMessage msg{
+						now,
+						static_cast<uint64_t>(elapsed.count()),
+						level,
+						target,
+						std::string_view{channel.name},
+						std::move(message),
+						std::string{tsBuf},
+						channel.color.r,
+						channel.color.g,
+						channel.color.b
+					};
+
+					if ((target & ETarget::Terminal) != ETarget::None)
+					{
+						WriteToTerminal(msg);
+					}
+
+					if ((target & ETarget::File) != ETarget::None)
+					{
+						WriteToFile(msg);
+					}
 				}
 			}
 		}
@@ -648,10 +674,10 @@ void CLogSystem::FlushTo(void* key)
 
 	if (it != GetListeners().end())
 	{
-		// Replay all messages to this listener
+		// Replay all Console-targeted messages to this listener
 		for (auto const& msg : GetMessages())
 		{
-			it->callback(msg);
+			it->callback(*msg);
 		}
 	}
 }
@@ -668,15 +694,43 @@ void CLogSystem::UnregisterListener(void* key)
 }
 
 //////////////////////////////////////////////////////////////////////////
+void CLogSystem::DispatchListeners()
+{
+	std::vector<std::shared_ptr<SLogMessage>> toDispatch;
+	std::vector<SListener> listenersSnapshot;
+
+	{
+		std::lock_guard lock(GetMutex());
+		std::swap(toDispatch, GetPendingDispatch());
+		auto const& src = GetListeners();
+		listenersSnapshot = std::vector<SListener>{src.begin(), src.end()};
+	}
+
+	for (auto const& msg : toDispatch)
+	{
+		for (auto const& listener : listenersSnapshot)
+		{
+			listener.callback(*msg);
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool CLogSystem::IsInitialized() const
+{
+	return m_initialized;
+}
+
+//////////////////////////////////////////////////////////////////////////
 CLog::CLog(std::string_view name, SColor const& color)
 {
 	m_id = GetLogSystem().Register(name, color);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::Write(ELogLevel level, ETarget target, std::string_view message) const
+void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 {
-	GetLogSystem().Write(m_id, level, target, message);
+	GetLogSystem().Write(m_id, level, target, std::move(message));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -701,14 +755,15 @@ bool CLogSystem::SetLogLevel(std::string_view, ELogLevel) { return false; }
 void CLogSystem::SetAllLogLevels(ELogLevel) {}
 ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::All; }
 std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
-void CLogSystem::Write(uint64_t, ELogLevel, ETarget, std::string_view) {}
+void CLogSystem::Write(uint64_t, ELogLevel, ETarget, std::string) {}
 std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
 void CLogSystem::RegisterListener(void*, LogMessageCallback) {}
 void CLogSystem::FlushTo(void*) {}
 void CLogSystem::UnregisterListener(void*) {}
+void CLogSystem::DispatchListeners() {}
 
 CLog::CLog(std::string_view, SColor const&) {}
 std::string_view CLog::GetName() const { return ""; }
-void CLog::Write(ELogLevel, ETarget, std::string_view) const {}
+void CLog::Write(ELogLevel, ETarget, std::string) const {}
 #endif // !TGE_LOGGING_ENABLED
 } // namespace Tge::Logging

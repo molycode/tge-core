@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tge/logging/log_message.hpp>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -31,13 +32,14 @@ public:
 
 	std::vector<std::string_view> GetChannelNames() const;
 
-	void Write(uint64_t channelId, ELogLevel level, ETarget target, std::string_view message);
+	void Write(uint64_t channelId, ELogLevel level, ETarget target, std::string message);
 
 	std::string_view GetChannelNameById(uint64_t channelId) const;
 
 	void RegisterListener(void* key, LogMessageCallback callback);
 	void FlushTo(void* key);
 	void UnregisterListener(void* key);
+	void DispatchListeners();
 
 private:
 

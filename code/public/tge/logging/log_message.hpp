@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <string_view>
 
 namespace Tge::Logging
 {
@@ -14,7 +15,7 @@ struct SLogMessage final
 	uint64_t elapsedMs = 0;  // Milliseconds since application start
 	ELogLevel level;
 	ETarget target;
-	std::string channelName;
+	std::string_view channelName;
 	std::string message;
 	std::string formattedTimestamp{};
 	uint8_t colorR = 255;

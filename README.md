@@ -62,7 +62,7 @@ int main()
 {
     Tge::Initialize();      // Initializes memory → threading → IO
 
-    // Per-frame update (resets the frame allocator)
+    // Per-frame update (resets the frame allocator, dispatches log listener callbacks)
     while (running)
     {
         Tge::Update();
@@ -176,7 +176,9 @@ Register a callback to receive messages (e.g. to display in an in-game console):
 ```cpp
 Tge::Logging::GetLogSystem().RegisterListener(this, [](Tge::Logging::SLogMessage const& msg)
 {
-    // msg.channelName, msg.message, msg.level, msg.elapsedMs, etc.
+    // msg.channelName  — std::string_view (use .data() not .c_str())
+    // msg.message      — std::string
+    // msg.level, msg.elapsedMs, msg.formattedTimestamp, etc.
 });
 
 // Replay buffered messages to a newly registered listener
@@ -184,6 +186,14 @@ Tge::Logging::GetLogSystem().FlushTo(this);
 
 // On teardown
 Tge::Logging::GetLogSystem().UnregisterListener(this);
+```
+
+Callbacks are dispatched from `Tge::Update()` — they are **not** called synchronously inside `Write()`. Only messages targeting `ETarget::Console` (or `ETarget::All`) reach listeners; `ETarget::Terminal` and `ETarget::File` messages are written immediately and never buffered.
+
+If you are not using `Tge::Update()`, call `DispatchListeners()` manually each frame:
+
+```cpp
+Tge::Logging::GetLogSystem().DispatchListeners();
 ```
 
 #### Pre-declared loggers — `<tge/logging/loggers.hpp>`
