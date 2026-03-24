@@ -42,4 +42,10 @@ inline ETarget operator&(ETarget a, ETarget b)
 {
 	return static_cast<ETarget>(std::to_underlying(a) & std::to_underlying(b));
 }
+
+enum class ETimestampMode : uint8_t
+{
+	Elapsed,    // Time elapsed since application start (progressive format: SS.mmm, MM:SS.mmm, ...)
+	WallClock   // Local system time (HH:MM:SS.mmm)
+};
 } // namespace Tge::Logging

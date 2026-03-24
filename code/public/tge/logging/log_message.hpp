@@ -16,6 +16,7 @@ struct SLogMessage final
 	ETarget target;
 	std::string channelName;
 	std::string message;
+	std::string formattedTimestamp{};
 	uint8_t colorR = 255;
 	uint8_t colorG = 255;
 	uint8_t colorB = 255;

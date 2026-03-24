@@ -264,11 +264,25 @@ void FormatTimestamp(uint64_t elapsedMs, char* buffer, size_t bufferSize)
 }
 
 //////////////////////////////////////////////////////////////////////////
+void FormatWallClockTimestamp(std::chrono::system_clock::time_point timestamp, char* buffer, size_t bufferSize)
+{
+	auto const timeT = std::chrono::system_clock::to_time_t(timestamp);
+	auto const ms    = std::chrono::duration_cast<std::chrono::milliseconds>(
+	                       timestamp.time_since_epoch()) % 1000;
+	std::tm tm{};
+#ifdef _WIN32
+	localtime_s(&tm, &timeT);
+#else
+	localtime_r(&timeT, &tm);
+#endif
+	char timePart[16];
+	std::strftime(timePart, sizeof(timePart), "%H:%M:%S", &tm);
+	std::snprintf(buffer, bufferSize, "%s.%03lld", timePart, static_cast<long long>(ms.count()));
+}
+
+//////////////////////////////////////////////////////////////////////////
 std::string FormatMessageForTerminal(SLogMessage const& msg)
 {
-	char timestamp[32];
-	FormatTimestamp(msg.elapsedMs, timestamp, sizeof(timestamp));
-
 	char buffer[512];
 
 	// Terminal uses colors for severity, so no level prefix needed for INFO
@@ -276,12 +290,12 @@ std::string FormatMessageForTerminal(SLogMessage const& msg)
 	if (msg.level == ELogLevel::Info)
 	{
 		std::snprintf(buffer, sizeof(buffer), "[%s] [%s] %s",
-			timestamp, msg.channelName.c_str(), msg.message.c_str());
+			msg.formattedTimestamp.c_str(), msg.channelName.c_str(), msg.message.c_str());
 	}
 	else
 	{
 		std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
-			timestamp, LevelToString(msg.level).data(),
+			msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
 			msg.channelName.c_str(), msg.message.c_str());
 	}
 
@@ -291,14 +305,11 @@ std::string FormatMessageForTerminal(SLogMessage const& msg)
 //////////////////////////////////////////////////////////////////////////
 std::string FormatMessageForFile(SLogMessage const& msg)
 {
-	char timestamp[32];
-	FormatTimestamp(msg.elapsedMs, timestamp, sizeof(timestamp));
-
 	char buffer[512];
 
 	// File has no colors, so always include level prefix
 	std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
-		timestamp, LevelToString(msg.level).data(),
+		msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
 		msg.channelName.c_str(), msg.message.c_str());
 
 	return buffer;
@@ -365,9 +376,11 @@ void NotifyListeners(SLogMessage const& msg)
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
-void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, std::string_view configDir)
+void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, std::string_view configDir, ETimestampMode timestampMode)
 {
 	std::lock_guard lock(GetMutex());
+
+	m_timestampMode = timestampMode;
 
 	// Prime start time now so timestamps are relative to app startup, not first log message
 	GetStartTime();
@@ -551,13 +564,14 @@ void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std:
 				auto const now = std::chrono::system_clock::now();
 				auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - GetStartTime());
 
-				SLogMessage const& msg = GetMessages().emplace_back(
+				SLogMessage& msg = GetMessages().emplace_back(
 					now,
 					static_cast<uint64_t>(elapsed.count()),
 					level,
 					target,
 					channel.name,
 					std::string{message},
+					std::string{},
 					channel.color.r,
 					channel.color.g,
 					channel.color.b
@@ -566,6 +580,21 @@ void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std:
 				if (GetMessages().size() > MaxMessages)
 				{
 					GetMessages().pop_front();
+				}
+
+				{
+					char tsBuf[32];
+
+					if (m_timestampMode == ETimestampMode::WallClock)
+					{
+						FormatWallClockTimestamp(msg.timestamp, tsBuf, sizeof(tsBuf));
+					}
+					else
+					{
+						FormatTimestamp(msg.elapsedMs, tsBuf, sizeof(tsBuf));
+					}
+
+					msg.formattedTimestamp = tsBuf;
 				}
 
 				if ((target & ETarget::Terminal) != ETarget::None)

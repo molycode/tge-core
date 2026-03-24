@@ -19,7 +19,7 @@ public:
 	CLogSystem() = default;
 	~CLogSystem() = default;
 
-	void Initialize(std::string_view prefix = "tge", std::string_view logsDir = "logs", std::string_view configDir = "configs");
+	void Initialize(std::string_view prefix = "tge", std::string_view logsDir = "logs", std::string_view configDir = "configs", ETimestampMode timestampMode = ETimestampMode::Elapsed);
 	void Terminate();
 	bool IsInitialized() const;
 
@@ -42,7 +42,8 @@ public:
 private:
 
 #ifdef TGE_LOGGING_ENABLED
-	bool m_initialized = false;
+	bool           m_initialized{ false };
+	ETimestampMode m_timestampMode{ ETimestampMode::Elapsed };
 #endif // TGE_LOGGING_ENABLED
 };
 
