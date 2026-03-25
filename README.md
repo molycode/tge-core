@@ -169,12 +169,12 @@ default   = a          # All channels: all levels (e=error, w=warning, i=info, a
 MySystem  = ew         # MySystem: errors and warnings only
 ```
 
-#### Listening to log output — `<tge/logging/log_system.hpp>`
+#### Listening to log output — `<tge/logging/log.hpp>`
 
-Register a callback to receive messages (e.g. to display in an in-game console):
+Register a callback on a specific `CLog` instance to receive only that channel's messages:
 
 ```cpp
-Tge::Logging::GetLogSystem().RegisterListener(this, [](Tge::Logging::SLogMessage const& msg)
+gMyLog.RegisterListener(this, [](Tge::Logging::SLogMessage const& msg)
 {
     // msg.channelName  — std::string_view (use .data() not .c_str())
     // msg.message      — std::string
@@ -182,10 +182,10 @@ Tge::Logging::GetLogSystem().RegisterListener(this, [](Tge::Logging::SLogMessage
 });
 
 // Replay buffered messages to a newly registered listener
-Tge::Logging::GetLogSystem().FlushTo(this);
+gMyLog.FlushTo(this);
 
 // On teardown
-Tge::Logging::GetLogSystem().UnregisterListener(this);
+gMyLog.UnregisterListener(this);
 ```
 
 Callbacks are dispatched from `Tge::Update()` — they are **not** called synchronously inside `Write()`. Only messages targeting `ETarget::Console` (or `ETarget::All`) reach listeners; `ETarget::Terminal` and `ETarget::File` messages are written immediately and never buffered.

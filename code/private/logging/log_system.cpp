@@ -21,17 +21,20 @@ namespace Tge::Logging
 #ifdef TGE_LOGGING_ENABLED
 namespace
 {
+struct SListener final
+{
+	void* key{ nullptr };
+	LogMessageCallback callback;
+};
+
 struct SChannelData final
 {
 	std::string name;
 	SColor color;
-	ELogLevel levelMask = ELogLevel::All;
-};
-
-struct SListener final
-{
-	void* key;
-	LogMessageCallback callback;
+	ELogLevel levelMask{ ELogLevel::All };
+	std::vector<SListener> listeners;
+	std::vector<std::shared_ptr<SLogMessage>> pendingDispatch;
+	std::deque<std::shared_ptr<SLogMessage>> history;
 };
 
 constexpr size_t MaxMessages = 1024;
@@ -48,24 +51,10 @@ std::unordered_map<uint64_t, SChannelData>& GetChannels()
 }
 
 //////////////////////////////////////////////////////////////////////////
-std::deque<std::shared_ptr<SLogMessage>>& GetMessages()
+std::unordered_map<uint64_t, CLog*>& GetLoggers()
 {
-	static std::deque<std::shared_ptr<SLogMessage>> messages;
-	return messages;
-}
-
-//////////////////////////////////////////////////////////////////////////
-std::vector<SListener>& GetListeners()
-{
-	static std::vector<SListener> listeners;
-	return listeners;
-}
-
-//////////////////////////////////////////////////////////////////////////
-std::vector<std::shared_ptr<SLogMessage>>& GetPendingDispatch()
-{
-	static std::vector<std::shared_ptr<SLogMessage>> pendingDispatch;
-	return pendingDispatch;
+	static std::unordered_map<uint64_t, CLog*> loggers;
+	return loggers;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -428,8 +417,7 @@ void CLogSystem::Terminate()
 	}
 
 	GetChannels().clear();
-	GetMessages().clear();
-	GetListeners().clear();
+	GetLoggers().clear();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -457,7 +445,7 @@ uint64_t CLogSystem::Register(std::string_view name, SColor const& color)
 
 		if (it == GetChannels().end())
 		{
-			GetChannels().emplace(id, SChannelData{std::string{name}, color});
+			GetChannels().emplace(id, SChannelData{std::string{name}, color, ELogLevel::All, {}, {}, {}});
 		}
 	}
 
@@ -552,11 +540,10 @@ void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std:
 		std::lock_guard lock(GetMutex());
 
 		auto it = GetChannels().find(channelId);
-		bool const channelFound = it != GetChannels().end();
 
-		if (channelFound)
+		if (it != GetChannels().end())
 		{
-			SChannelData const& channel = it->second;
+			SChannelData& channel = it->second;
 
 			// Check filtering (bitmask: message level must be in channel's allowed levels)
 			if ((level & channel.levelMask) != ELogLevel::None)
@@ -602,12 +589,12 @@ void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std:
 						WriteToFile(*msg);
 					}
 
-					GetPendingDispatch().push_back(msg);
-					GetMessages().push_back(std::move(msg));
+					channel.pendingDispatch.push_back(msg);
+					channel.history.push_back(std::move(msg));
 
-					if (GetMessages().size() > MaxMessages)
+					if (channel.history.size() > MaxMessages)
 					{
-						GetMessages().pop_front();
+						channel.history.pop_front();
 					}
 				}
 				else
@@ -658,60 +645,23 @@ std::string_view CLogSystem::GetChannelNameById(uint64_t channelId) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLogSystem::RegisterListener(void* key, LogMessageCallback callback)
-{
-	std::lock_guard lock(GetMutex());
-	GetListeners().emplace_back(key, std::move(callback));
-}
-
-//////////////////////////////////////////////////////////////////////////
-void CLogSystem::FlushTo(void* key)
-{
-	std::lock_guard lock(GetMutex());
-
-	auto it = std::find_if(GetListeners().begin(), GetListeners().end(),
-		[key](SListener const& listener) { return listener.key == key; });
-
-	if (it != GetListeners().end())
-	{
-		// Replay all Console-targeted messages to this listener
-		for (auto const& msg : GetMessages())
-		{
-			it->callback(*msg);
-		}
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-void CLogSystem::UnregisterListener(void* key)
-{
-	std::lock_guard lock(GetMutex());
-	GetListeners().erase(
-		std::remove_if(GetListeners().begin(), GetListeners().end(),
-			[key](SListener const& listener) { return listener.key == key; }),
-		GetListeners().end()
-	);
-}
-
-//////////////////////////////////////////////////////////////////////////
 void CLogSystem::DispatchListeners()
 {
-	std::vector<std::shared_ptr<SLogMessage>> toDispatch;
-	std::vector<SListener> listenersSnapshot;
+	std::vector<CLog*> loggers;
 
 	{
 		std::lock_guard lock(GetMutex());
-		std::swap(toDispatch, GetPendingDispatch());
-		auto const& src = GetListeners();
-		listenersSnapshot = std::vector<SListener>{src.begin(), src.end()};
+		loggers.reserve(GetLoggers().size());
+
+		for (auto& [id, pLog] : GetLoggers())
+		{
+			loggers.push_back(pLog);
+		}
 	}
 
-	for (auto const& msg : toDispatch)
+	for (auto* pLog : loggers)
 	{
-		for (auto const& listener : listenersSnapshot)
-		{
-			listener.callback(*msg);
-		}
+		pLog->DispatchPending();
 	}
 }
 
@@ -725,6 +675,16 @@ bool CLogSystem::IsInitialized() const
 CLog::CLog(std::string_view name, SColor const& color)
 {
 	m_id = GetLogSystem().Register(name, color);
+
+	std::lock_guard lock(GetMutex());
+	GetLoggers().emplace(m_id, this);
+}
+
+//////////////////////////////////////////////////////////////////////////
+CLog::~CLog()
+{
+	std::lock_guard lock(GetMutex());
+	GetLoggers().erase(m_id);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -737,6 +697,84 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 std::string_view CLog::GetName() const
 {
 	return GetLogSystem().GetChannelNameById(m_id);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CLog::RegisterListener(void* key, LogMessageCallback callback)
+{
+	std::lock_guard lock(GetMutex());
+	auto it = GetChannels().find(m_id);
+
+	if (it != GetChannels().end())
+	{
+		it->second.listeners.emplace_back(key, std::move(callback));
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CLog::UnregisterListener(void* key)
+{
+	std::lock_guard lock(GetMutex());
+	auto it = GetChannels().find(m_id);
+
+	if (it != GetChannels().end())
+	{
+		auto& listeners = it->second.listeners;
+		listeners.erase(
+			std::remove_if(listeners.begin(), listeners.end(),
+				[key](SListener const& listener) { return listener.key == key; }),
+			listeners.end()
+		);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CLog::FlushTo(void* key)
+{
+	std::lock_guard lock(GetMutex());
+	auto it = GetChannels().find(m_id);
+
+	if (it != GetChannels().end())
+	{
+		SChannelData& channel = it->second;
+		auto listenerIt = std::find_if(channel.listeners.begin(), channel.listeners.end(),
+			[key](SListener const& listener) { return listener.key == key; });
+
+		if (listenerIt != channel.listeners.end())
+		{
+			for (auto const& msg : channel.history)
+			{
+				listenerIt->callback(*msg);
+			}
+		}
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CLog::DispatchPending()
+{
+	std::vector<std::shared_ptr<SLogMessage>> toDispatch;
+	std::vector<SListener> listenersSnapshot;
+
+	{
+		std::lock_guard lock(GetMutex());
+		auto it = GetChannels().find(m_id);
+
+		if (it != GetChannels().end())
+		{
+			SChannelData& channel = it->second;
+			std::swap(toDispatch, channel.pendingDispatch);
+			listenersSnapshot = channel.listeners;
+		}
+	}
+
+	for (auto const& msg : toDispatch)
+	{
+		for (auto const& listener : listenersSnapshot)
+		{
+			listener.callback(*msg);
+		}
+	}
 }
 #endif // TGE_LOGGING_ENABLED
 
@@ -757,13 +795,15 @@ ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::Al
 std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
 void CLogSystem::Write(uint64_t, ELogLevel, ETarget, std::string) {}
 std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
-void CLogSystem::RegisterListener(void*, LogMessageCallback) {}
-void CLogSystem::FlushTo(void*) {}
-void CLogSystem::UnregisterListener(void*) {}
 void CLogSystem::DispatchListeners() {}
 
 CLog::CLog(std::string_view, SColor const&) {}
+CLog::~CLog() {}
 std::string_view CLog::GetName() const { return ""; }
 void CLog::Write(ELogLevel, ETarget, std::string) const {}
+void CLog::RegisterListener(void*, LogMessageCallback) {}
+void CLog::UnregisterListener(void*) {}
+void CLog::FlushTo(void*) {}
+void CLog::DispatchPending() {}
 #endif // !TGE_LOGGING_ENABLED
 } // namespace Tge::Logging

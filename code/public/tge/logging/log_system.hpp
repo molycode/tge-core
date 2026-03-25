@@ -36,9 +36,6 @@ public:
 
 	std::string_view GetChannelNameById(uint64_t channelId) const;
 
-	void RegisterListener(void* key, LogMessageCallback callback);
-	void FlushTo(void* key);
-	void UnregisterListener(void* key);
 	void DispatchListeners();
 
 private:

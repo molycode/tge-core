@@ -1,6 +1,7 @@
 #pragma once
 
-#include <tge/logging/log_level.hpp>
+#include <tge/logging/log_message.hpp>
+#include <tge/non_copyable.hpp>
 #include <tge/color.hpp>
 #include <cstdint>
 #include <format>
@@ -12,11 +13,12 @@ namespace Tge::Logging
 class CLogSystem;
 CLogSystem& GetLogSystem();
 
-class CLog final
+class CLog final : private SNoCopyNoMove
 {
 public:
 
 	explicit CLog(std::string_view name, SColor const& color = SColor{});
+	~CLog();
 
 	// Logging methods with explicit target
 	template<typename... Args>
@@ -91,9 +93,14 @@ public:
 
 	std::string_view GetName() const;
 
+	void RegisterListener(void* key, LogMessageCallback callback);
+	void UnregisterListener(void* key);
+	void FlushTo(void* key);
+	void DispatchPending();
+
 private:
 
-	uint64_t m_id = 0;
+	uint64_t m_id{ 0 };
 
 	void Write(ELogLevel level, ETarget target, std::string message) const;
 };
