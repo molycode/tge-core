@@ -9,6 +9,13 @@
 
 namespace Tge::Logging
 {
+
+enum class EMessageFormat
+{
+	Formatted, // Default: [timestamp] [LEVEL] [channel] message
+	Raw        // Undecorated user message; all fields in SLogMessage remain available for custom formatting
+};
+
 struct SLogMessage final
 {
 	std::chrono::system_clock::time_point timestamp;

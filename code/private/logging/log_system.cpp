@@ -25,6 +25,7 @@ struct SListener final
 {
 	void* key{ nullptr };
 	LogMessageCallback callback;
+	EMessageFormat format{ EMessageFormat::Formatted };
 };
 
 struct SChannelData final
@@ -300,11 +301,10 @@ std::string FormatMessageForTerminal(SLogMessage const& msg)
 }
 
 //////////////////////////////////////////////////////////////////////////
-std::string FormatMessageForFile(SLogMessage const& msg)
+std::string FormatMessage(SLogMessage const& msg)
 {
 	char buffer[512];
 
-	// File has no colors, so always include level prefix
 	std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
 		msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
 		msg.channelName.data(), msg.message.c_str());
@@ -356,8 +356,7 @@ void WriteToFile(SLogMessage const& msg)
 {
 	if (GetLogFile().is_open())
 	{
-		std::string formatted = FormatMessageForFile(msg);
-		GetLogFile() << formatted << '\n';
+		GetLogFile() << FormatMessage(msg) << '\n';
 		GetLogFile().flush();
 	}
 }
@@ -700,14 +699,14 @@ std::string_view CLog::GetName() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLog::RegisterListener(void* key, LogMessageCallback callback)
+void CLog::RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format)
 {
 	std::lock_guard lock(GetMutex());
 	auto it = GetChannels().find(m_id);
 
 	if (it != GetChannels().end())
 	{
-		it->second.listeners.emplace_back(key, std::move(callback));
+		it->second.listeners.emplace_back(key, std::move(callback), format);
 	}
 }
 
@@ -744,7 +743,16 @@ void CLog::FlushTo(void* key)
 		{
 			for (auto const& msg : channel.history)
 			{
-				listenerIt->callback(*msg);
+				if (listenerIt->format == EMessageFormat::Formatted)
+				{
+					SLogMessage formatted{ *msg };
+					formatted.message = FormatMessage(*msg);
+					listenerIt->callback(formatted);
+				}
+				else
+				{
+					listenerIt->callback(*msg);
+				}
 			}
 		}
 	}
@@ -770,9 +778,27 @@ void CLog::DispatchPending()
 
 	for (auto const& msg : toDispatch)
 	{
+		std::string formattedText;
+		bool formattedComputed{ false };
+
 		for (auto const& listener : listenersSnapshot)
 		{
-			listener.callback(*msg);
+			if (listener.format == EMessageFormat::Formatted)
+			{
+				if (!formattedComputed)
+				{
+					formattedText = FormatMessage(*msg);
+					formattedComputed = true;
+				}
+
+				SLogMessage formatted{ *msg };
+				formatted.message = formattedText;
+				listener.callback(formatted);
+			}
+			else
+			{
+				listener.callback(*msg);
+			}
 		}
 	}
 }
@@ -801,7 +827,7 @@ CLog::CLog(std::string_view, SColor const&) {}
 CLog::~CLog() {}
 std::string_view CLog::GetName() const { return ""; }
 void CLog::Write(ELogLevel, ETarget, std::string) const {}
-void CLog::RegisterListener(void*, LogMessageCallback) {}
+void CLog::RegisterListener(void*, LogMessageCallback, EMessageFormat) {}
 void CLog::UnregisterListener(void*) {}
 void CLog::FlushTo(void*) {}
 void CLog::DispatchPending() {}

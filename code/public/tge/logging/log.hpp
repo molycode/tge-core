@@ -93,7 +93,7 @@ public:
 
 	std::string_view GetName() const;
 
-	void RegisterListener(void* key, LogMessageCallback callback);
+	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted);
 	void UnregisterListener(void* key);
 	void FlushTo(void* key);
 	void DispatchPending();
