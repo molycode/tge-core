@@ -4,9 +4,12 @@
 #include <tge/non_copyable.hpp>
 #include <tge/color.hpp>
 #include <cstdint>
+#include <deque>
 #include <format>
+#include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace Tge::Logging
 {
@@ -91,16 +94,33 @@ public:
 	void Warning(std::string_view message) const { Warning(ETarget::All, message); }
 	void Info(std::string_view message) const { Info(ETarget::All, message); }
 
-	std::string_view GetName() const;
+	std::string_view GetName() const { return m_name; }
 
 	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted);
 	void UnregisterListener(void* key);
 	void FlushTo(void* key);
 	void DispatchPending();
 
+	void      SetLevelMask(ELogLevel level);
+	ELogLevel GetLevelMask() const;
+
 private:
 
-	uint64_t m_id{ 0 };
+	struct SListener final
+	{
+		void*              key{ nullptr };
+		LogMessageCallback callback;
+		EMessageFormat     format{ EMessageFormat::Formatted };
+	};
+
+	uint64_t    m_id{ 0 };
+	std::string m_name;
+	SColor      m_color;
+	ELogLevel   m_levelMask{ ELogLevel::All };
+
+	std::vector<SListener>                             m_listeners;
+	mutable std::vector<std::shared_ptr<SLogMessage>> m_pendingDispatch;
+	mutable std::deque<std::shared_ptr<SLogMessage>>  m_history;
 
 	void Write(ELogLevel level, ETarget target, std::string message) const;
 };

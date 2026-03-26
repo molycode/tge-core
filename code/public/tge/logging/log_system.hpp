@@ -7,8 +7,6 @@
 
 namespace Tge
 {
-struct SColor;
-
 namespace Logging
 {
 class CLog;
@@ -23,16 +21,15 @@ public:
 	void Initialize(std::string_view prefix = "tge", std::string_view logsDir = "logs", std::string_view configDir = "configs", ETimestampMode timestampMode = ETimestampMode::Elapsed);
 	void Terminate();
 	bool IsInitialized() const;
+	ETimestampMode GetTimestampMode() const;
 
-	uint64_t Register(std::string_view name, SColor const& color);
+	uint64_t Register(std::string_view name);
 
 	bool SetLogLevel(std::string_view channelName, ELogLevel level);
 	void SetAllLogLevels(ELogLevel level);
 	ELogLevel GetLogLevel(std::string_view channelName) const;
 
 	std::vector<std::string_view> GetChannelNames() const;
-
-	void Write(uint64_t channelId, ELogLevel level, ETarget target, std::string message);
 
 	std::string_view GetChannelNameById(uint64_t channelId) const;
 

@@ -7,11 +7,9 @@
 #include <algorithm>
 #include <cassert>
 #include <ctime>
-#include <deque>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <memory>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -22,35 +20,11 @@ namespace Tge::Logging
 #ifdef TGE_LOGGING_ENABLED
 namespace
 {
-struct SListener final
-{
-	void* key{ nullptr };
-	LogMessageCallback callback;
-	EMessageFormat format{ EMessageFormat::Formatted };
-};
-
-struct SChannelData final
-{
-	std::string name;
-	SColor color;
-	ELogLevel levelMask{ ELogLevel::All };
-	std::vector<SListener> listeners;
-	std::vector<std::shared_ptr<SLogMessage>> pendingDispatch;
-	std::deque<std::shared_ptr<SLogMessage>> history;
-};
-
 constexpr size_t MaxMessages = 1024;
 
 // Construct-on-first-use idiom to avoid static initialization order fiasco.
 // CLog instances are global statics that register during static init,
-// so these containers must be available before main() runs.
-
-//////////////////////////////////////////////////////////////////////////
-std::unordered_map<uint64_t, SChannelData>& GetChannels()
-{
-	static std::unordered_map<uint64_t, SChannelData> channels;
-	return channels;
-}
+// so this container must be available before main() runs.
 
 //////////////////////////////////////////////////////////////////////////
 std::unordered_map<uint64_t, CLog*>& GetLoggers()
@@ -181,9 +155,9 @@ void LoadConfig(std::string_view configPath)
 		// Apply default first
 		if (hasDefault)
 		{
-			for (auto& [id, channel] : GetChannels())
+			for (auto& [id, pLog] : GetLoggers())
 			{
-				channel.levelMask = defaultLevel;
+				pLog->SetLevelMask(defaultLevel);
 			}
 		}
 
@@ -191,11 +165,11 @@ void LoadConfig(std::string_view configPath)
 		for (auto const& [name, level] : channelOverrides)
 		{
 			uint64_t const id = HashChannelName(name);
-			auto it = GetChannels().find(id);
+			auto it = GetLoggers().find(id);
 
-			if (it != GetChannels().end())
+			if (it != GetLoggers().end())
 			{
-				it->second.levelMask = level;
+				it->second->SetLevelMask(level);
 			}
 		}
 	}
@@ -416,7 +390,6 @@ void CLogSystem::Terminate()
 		GetLogFile().close();
 	}
 
-	GetChannels().clear();
 	GetLoggers().clear();
 }
 
@@ -429,7 +402,7 @@ bool IsReservedChannelName(std::string_view name)
 }
 
 //////////////////////////////////////////////////////////////////////////
-uint64_t CLogSystem::Register(std::string_view name, SColor const& color)
+uint64_t CLogSystem::Register(std::string_view name)
 {
 	uint64_t id = 0;
 	bool const reserved = IsReservedChannelName(name);
@@ -438,15 +411,8 @@ uint64_t CLogSystem::Register(std::string_view name, SColor const& color)
 	if (!reserved)
 	{
 		std::lock_guard lock(GetMutex());
-
 		id = HashChannelName(name);
-
-		auto it = GetChannels().find(id);
-
-		if (it == GetChannels().end())
-		{
-			GetChannels().emplace(id, SChannelData{std::string{name}, color, ELogLevel::All, {}, {}, {}});
-		}
+		assert(GetLoggers().find(id) == GetLoggers().end() && "Duplicate channel name registered");
 	}
 
 	return id;
@@ -458,12 +424,12 @@ bool CLogSystem::SetLogLevel(std::string_view channelName, ELogLevel level)
 	std::lock_guard lock(GetMutex());
 
 	uint64_t const id = HashChannelName(channelName);
-	auto const it = GetChannels().find(id);
-	bool const found = it != GetChannels().end();
+	auto const it = GetLoggers().find(id);
+	bool const found = it != GetLoggers().end();
 
 	if (found)
 	{
-		it->second.levelMask = level;
+		it->second->SetLevelMask(level);
 	}
 
 	return found;
@@ -474,9 +440,9 @@ void CLogSystem::SetAllLogLevels(ELogLevel level)
 {
 	std::lock_guard lock(GetMutex());
 
-	for (auto& [id, channel] : GetChannels())
+	for (auto& [id, pLog] : GetLoggers())
 	{
-		channel.levelMask = level;
+		pLog->SetLevelMask(level);
 	}
 }
 
@@ -486,11 +452,11 @@ ELogLevel CLogSystem::GetLogLevel(std::string_view channelName) const
 	std::lock_guard lock(GetMutex());
 
 	uint64_t const id = HashChannelName(channelName);
-	auto it = GetChannels().find(id);
+	auto it = GetLoggers().find(id);
 
-	if (it != GetChannels().end())
+	if (it != GetLoggers().end())
 	{
-		return it->second.levelMask;
+		return it->second->GetLevelMask();
 	}
 
 	return ELogLevel::All;
@@ -502,131 +468,14 @@ std::vector<std::string_view> CLogSystem::GetChannelNames() const
 	std::lock_guard lock(GetMutex());
 
 	std::vector<std::string_view> names;
-	names.reserve(GetChannels().size());
+	names.reserve(GetLoggers().size());
 
-	for (auto const& [id, channel] : GetChannels())
+	for (auto const& [id, pLog] : GetLoggers())
 	{
-		names.emplace_back(channel.name);
+		names.emplace_back(pLog->GetName());
 	}
 
 	return names;
-}
-
-//////////////////////////////////////////////////////////////////////////
-void CLogSystem::Write(uint64_t channelId, ELogLevel level, ETarget target, std::string message)
-{
-	if (!m_initialized)
-	{
-		// Fallback to stderr before logging system is initialized
-		switch (level)
-		{
-			case ELogLevel::Info:
-				std::cout << "[Pre-init] " << message << '\n' << std::flush;
-				break;
-			case ELogLevel::Warning:
-				std::cout << "\033[33m[Pre-init] [WARNING] " << message << "\033[0m\n" << std::flush;
-				break;
-			case ELogLevel::Error:
-				std::cerr << "\033[31m[Pre-init] [ERROR] " << message << "\033[0m\n" << std::flush;
-				break;
-			case ELogLevel::None:
-			default:
-				assert(false && "Invalid log level for message");
-				break;
-		}
-	}
-	else
-	{
-		std::lock_guard lock(GetMutex());
-
-		auto it = GetChannels().find(channelId);
-
-		if (it != GetChannels().end())
-		{
-			SChannelData& channel = it->second;
-
-			// Check filtering (bitmask: message level must be in channel's allowed levels)
-			if ((level & channel.levelMask) != ELogLevel::None)
-			{
-				auto const now = std::chrono::system_clock::now();
-				auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - GetStartTime());
-
-				char tsBuf[32];
-
-				if (m_timestampMode == ETimestampMode::WallClock)
-				{
-					FormatWallClockTimestamp(now, tsBuf, sizeof(tsBuf));
-				}
-				else
-				{
-					FormatTimestamp(static_cast<uint64_t>(elapsed.count()), tsBuf, sizeof(tsBuf));
-				}
-
-				if ((target & ETarget::Console) != ETarget::None)
-				{
-					// Console path: heap-allocate a shared SLogMessage so both the history
-					// deque and the pending-dispatch queue own it without copying strings.
-					auto msg = std::make_shared<SLogMessage>(SLogMessage{
-						now,
-						static_cast<uint64_t>(elapsed.count()),
-						level,
-						target,
-						std::string_view{channel.name},
-						std::move(message),
-						std::string{tsBuf},
-						channel.color.r,
-						channel.color.g,
-						channel.color.b
-					});
-
-					if ((target & ETarget::Terminal) != ETarget::None)
-					{
-						WriteToTerminal(*msg);
-					}
-
-					if ((target & ETarget::File) != ETarget::None)
-					{
-						WriteToFile(*msg);
-					}
-
-					channel.pendingDispatch.push_back(msg);
-					channel.history.push_back(std::move(msg));
-
-					if (channel.history.size() > MaxMessages)
-					{
-						channel.history.pop_front();
-					}
-				}
-				else
-				{
-					// Terminal/File only: build a local SLogMessage (stack-allocated struct,
-					// no heap for channelName or timestamp — SSO covers both).
-					SLogMessage msg{
-						now,
-						static_cast<uint64_t>(elapsed.count()),
-						level,
-						target,
-						std::string_view{channel.name},
-						std::move(message),
-						std::string{tsBuf},
-						channel.color.r,
-						channel.color.g,
-						channel.color.b
-					};
-
-					if ((target & ETarget::Terminal) != ETarget::None)
-					{
-						WriteToTerminal(msg);
-					}
-
-					if ((target & ETarget::File) != ETarget::None)
-					{
-						WriteToFile(msg);
-					}
-				}
-			}
-		}
-	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -634,11 +483,11 @@ std::string_view CLogSystem::GetChannelNameById(uint64_t channelId) const
 {
 	std::lock_guard lock(GetMutex());
 
-	auto it = GetChannels().find(channelId);
+	auto it = GetLoggers().find(channelId);
 
-	if (it != GetChannels().end())
+	if (it != GetLoggers().end())
 	{
-		return it->second.name;
+		return it->second->GetName();
 	}
 
 	return "";
@@ -672,9 +521,17 @@ bool CLogSystem::IsInitialized() const
 }
 
 //////////////////////////////////////////////////////////////////////////
-CLog::CLog(std::string_view name, SColor const& color)
+ETimestampMode CLogSystem::GetTimestampMode() const
 {
-	m_id = GetLogSystem().Register(name, color);
+	return m_timestampMode;
+}
+
+//////////////////////////////////////////////////////////////////////////
+CLog::CLog(std::string_view name, SColor const& color)
+	: m_name{ name }
+	, m_color{ color }
+{
+	m_id = GetLogSystem().Register(name);
 
 	std::lock_guard lock(GetMutex());
 	GetLoggers().emplace(m_id, this);
@@ -685,81 +542,160 @@ CLog::~CLog()
 {
 	std::lock_guard lock(GetMutex());
 	GetLoggers().erase(m_id);
-	GetChannels().erase(m_id);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 {
-	GetLogSystem().Write(m_id, level, target, std::move(message));
-}
+	if (!GetLogSystem().IsInitialized())
+	{
+		// Fallback to stderr before logging system is initialized
+		switch (level)
+		{
+			case ELogLevel::Info:
+				std::cout << "[Pre-init] " << message << '\n' << std::flush;
+				break;
+			case ELogLevel::Warning:
+				std::cout << "\033[33m[Pre-init] [WARNING] " << message << "\033[0m\n" << std::flush;
+				break;
+			case ELogLevel::Error:
+				std::cerr << "\033[31m[Pre-init] [ERROR] " << message << "\033[0m\n" << std::flush;
+				break;
+			case ELogLevel::None:
+			default:
+				assert(false && "Invalid log level for message");
+				break;
+		}
+	}
+	else
+	{
+		std::lock_guard lock(GetMutex());
 
-//////////////////////////////////////////////////////////////////////////
-std::string_view CLog::GetName() const
-{
-	return GetLogSystem().GetChannelNameById(m_id);
+		// Check filtering (bitmask: message level must be in channel's allowed levels)
+		if ((level & m_levelMask) != ELogLevel::None)
+		{
+			auto const now = std::chrono::system_clock::now();
+			auto const elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - GetStartTime());
+
+			char tsBuf[32];
+
+			if (GetLogSystem().GetTimestampMode() == ETimestampMode::WallClock)
+			{
+				FormatWallClockTimestamp(now, tsBuf, sizeof(tsBuf));
+			}
+			else
+			{
+				FormatTimestamp(static_cast<uint64_t>(elapsed.count()), tsBuf, sizeof(tsBuf));
+			}
+
+			if ((target & ETarget::Console) != ETarget::None)
+			{
+				// Console path: heap-allocate a shared SLogMessage so both the history
+				// deque and the pending-dispatch queue own it without copying strings.
+				auto msg = std::make_shared<SLogMessage>(SLogMessage{
+					now,
+					static_cast<uint64_t>(elapsed.count()),
+					level,
+					target,
+					std::string_view{m_name},
+					std::move(message),
+					std::string{tsBuf},
+					m_color.r,
+					m_color.g,
+					m_color.b
+				});
+
+				if ((target & ETarget::Terminal) != ETarget::None)
+				{
+					WriteToTerminal(*msg);
+				}
+
+				if ((target & ETarget::File) != ETarget::None)
+				{
+					WriteToFile(*msg);
+				}
+
+				m_pendingDispatch.push_back(msg);
+				m_history.push_back(std::move(msg));
+
+				if (m_history.size() > MaxMessages)
+				{
+					m_history.pop_front();
+				}
+			}
+			else
+			{
+				// Terminal/File only: build a local SLogMessage (stack-allocated struct,
+				// no heap for channelName or timestamp — SSO covers both).
+				SLogMessage msg{
+					now,
+					static_cast<uint64_t>(elapsed.count()),
+					level,
+					target,
+					std::string_view{m_name},
+					std::move(message),
+					std::string{tsBuf},
+					m_color.r,
+					m_color.g,
+					m_color.b
+				};
+
+				if ((target & ETarget::Terminal) != ETarget::None)
+				{
+					WriteToTerminal(msg);
+				}
+
+				if ((target & ETarget::File) != ETarget::None)
+				{
+					WriteToFile(msg);
+				}
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
 void CLog::RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format)
 {
 	std::lock_guard lock(GetMutex());
-	auto it = GetChannels().find(m_id);
+	TGE_ASSERT(std::none_of(m_listeners.begin(), m_listeners.end(),
+		[key](SListener const& l) { return l.key == key; }),
+		"Listener with this key is already registered — did you forget to UnregisterListener?");
 
-	if (it != GetChannels().end())
-	{
-		auto& listeners = it->second.listeners;
-		TGE_ASSERT(std::none_of(listeners.begin(), listeners.end(),
-			[key](SListener const& l) { return l.key == key; }),
-			"Listener with this key is already registered — did you forget to UnregisterListener?");
-
-		listeners.emplace_back(key, std::move(callback), format);
-	}
+	m_listeners.emplace_back(key, std::move(callback), format);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void CLog::UnregisterListener(void* key)
 {
 	std::lock_guard lock(GetMutex());
-	auto it = GetChannels().find(m_id);
-
-	if (it != GetChannels().end())
-	{
-		auto& listeners = it->second.listeners;
-		listeners.erase(
-			std::remove_if(listeners.begin(), listeners.end(),
-				[key](SListener const& listener) { return listener.key == key; }),
-			listeners.end()
-		);
-	}
+	m_listeners.erase(
+		std::remove_if(m_listeners.begin(), m_listeners.end(),
+			[key](SListener const& listener) { return listener.key == key; }),
+		m_listeners.end()
+	);
 }
 
 //////////////////////////////////////////////////////////////////////////
 void CLog::FlushTo(void* key)
 {
 	std::lock_guard lock(GetMutex());
-	auto it = GetChannels().find(m_id);
+	auto listenerIt = std::find_if(m_listeners.begin(), m_listeners.end(),
+		[key](SListener const& listener) { return listener.key == key; });
 
-	if (it != GetChannels().end())
+	if (listenerIt != m_listeners.end())
 	{
-		SChannelData& channel = it->second;
-		auto listenerIt = std::find_if(channel.listeners.begin(), channel.listeners.end(),
-			[key](SListener const& listener) { return listener.key == key; });
-
-		if (listenerIt != channel.listeners.end())
+		for (auto const& msg : m_history)
 		{
-			for (auto const& msg : channel.history)
+			if (listenerIt->format == EMessageFormat::Formatted)
 			{
-				if (listenerIt->format == EMessageFormat::Formatted)
-				{
-					SLogMessage formatted{ *msg };
-					formatted.message = FormatMessage(*msg);
-					listenerIt->callback(formatted);
-				}
-				else
-				{
-					listenerIt->callback(*msg);
-				}
+				SLogMessage formatted{ *msg };
+				formatted.message = FormatMessage(*msg);
+				listenerIt->callback(formatted);
+			}
+			else
+			{
+				listenerIt->callback(*msg);
 			}
 		}
 	}
@@ -773,14 +709,8 @@ void CLog::DispatchPending()
 
 	{
 		std::lock_guard lock(GetMutex());
-		auto it = GetChannels().find(m_id);
-
-		if (it != GetChannels().end())
-		{
-			SChannelData& channel = it->second;
-			std::swap(toDispatch, channel.pendingDispatch);
-			listenersSnapshot = channel.listeners;
-		}
+		std::swap(toDispatch, m_pendingDispatch);
+		listenersSnapshot = m_listeners;
 	}
 
 	for (auto const& msg : toDispatch)
@@ -809,6 +739,19 @@ void CLog::DispatchPending()
 		}
 	}
 }
+
+//////////////////////////////////////////////////////////////////////////
+void CLog::SetLevelMask(ELogLevel level)
+{
+	m_levelMask = level;
+}
+
+//////////////////////////////////////////////////////////////////////////
+ELogLevel CLog::GetLevelMask() const
+{
+	return m_levelMask;
+}
+
 #endif // TGE_LOGGING_ENABLED
 
 //////////////////////////////////////////////////////////////////////////
@@ -818,25 +761,26 @@ CLogSystem& GetLogSystem()
 	return logSystem;
 }
 #ifndef TGE_LOGGING_ENABLED
-void CLogSystem::Initialize(std::string_view, std::string_view, std::string_view) {}
+void CLogSystem::Initialize(std::string_view, std::string_view, std::string_view, ETimestampMode) {}
 void CLogSystem::Terminate() {}
 bool CLogSystem::IsInitialized() const { return false; }
-uint64_t CLogSystem::Register(std::string_view, SColor const&) { return 0; }
+ETimestampMode CLogSystem::GetTimestampMode() const { return ETimestampMode::Elapsed; }
+uint64_t CLogSystem::Register(std::string_view) { return 0; }
 bool CLogSystem::SetLogLevel(std::string_view, ELogLevel) { return false; }
 void CLogSystem::SetAllLogLevels(ELogLevel) {}
 ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::All; }
 std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
-void CLogSystem::Write(uint64_t, ELogLevel, ETarget, std::string) {}
 std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
 void CLogSystem::DispatchListeners() {}
 
-CLog::CLog(std::string_view, SColor const&) {}
+CLog::CLog(std::string_view name, SColor const& color) : m_name{ name }, m_color{ color } {}
 CLog::~CLog() {}
-std::string_view CLog::GetName() const { return ""; }
 void CLog::Write(ELogLevel, ETarget, std::string) const {}
 void CLog::RegisterListener(void*, LogMessageCallback, EMessageFormat) {}
 void CLog::UnregisterListener(void*) {}
 void CLog::FlushTo(void*) {}
 void CLog::DispatchPending() {}
+void CLog::SetLevelMask(ELogLevel) {}
+ELogLevel CLog::GetLevelMask() const { return ELogLevel::All; }
 #endif // !TGE_LOGGING_ENABLED
 } // namespace Tge::Logging
