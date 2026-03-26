@@ -1,6 +1,7 @@
 #pragma once
 
 #include "allocator.hpp"
+#include <tge/non_copyable.hpp>
 #include <atomic>
 
 namespace Tge::Memory
@@ -8,7 +9,7 @@ namespace Tge::Memory
 // Intermediate base providing atomic tracking state shared by all concrete allocators.
 // Implements GetTotalAllocated, GetCurrentUsage, and GetNumAllocations so concrete
 // allocators only need to update the atomics, not re-declare the getters.
-class CTrackedAllocator : public IAllocator
+class CTrackedAllocator : public IAllocator, private SNoCopyNoMove
 {
 public:
 

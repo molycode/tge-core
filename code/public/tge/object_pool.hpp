@@ -32,7 +32,7 @@ public:
 
 private:
 
-	struct alignas(alignof(T)) SSlot
+	struct alignas(alignof(T)) SSlot final
 	{
 		std::byte storage[sizeof(T)];
 	};

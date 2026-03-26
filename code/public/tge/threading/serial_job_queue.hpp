@@ -116,7 +116,7 @@ public:
 
 private:
 
-	struct SEntry
+	struct SEntry final
 	{
 		std::string jobId;
 		std::function<TResult()> work;

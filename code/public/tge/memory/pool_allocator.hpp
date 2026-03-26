@@ -25,7 +25,7 @@ public:
 
 private:
 
-	struct SFreeNode
+	struct SFreeNode final
 	{
 		SFreeNode* next;
 	};

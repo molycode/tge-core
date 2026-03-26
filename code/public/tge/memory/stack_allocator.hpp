@@ -23,7 +23,7 @@ public:
 
 private:
 
-	struct SAllocationHeader
+	struct SAllocationHeader final
 	{
 		size_t size;
 		size_t padding;

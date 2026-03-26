@@ -33,12 +33,13 @@
 
 #pragma once
 
+#include <tge/non_copyable.hpp>
 #include <atomic>
 
 namespace Tge::Threading
 {
 template<typename T>
-class CMpscQueue final
+class CMpscQueue final : private SNoCopyNoMove
 {
 public:
 	CMpscQueue() :
@@ -83,21 +84,18 @@ public:
 		return true;
 	}
 
-	CMpscQueue(CMpscQueue const&) = delete;
-	CMpscQueue& operator=(CMpscQueue const&) = delete;
-
 private:
 	// Standard cache line size for x86_64 (stable value for ABI compatibility)
 	static constexpr size_t CacheLineSize = 64;
 
-	struct SBufferNode
+	struct SBufferNode final
 	{
 		T data;
 		std::atomic<SBufferNode*> next;
 	};
 
 	// Align to cache line boundary to prevent false sharing
-	struct alignas(CacheLineSize) SBufferNodeAligned
+	struct alignas(CacheLineSize) SBufferNodeAligned final
 	{
 		SBufferNode node;
 	};

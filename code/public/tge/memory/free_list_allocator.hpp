@@ -22,13 +22,13 @@ public:
 
 private:
 
-	struct SAllocationHeader
+	struct SAllocationHeader final
 	{
 		size_t size;
 		size_t padding;
 	};
 
-	struct SFreeBlock
+	struct SFreeBlock final
 	{
 		size_t size;
 		SFreeBlock* next;

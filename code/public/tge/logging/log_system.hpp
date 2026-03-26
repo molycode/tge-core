@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tge/logging/log_message.hpp>
+#include <tge/non_copyable.hpp>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -11,7 +12,7 @@ namespace Logging
 {
 class CLog;
 
-class CLogSystem final
+class CLogSystem final : private SNoCopyNoMove
 {
 public:
 
