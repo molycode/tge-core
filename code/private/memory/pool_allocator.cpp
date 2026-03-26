@@ -51,7 +51,7 @@ CPoolAllocator::~CPoolAllocator()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void* CPoolAllocator::Allocate(size_t size, size_t alignment)
+void* CPoolAllocator::Allocate(size_t size, size_t)
 {
 	void* ptr = nullptr;
 
@@ -60,9 +60,7 @@ void* CPoolAllocator::Allocate(size_t size, size_t alignment)
 		ptr = m_freeList;
 		m_freeList = m_freeList->next;
 
-		m_totalAllocated.fetch_add(m_objectSize, std::memory_order_relaxed);
-		m_currentUsage.fetch_add(m_objectSize, std::memory_order_relaxed);
-		m_numAllocations.fetch_add(1, std::memory_order_relaxed);
+		RecordAlloc(m_objectSize);
 	}
 
 	return ptr;
@@ -78,8 +76,7 @@ void CPoolAllocator::Deallocate(void* ptr)
 		node->next = m_freeList;
 		m_freeList = node;
 
-		m_currentUsage.fetch_sub(m_objectSize, std::memory_order_relaxed);
-		m_numDeallocations.fetch_add(1, std::memory_order_relaxed);
+		RecordDealloc(m_objectSize);
 	}
 }
 

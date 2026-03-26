@@ -16,12 +16,6 @@ bool Initialize(size_t numThreads);
 void Terminate();
 } // namespace Threading::Internal
 
-namespace IO::Internal
-{
-bool Initialize();
-void Terminate();
-} // namespace IO::Internal
-
 //////////////////////////////////////////////////////////////////////////
 bool Initialize(size_t numThreads)
 {
@@ -30,11 +24,6 @@ bool Initialize(size_t numThreads)
 	if (success)
 	{
 		success = Threading::Internal::Initialize(numThreads);
-	}
-
-	if (success)
-	{
-		success = IO::Internal::Initialize();
 	}
 
 	if (!success)
@@ -48,7 +37,6 @@ bool Initialize(size_t numThreads)
 //////////////////////////////////////////////////////////////////////////
 void Terminate()
 {
-	IO::Internal::Terminate();
 	Threading::Internal::Terminate();
 	Memory::Internal::Terminate();
 }

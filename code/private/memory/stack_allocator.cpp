@@ -52,9 +52,7 @@ void* CStackAllocator::Allocate(size_t size, size_t alignment)
 			m_lastAllocation = ptr;
 			m_offset += totalSize;
 
-			m_totalAllocated.fetch_add(size, std::memory_order_relaxed);
-			m_currentUsage.fetch_add(size, std::memory_order_relaxed);
-			m_numAllocations.fetch_add(1, std::memory_order_relaxed);
+			RecordAlloc(size);
 		}
 	}
 
@@ -74,8 +72,7 @@ void CStackAllocator::Deallocate(void* ptr)
 		size_t const totalSize = headerSize + header->padding + header->size;
 		m_offset -= totalSize;
 
-		m_currentUsage.fetch_sub(header->size, std::memory_order_relaxed);
-		m_numDeallocations.fetch_add(1, std::memory_order_relaxed);
+		RecordDealloc(header->size);
 
 		// Update last allocation pointer (walk backwards to find previous)
 		m_lastAllocation = nullptr;

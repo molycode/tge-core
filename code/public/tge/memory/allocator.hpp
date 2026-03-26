@@ -16,6 +16,7 @@ public:
 	virtual size_t GetTotalAllocated() const = 0;
 	virtual size_t GetCurrentUsage() const = 0;
 	virtual size_t GetNumAllocations() const = 0;
+	virtual size_t GetNumDeallocations() const = 0;
 
 protected:
 

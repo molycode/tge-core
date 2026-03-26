@@ -44,9 +44,7 @@ void* CLinearAllocator::Allocate(size_t size, size_t alignment)
 			ptr = reinterpret_cast<void*>(alignedAddr);
 			m_offset += totalSize;
 
-			m_totalAllocated.fetch_add(size, std::memory_order_relaxed);
-			m_currentUsage.fetch_add(size, std::memory_order_relaxed);
-			m_numAllocations.fetch_add(1, std::memory_order_relaxed);
+			RecordAlloc(size);
 
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 			TrackAllocation(Category::Other, size);
@@ -57,7 +55,7 @@ void* CLinearAllocator::Allocate(size_t size, size_t alignment)
 	return ptr;
 }
 
-void CLinearAllocator::Deallocate([[maybe_unused]] void* ptr)
+void CLinearAllocator::Deallocate(void*)
 {
 	// Linear allocator doesn't support individual deallocations
 	// Memory is only freed on Reset()

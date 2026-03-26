@@ -96,13 +96,13 @@ void operator delete[](void* ptr) noexcept
 }
 
 //////////////////////////////////////////////////////////////////////////
-void operator delete(void* ptr, [[maybe_unused]] size_t size) noexcept
+void operator delete(void* ptr, size_t) noexcept
 {
 	::operator delete(ptr);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void operator delete[](void* ptr, [[maybe_unused]] size_t size) noexcept
+void operator delete[](void* ptr, size_t) noexcept
 {
 	::operator delete(ptr);
 }
@@ -163,19 +163,19 @@ void operator delete[](void* ptr, std::align_val_t align) noexcept
 }
 
 //////////////////////////////////////////////////////////////////////////
-void operator delete(void* ptr, [[maybe_unused]] size_t size, std::align_val_t align) noexcept
+void operator delete(void* ptr, size_t, std::align_val_t align) noexcept
 {
 	::operator delete(ptr, align);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void operator delete[](void* ptr, [[maybe_unused]] size_t size, std::align_val_t align) noexcept
+void operator delete[](void* ptr, size_t, std::align_val_t align) noexcept
 {
 	::operator delete(ptr, align);
 }
 
 //////////////////////////////////////////////////////////////////////////
-void* operator new(size_t size, [[maybe_unused]] std::nothrow_t const& tag) noexcept
+void* operator new(size_t size, std::nothrow_t const&) noexcept
 {
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 	size_t const totalSize = sizeof(SAllocationHeader) + size;
@@ -205,7 +205,7 @@ void* operator new[](size_t size, std::nothrow_t const& tag) noexcept
 }
 
 //////////////////////////////////////////////////////////////////////////
-void* operator new(size_t size, std::align_val_t align, [[maybe_unused]] std::nothrow_t const& tag) noexcept
+void* operator new(size_t size, std::align_val_t align, std::nothrow_t const&) noexcept
 {
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 	size_t const alignment = static_cast<size_t>(align);

@@ -96,9 +96,7 @@ void* CFreeListAllocator::Allocate(size_t size, size_t alignment)
 
 				ptr = reinterpret_cast<void*>(alignedAddr);
 
-				m_totalAllocated.fetch_add(size, std::memory_order_relaxed);
-				m_currentUsage.fetch_add(size, std::memory_order_relaxed);
-				m_numAllocations.fetch_add(1, std::memory_order_relaxed);
+				RecordAlloc(size);
 
 				break;
 			}
@@ -150,8 +148,7 @@ void CFreeListAllocator::Deallocate(void* ptr)
 
 		newBlock->next = currentBlock;
 
-		m_currentUsage.fetch_sub(header->size, std::memory_order_relaxed);
-		m_numDeallocations.fetch_add(1, std::memory_order_relaxed);
+		RecordDealloc(header->size);
 
 		// Coalesce adjacent free blocks
 		CoalesceFreeBlocks();

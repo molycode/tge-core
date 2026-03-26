@@ -8,8 +8,8 @@ class CDefaultAllocator final : public CTrackedAllocator
 {
 public:
 
-	CDefaultAllocator();
-	~CDefaultAllocator();
+	CDefaultAllocator() = default;
+	~CDefaultAllocator() = default;
 
 	void* Allocate(size_t size, size_t alignment) override;
 	void Deallocate(void* ptr) override;
