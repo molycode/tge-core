@@ -1,6 +1,7 @@
 #include <tge/logging/log_system.hpp>
 #include <tge/logging/log.hpp>
 #include <tge/color.hpp>
+#include <tge/init/assert.hpp>
 
 #ifdef TGE_LOGGING_ENABLED
 #include <algorithm>
@@ -684,6 +685,7 @@ CLog::~CLog()
 {
 	std::lock_guard lock(GetMutex());
 	GetLoggers().erase(m_id);
+	GetChannels().erase(m_id);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -707,18 +709,11 @@ void CLog::RegisterListener(void* key, LogMessageCallback callback, EMessageForm
 	if (it != GetChannels().end())
 	{
 		auto& listeners = it->second.listeners;
-		auto existingIt = std::find_if(listeners.begin(), listeners.end(),
-			[key](SListener const& listener) { return listener.key == key; });
+		TGE_ASSERT(std::none_of(listeners.begin(), listeners.end(),
+			[key](SListener const& l) { return l.key == key; }),
+			"Listener with this key is already registered — did you forget to UnregisterListener?");
 
-		if (existingIt != listeners.end())
-		{
-			existingIt->callback = std::move(callback);
-			existingIt->format = format;
-		}
-		else
-		{
-			listeners.emplace_back(key, std::move(callback), format);
-		}
+		listeners.emplace_back(key, std::move(callback), format);
 	}
 }
 
