@@ -706,7 +706,19 @@ void CLog::RegisterListener(void* key, LogMessageCallback callback, EMessageForm
 
 	if (it != GetChannels().end())
 	{
-		it->second.listeners.emplace_back(key, std::move(callback), format);
+		auto& listeners = it->second.listeners;
+		auto existingIt = std::find_if(listeners.begin(), listeners.end(),
+			[key](SListener const& listener) { return listener.key == key; });
+
+		if (existingIt != listeners.end())
+		{
+			existingIt->callback = std::move(callback);
+			existingIt->format = format;
+		}
+		else
+		{
+			listeners.emplace_back(key, std::move(callback), format);
+		}
 	}
 }
 
