@@ -95,6 +95,7 @@ public:
 	void Info(std::string_view message) const { Info(ETarget::All, message); }
 
 	std::string_view GetName() const { return m_name; }
+	void             SetName(std::string_view name) { m_name = name; }
 
 	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted);
 	void UnregisterListener(void* key);
