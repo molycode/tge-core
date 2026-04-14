@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 4.1.2)
 
 project(tge-core LANGUAGES C CXX)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/external.cmake)
+
 if(PROJECT_IS_TOP_LEVEL)
 	set(CMAKE_CXX_STANDARD 23)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -26,30 +28,6 @@ if(PROJECT_IS_TOP_LEVEL)
 
 	set(CMAKE_CONFIGURATION_TYPES Debug Release)
 endif() # PROJECT_IS_TOP_LEVEL
-
-# Helper function to suppress warnings for external libraries (all supported compilers)
-if(NOT COMMAND suppress_external_warnings)
-function(suppress_external_warnings target_name)
-	if(TARGET ${target_name})
-		get_target_property(target_type ${target_name} TYPE)
-		if(target_type STREQUAL "STATIC_LIBRARY" OR
-		   target_type STREQUAL "SHARED_LIBRARY" OR
-		   target_type STREQUAL "MODULE_LIBRARY" OR
-		   target_type STREQUAL "OBJECT_LIBRARY" OR
-		   target_type STREQUAL "EXECUTABLE")
-			if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-				target_compile_options(${target_name} PRIVATE -w)
-			elseif(CMAKE_CXX_COMPILER_ID MATCHES "[Cc]lang")
-				target_compile_options(${target_name} PRIVATE -w)
-			elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-				target_compile_options(${target_name} PRIVATE /w)
-			else()
-				message(FATAL_ERROR "Unsupported compiler: ${CMAKE_CXX_COMPILER_ID}")
-			endif()
-		endif()
-	endif()
-endfunction()
-endif() # NOT COMMAND suppress_external_warnings
 
 # Options
 option(TGE_ENABLE_LOGGING "Enable logging system" ON)
