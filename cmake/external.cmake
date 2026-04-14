@@ -1,4 +1,4 @@
-# add_external(source_dir [EXCLUDE_FROM_ALL] ...)
+# tge_add_external(source_dir [EXCLUDE_FROM_ALL] ...)
 #
 # Adds a vendored/submodule dependency as a subdirectory, isolated from the
 # project's compiler flags. All targets produced by the subdirectory are
@@ -6,8 +6,8 @@
 # consuming code.
 #
 # Use this for all subdirectory-based external dependencies.
-# For inline-defined targets (not via add_subdirectory), use suppress_external_warnings().
-function(add_external source_dir)
+# For inline-defined targets (not via add_subdirectory), use tge_suppress_external_warnings().
+function(tge_add_external source_dir)
 	get_directory_property(_saved_opts COMPILE_OPTIONS)
 	set_directory_properties(PROPERTIES COMPILE_OPTIONS "")
 
@@ -23,12 +23,12 @@ function(add_external source_dir)
 	endforeach()
 endfunction()
 
-# suppress_external_warnings(target_name)
+# tge_suppress_external_warnings(target_name)
 #
 # Suppresses all compiler warnings for an inline-defined external target —
 # one whose library is created directly in CMake (not via add_subdirectory).
-# For subdirectory-based dependencies, prefer add_external() instead.
-function(suppress_external_warnings target_name)
+# For subdirectory-based dependencies, prefer tge_add_external() instead.
+function(tge_suppress_external_warnings target_name)
 	if(TARGET ${target_name})
 		get_target_property(_type ${target_name} TYPE)
 		if(_type STREQUAL "STATIC_LIBRARY" OR

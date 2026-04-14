@@ -61,7 +61,7 @@ endif() # PROJECT_IS_TOP_LEVEL
 
 # External dependencies
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpmalloc.cmake)
-suppress_external_warnings(rpmalloc)
+tge_suppress_external_warnings(rpmalloc)
 
 # ============================================================================
 # TgeBase (INTERFACE - header-only base utilities)
