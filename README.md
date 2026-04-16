@@ -18,7 +18,7 @@ Both are included as git submodules and require no separate installation:
 ## Adding to Your Project
 
 ```bash
-git submodule add <url> external/tge-core
+git submodule add https://github.com/molycode/tge-core external/tge-core
 git submodule update --init --recursive
 ```
 
