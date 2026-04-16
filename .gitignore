@@ -15,6 +15,7 @@ cmake-build-*/
 
 # Session documentation (project-specific, not for repo)
 CLAUDE.md
+tasks/
 docs/
 
 # QtCreator files
