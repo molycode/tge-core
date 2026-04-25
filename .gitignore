@@ -60,3 +60,9 @@ CMakeUserPresets.json
 
 # System files
 Thumbs.db
+
+# Claude Code
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json
+.claude/
