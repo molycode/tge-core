@@ -37,14 +37,14 @@ inline Mat4 LookAt(Vec3 const& eye, Vec3 const& center, Vec3 const& up)
 	return glm::lookAt(eye, center, up);
 }
 
-inline Mat4 Perspective(float fovy, float aspect, float near, float far)
+inline Mat4 Perspective(float fovy, float aspect, float nearPlane, float farPlane)
 {
-	return glm::perspective(fovy, aspect, near, far);
+	return glm::perspective(fovy, aspect, nearPlane, farPlane);
 }
 
-inline Mat4 Orthographic(float left, float right, float bottom, float top, float near, float far)
+inline Mat4 Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
 {
-	return glm::ortho(left, right, bottom, top, near, far);
+	return glm::ortho(left, right, bottom, top, nearPlane, farPlane);
 }
 
 // Quaternion functions

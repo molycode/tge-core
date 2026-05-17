@@ -95,6 +95,11 @@ private:
 	};
 
 	// Align to cache line boundary to prevent false sharing
+	// C4324: padding is intentional — cache-line alignment prevents false sharing
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable: 4324)
+#endif
 	struct alignas(CacheLineSize) SBufferNodeAligned final
 	{
 		SBufferNode node;
@@ -103,5 +108,8 @@ private:
 	// Cache-line aligned atomics to prevent false sharing between head and tail
 	alignas(CacheLineSize) std::atomic<SBufferNode*> m_head;
 	alignas(CacheLineSize) std::atomic<SBufferNode*> m_tail;
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 };
 } // namespace Tge::Threading

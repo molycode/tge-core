@@ -6,6 +6,11 @@
 #include <linux/limits.h>
 #endif
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 namespace Tge::IO
 {
 //////////////////////////////////////////////////////////////////////////
@@ -114,6 +119,17 @@ std::string CDirectory::GetExecutableDirectory()
 	if (len != -1)
 	{
 		buffer[len] = '\0';
+		std::filesystem::path exePath(buffer);
+		return exePath.parent_path().string();
+	}
+
+	return "";
+#elif defined(_WIN32)
+	wchar_t buffer[MAX_PATH];
+	DWORD const len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+
+	if (len != 0)
+	{
 		std::filesystem::path exePath(buffer);
 		return exePath.parent_path().string();
 	}
