@@ -107,6 +107,7 @@ public:
 	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted);
 	void UnregisterListener(void* key);
 	void FlushTo(void* key);
+	void AppendHistoryTo(std::vector<std::shared_ptr<SLogMessage>>& out) const;
 	void DispatchPending();
 
 	void      SetLevelMask(ELogLevel level);

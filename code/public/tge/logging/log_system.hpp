@@ -12,6 +12,12 @@ namespace Logging
 {
 class CLog;
 
+enum class EHistory
+{
+	Skip,
+	Flush
+};
+
 class CLogSystem final : private SNoCopyNoMove
 {
 public:
@@ -34,7 +40,7 @@ public:
 
 	std::string_view GetChannelNameById(uint64_t channelId) const;
 
-	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted);
+	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted, EHistory history = EHistory::Skip);
 	void UnregisterListener(void* key);
 
 	void DispatchListeners();

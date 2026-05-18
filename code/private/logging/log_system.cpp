@@ -501,13 +501,46 @@ std::string_view CLogSystem::GetChannelNameById(uint64_t channelId) const
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format)
+void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format, EHistory history)
 {
-	std::lock_guard lock(GetMutex());
-	TGE_ASSERT(std::none_of(GetListeners().begin(), GetListeners().end(),
-		[key](SListener const& l) { return l.key == key; }),
-		"Listener with this key is already registered");
-	GetListeners().emplace_back(key, std::move(callback), format);
+	std::vector<std::shared_ptr<SLogMessage>> historyToFlush;
+	SListener listenerSnapshot;
+
+	{
+		std::lock_guard lock(GetMutex());
+		TGE_ASSERT(std::none_of(GetListeners().begin(), GetListeners().end(),
+			[key](SListener const& l) { return l.key == key; }),
+			"Listener with this key is already registered");
+
+		if (history == EHistory::Flush)
+		{
+			for (auto& [id, pLog] : GetLoggers())
+			{
+				pLog->AppendHistoryTo(historyToFlush);
+			}
+
+			std::sort(historyToFlush.begin(), historyToFlush.end(),
+				[](auto const& a, auto const& b) { return a->elapsedMs < b->elapsedMs; });
+
+			listenerSnapshot = { key, callback, format };
+		}
+
+		GetListeners().emplace_back(key, std::move(callback), format);
+	}
+
+	for (auto const& msg : historyToFlush)
+	{
+		if (listenerSnapshot.format == EMessageFormat::Formatted)
+		{
+			SLogMessage formatted{ *msg };
+			formatted.message = FormatMessage(*msg);
+			listenerSnapshot.callback(formatted);
+		}
+		else
+		{
+			listenerSnapshot.callback(*msg);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -781,6 +814,12 @@ void CLog::DispatchPending()
 }
 
 //////////////////////////////////////////////////////////////////////////
+void CLog::AppendHistoryTo(std::vector<std::shared_ptr<SLogMessage>>& out) const
+{
+	out.insert(out.end(), m_history.begin(), m_history.end());
+}
+
+//////////////////////////////////////////////////////////////////////////
 void CLog::SetLevelMask(ELogLevel level)
 {
 	m_levelMask = level;
@@ -811,7 +850,7 @@ void CLogSystem::SetAllLogLevels(ELogLevel) {}
 ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::All; }
 std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
 std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
-void CLogSystem::RegisterListener(void*, LogMessageCallback, EMessageFormat) {}
+void CLogSystem::RegisterListener(void*, LogMessageCallback, EMessageFormat, EHistory) {}
 void CLogSystem::UnregisterListener(void*) {}
 void CLogSystem::DispatchListeners() {}
 
@@ -821,6 +860,7 @@ void CLog::Write(ELogLevel, ETarget, std::string) const {}
 void CLog::RegisterListener(void*, LogMessageCallback, EMessageFormat) {}
 void CLog::UnregisterListener(void*) {}
 void CLog::FlushTo(void*) {}
+void CLog::AppendHistoryTo(std::vector<std::shared_ptr<SLogMessage>>&) const {}
 void CLog::DispatchPending() {}
 void CLog::SetLevelMask(ELogLevel) {}
 ELogLevel CLog::GetLevelMask() const { return ELogLevel::All; }
