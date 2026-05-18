@@ -6,7 +6,6 @@ cmake-build-*/
 .vscode/
 .idea/
 .vs/
-.claude/
 .qtcreator/
 *.swp
 *.swo
@@ -14,7 +13,6 @@ cmake-build-*/
 .DS_Store
 
 # Session documentation (project-specific, not for repo)
-CLAUDE.md
 tasks/
 docs/
 
@@ -62,7 +60,6 @@ CMakeUserPresets.json
 Thumbs.db
 
 # Claude Code
-CLAUDE.md
 CLAUDE.local.md
 .mcp.json
-.claude/
+.claude/*.json
