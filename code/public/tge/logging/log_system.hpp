@@ -34,6 +34,9 @@ public:
 
 	std::string_view GetChannelNameById(uint64_t channelId) const;
 
+	void RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format = EMessageFormat::Formatted);
+	void UnregisterListener(void* key);
+
 	void DispatchListeners();
 
 private:

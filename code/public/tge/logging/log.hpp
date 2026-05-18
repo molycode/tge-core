@@ -13,6 +13,13 @@
 
 namespace Tge::Logging
 {
+struct SListener final
+{
+	void*              key{ nullptr };
+	LogMessageCallback callback;
+	EMessageFormat     format{ EMessageFormat::Formatted };
+};
+
 class CLogSystem;
 CLogSystem& GetLogSystem();
 
@@ -106,13 +113,6 @@ public:
 	ELogLevel GetLevelMask() const;
 
 private:
-
-	struct SListener final
-	{
-		void*              key{ nullptr };
-		LogMessageCallback callback;
-		EMessageFormat     format{ EMessageFormat::Formatted };
-	};
 
 	uint64_t    m_id{ 0 };
 	std::string m_name;

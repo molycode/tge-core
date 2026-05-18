@@ -55,6 +55,13 @@ std::chrono::system_clock::time_point& GetStartTime()
 }
 
 //////////////////////////////////////////////////////////////////////////
+std::vector<SListener>& GetListeners()
+{
+	static std::vector<SListener> listeners;
+	return listeners;
+}
+
+//////////////////////////////////////////////////////////////////////////
 uint64_t HashChannelName(std::string_view name)
 {
 	return std::hash<std::string_view>{}(name);
@@ -494,6 +501,27 @@ std::string_view CLogSystem::GetChannelNameById(uint64_t channelId) const
 }
 
 //////////////////////////////////////////////////////////////////////////
+void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessageFormat format)
+{
+	std::lock_guard lock(GetMutex());
+	TGE_ASSERT(std::none_of(GetListeners().begin(), GetListeners().end(),
+		[key](SListener const& l) { return l.key == key; }),
+		"Listener with this key is already registered");
+	GetListeners().emplace_back(key, std::move(callback), format);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CLogSystem::UnregisterListener(void* key)
+{
+	std::lock_guard lock(GetMutex());
+	GetListeners().erase(
+		std::remove_if(GetListeners().begin(), GetListeners().end(),
+			[key](SListener const& l) { return l.key == key; }),
+		GetListeners().end()
+	);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void CLogSystem::DispatchListeners()
 {
 	std::vector<CLog*> loggers;
@@ -706,11 +734,13 @@ void CLog::DispatchPending()
 {
 	std::vector<std::shared_ptr<SLogMessage>> toDispatch;
 	std::vector<SListener> listenersSnapshot;
+	std::vector<SListener> globalSnapshot;
 
 	{
 		std::lock_guard lock(GetMutex());
 		std::swap(toDispatch, m_pendingDispatch);
 		listenersSnapshot = m_listeners;
+		globalSnapshot    = GetListeners();
 	}
 
 	for (auto const& msg : toDispatch)
@@ -718,13 +748,13 @@ void CLog::DispatchPending()
 		std::string formattedText;
 		bool formattedComputed{ false };
 
-		for (auto const& listener : listenersSnapshot)
+		auto dispatch = [&](SListener const& listener)
 		{
 			if (listener.format == EMessageFormat::Formatted)
 			{
 				if (!formattedComputed)
 				{
-					formattedText = FormatMessage(*msg);
+					formattedText    = FormatMessage(*msg);
 					formattedComputed = true;
 				}
 
@@ -736,6 +766,16 @@ void CLog::DispatchPending()
 			{
 				listener.callback(*msg);
 			}
+		};
+
+		for (auto const& listener : listenersSnapshot)
+		{
+			dispatch(listener);
+		}
+
+		for (auto const& listener : globalSnapshot)
+		{
+			dispatch(listener);
 		}
 	}
 }
@@ -771,6 +811,8 @@ void CLogSystem::SetAllLogLevels(ELogLevel) {}
 ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::All; }
 std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
 std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
+void CLogSystem::RegisterListener(void*, LogMessageCallback, EMessageFormat) {}
+void CLogSystem::UnregisterListener(void*) {}
 void CLogSystem::DispatchListeners() {}
 
 CLog::CLog(std::string_view name, SColor const& color) : m_name{ name }, m_color{ color } {}
