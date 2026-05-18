@@ -588,7 +588,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 				FormatTimestamp(static_cast<uint64_t>(elapsed.count()), tsBuf, sizeof(tsBuf));
 			}
 
-			if ((target & ETarget::Console) != ETarget::None)
+			if ((target & ETarget::Listeners) != ETarget::None)
 			{
 				// Console path: heap-allocate a shared SLogMessage so both the history
 				// deque and the pending-dispatch queue own it without copying strings.

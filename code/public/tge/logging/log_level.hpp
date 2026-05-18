@@ -26,11 +26,11 @@ inline ELogLevel operator&(ELogLevel a, ELogLevel b)
 
 enum class ETarget : uint8_t
 {
-	None     = 0,
-	Terminal = 1 << 0,  // stdout/stderr
-	File     = 1 << 1,  // Log file
-	Console  = 1 << 2,  // Application console (listener)
-	All      = Terminal | File | Console
+	None      = 0,
+	Terminal  = 1 << 0,  // stdout/stderr
+	File      = 1 << 1,  // Log file
+	Listeners = 1 << 2,  // External listeners (registered via CLogSystem)
+	All       = Terminal | File | Listeners
 };
 
 inline ETarget operator|(ETarget a, ETarget b)
