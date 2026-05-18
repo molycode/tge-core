@@ -3,7 +3,6 @@ set(CMAKE_SYSTEM_NAME Darwin)
 set(CMAKE_C_COMPILER "clang")
 set(CMAKE_CXX_COMPILER "clang++")
 
-set(TGE_PLATFORM_MACOS TRUE)
 
 execute_process(
 	COMMAND xcrun --show-sdk-path

@@ -17,7 +17,6 @@ if(NOT DEFINED CMAKE_CXX_COMPILER)
 	endif()
 endif()
 
-set(TGE_PLATFORM_LINUX TRUE)
 
 if(DEFINED ENV{TGE_GCC_PATH})
 	# Bake in the RPATH so the binary finds the custom libstdc++ at runtime
