@@ -58,9 +58,11 @@ int main()
 - **rpmalloc** (git submodule) - Fast memory allocator (global new/delete override)
 
 ## Build
+Requires CMake 4.x (`cmake --version` to verify — system cmake may be too old).
+
 ```bash
-cmake --preset tge-core-linux-gcc16-debug
-cmake --build --preset tge-core-linux-gcc16-debug
+cmake --preset tge-core-linux-gcc_16-debug
+cmake --build --preset tge-core-linux-gcc_16-debug
 ```
 
 ## Remote Setup
