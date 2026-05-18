@@ -9,7 +9,7 @@ elseif(NOT DEFINED CMAKE_C_COMPILER)
 	set(CMAKE_CXX_COMPILER "clang++")
 endif()
 
-add_compile_definitions(TGE_PLATFORM_LINUX)
+set(TGE_PLATFORM_LINUX TRUE)
 
 if(DEFINED ENV{TGE_CLANG_PATH})
 	message(STATUS "Using Clang from TGE_CLANG_PATH: $ENV{TGE_CLANG_PATH}")

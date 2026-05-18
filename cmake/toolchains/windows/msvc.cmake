@@ -1,7 +1,7 @@
 set(CMAKE_SYSTEM_NAME Windows)
 set(CMAKE_SYSTEM_PROCESSOR AMD64)
 
-add_compile_definitions(TGE_PLATFORM_WINDOWS)
+set(TGE_PLATFORM_WINDOWS TRUE)
 add_compile_definitions(_CRT_SECURE_NO_WARNINGS)
 add_compile_definitions(NOMINMAX)
 

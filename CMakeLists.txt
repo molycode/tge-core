@@ -78,6 +78,8 @@ target_include_directories(TgeBase INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/code/public
 )
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/platform.cmake)
+
 # ============================================================================
 # TgeLogging (STATIC - logging system)
 # ============================================================================
