@@ -2,6 +2,7 @@
 #include <tge/logging/log.hpp>
 #include <tge/color.hpp>
 #include <tge/init/assert.hpp>
+#include <tge/platform.hpp>
 
 #ifdef TGE_LOGGING_ENABLED
 #include <algorithm>
@@ -13,6 +14,15 @@
 #include <mutex>
 #include <unordered_map>
 #include <vector>
+#if defined(TGE_PLATFORM_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif // WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+#include <windows.h>
+#endif // defined(TGE_PLATFORM_WINDOWS)
 #endif // TGE_LOGGING_ENABLED
 
 namespace Tge::Logging
@@ -250,11 +260,13 @@ void FormatWallClockTimestamp(std::chrono::system_clock::time_point timestamp, c
 	auto const ms    = std::chrono::duration_cast<std::chrono::milliseconds>(
 	                       timestamp.time_since_epoch()) % 1000;
 	std::tm tm{};
-#ifdef _WIN32
+#if defined(TGE_PLATFORM_WINDOWS)
 	localtime_s(&tm, &timeT);
-#else
+#elif defined(TGE_PLATFORM_LINUX)
 	localtime_r(&timeT, &tm);
-#endif
+#else
+#	error "localtime_r/localtime_s: unhandled platform — add an implementation here"
+#endif // defined(TGE_PLATFORM_WINDOWS)
 	char timePart[16];
 	std::strftime(timePart, sizeof(timePart), "%H:%M:%S", &tm);
 	std::snprintf(buffer, bufferSize, "%s.%03lld", timePart, static_cast<long long>(ms.count()));
@@ -350,6 +362,22 @@ void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, s
 {
 	std::lock_guard lock(GetMutex());
 
+#if defined(TGE_PLATFORM_WINDOWS)
+	// Switch console output to UTF-8 and enable ANSI escape code processing
+	SetConsoleOutputCP(CP_UTF8);
+
+	for (DWORD handle : { STD_OUTPUT_HANDLE, STD_ERROR_HANDLE })
+	{
+		HANDLE h = GetStdHandle(handle);
+		DWORD mode{ 0 };
+
+		if (GetConsoleMode(h, &mode))
+		{
+			SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+		}
+	}
+#endif // defined(TGE_PLATFORM_WINDOWS)
+
 	m_timestampMode = timestampMode;
 
 	// Prime start time now so timestamps are relative to app startup, not first log message
@@ -368,11 +396,13 @@ void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, s
 		auto now = std::chrono::system_clock::now();
 		auto time_t = std::chrono::system_clock::to_time_t(now);
 		std::tm tm;
-#ifdef _WIN32
+#if defined(TGE_PLATFORM_WINDOWS)
 		localtime_s(&tm, &time_t);
-#else
+#elif defined(TGE_PLATFORM_LINUX)
 		localtime_r(&time_t, &tm);
-#endif
+#else
+#	error "localtime_r/localtime_s: unhandled platform — add an implementation here"
+#endif // defined(TGE_PLATFORM_WINDOWS)
 
 		std::string const format = std::string(logsDir) + "/" + std::string(prefix) + "_%Y-%m-%d_%H-%M-%S.log";
 		char filename[256];
