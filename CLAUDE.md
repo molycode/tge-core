@@ -67,16 +67,19 @@ cmake --build --preset tge-core-linux-gcc_16-debug
 
 ## Remote Setup
 
-Two remotes: `github` (primary, public) and `hosty` (Gitea mirror). New commits go on `github`; `hosty` stays in sync via dual-push.
+**GitHub is the primary dev repo. Gitea is a read-only mirror that follows it — never push to Gitea directly.**
 
-On each new clone or session, configure pushes to go to both simultaneously:
+The submodule is cloned from Gitea (`.gitmodules` URL), so `origin` lands on Gitea. Ignore `origin` for pushes — always use the `github` remote.
+
+On each new clone or session, add the `github` remote and configure it to dual-push to both destinations:
 
 ```bash
+git remote add github git@github-molycode:molycode/tge-core.git
 git remote set-url --add --push github git@github-molycode:molycode/tge-core.git
 git remote set-url --add --push github gitea@git.satoki.org:moly/tge-core.git
 ```
 
-After this a single `git push` sends to both. Fetch still pulls from GitHub only.
+After this, `git push github main` sends to GitHub first and mirrors to Gitea automatically.
 
 ## Coding Standards
 Follow global C++ guidelines from `~/.claude/CLAUDE.md` (Tge project conventions).
