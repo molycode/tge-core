@@ -9,6 +9,7 @@
 #include <cassert>
 #include <ctime>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <mutex>
@@ -275,35 +276,18 @@ void FormatWallClockTimestamp(std::chrono::system_clock::time_point timestamp, c
 //////////////////////////////////////////////////////////////////////////
 std::string FormatMessageForTerminal(SLogMessage const& msg)
 {
-	char buffer[512];
-
-	// Terminal uses colors for severity, so no level prefix needed for INFO
-	// WARNING and ERROR get prefix for extra visibility
 	if (msg.level == ELogLevel::Info)
 	{
-		std::snprintf(buffer, sizeof(buffer), "[%s] [%s] %s",
-			msg.formattedTimestamp.c_str(), msg.channelName.data(), msg.message.c_str());
-	}
-	else
-	{
-		std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
-			msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
-			msg.channelName.data(), msg.message.c_str());
+		return std::format("[{}] [{}] {}", msg.formattedTimestamp, msg.channelName, msg.message);
 	}
 
-	return buffer;
+	return std::format("[{}] [{}] [{}] {}", msg.formattedTimestamp, LevelToString(msg.level), msg.channelName, msg.message);
 }
 
 //////////////////////////////////////////////////////////////////////////
 std::string FormatMessage(SLogMessage const& msg)
 {
-	char buffer[512];
-
-	std::snprintf(buffer, sizeof(buffer), "[%s] [%s] [%s] %s",
-		msg.formattedTimestamp.c_str(), LevelToString(msg.level).data(),
-		msg.channelName.data(), msg.message.c_str());
-
-	return buffer;
+	return std::format("[{}] [{}] [{}] {}", msg.formattedTimestamp, LevelToString(msg.level), msg.channelName, msg.message);
 }
 
 //////////////////////////////////////////////////////////////////////////
