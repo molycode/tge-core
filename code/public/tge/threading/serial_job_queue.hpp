@@ -52,6 +52,20 @@ public:
 		}
 	}
 
+	// Stop the worker (blocks until any in-progress job finishes), clear all internal
+	// state (pending/cancelled/completed), then restart. Releases all captured references.
+	void Flush()
+	{
+		Stop();
+		{
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_pending.clear();
+			m_cancelled.clear();
+			m_completed.clear();
+		}
+		Start();
+	}
+
 	bool IsRunning() const
 	{
 		return m_isRunning.load();
