@@ -50,8 +50,12 @@ inline constexpr Vec3 Vec3Left    = -Vec3UnitX;
 inline constexpr Vec3 Vec3Forward = Vec3UnitZ;
 inline constexpr Vec3 Vec3Back    = -Vec3UnitZ;
 
-inline constexpr Vec4 Vec4Zero = Vec4{0.0f, 0.0f, 0.0f, 0.0f};
-inline constexpr Vec4 Vec4One  = Vec4{1.0f, 1.0f, 1.0f, 1.0f};
+inline constexpr Vec4 Vec4Zero  = Vec4{0.0f, 0.0f, 0.0f, 0.0f};
+inline constexpr Vec4 Vec4One   = Vec4{1.0f, 1.0f, 1.0f, 1.0f};
+inline constexpr Vec4 Vec4UnitX = Vec4{1.0f, 0.0f, 0.0f, 0.0f};
+inline constexpr Vec4 Vec4UnitY = Vec4{0.0f, 1.0f, 0.0f, 0.0f};
+inline constexpr Vec4 Vec4UnitZ = Vec4{0.0f, 0.0f, 1.0f, 0.0f};
+inline constexpr Vec4 Vec4UnitW = Vec4{0.0f, 0.0f, 0.0f, 1.0f};
 
 inline constexpr Mat4 IdentityMat4 = Mat4{1.0f};
 inline constexpr Mat3 IdentityMat3 = Mat3{1.0f};
