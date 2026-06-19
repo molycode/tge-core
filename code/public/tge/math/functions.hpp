@@ -71,6 +71,11 @@ inline Vec4 Normalize(Vec4 const& v)
 	return glm::normalize(v);
 }
 
+inline Quat Normalize(Quat const& q)
+{
+	return glm::normalize(q);
+}
+
 inline float Dot(Vec3 const& a, Vec3 const& b)
 {
 	return glm::dot(a, b);
