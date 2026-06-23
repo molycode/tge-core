@@ -3,12 +3,12 @@
 
 namespace Tge::Threading
 {
-CJobGroup g_defaultJobGroup;
+CJobGroup gDefaultJobGroup;
 
 //////////////////////////////////////////////////////////////////////////
 void CJobGroup::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 {
-	if (job && g_jobScheduler)
+	if (job && gJobScheduler)
 	{
 		m_activeJobs.fetch_add(1, std::memory_order_relaxed);
 
@@ -37,7 +37,7 @@ void CJobGroup::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 	};
 
 		std::unique_ptr<IJob> wrappedJob(new CWrappedJob(std::move(job), this));
-		g_jobScheduler->SubmitJob(std::move(wrappedJob), priority);
+		gJobScheduler->SubmitJob(std::move(wrappedJob), priority);
 	}
 }
 

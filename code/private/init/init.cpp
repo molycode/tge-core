@@ -45,6 +45,6 @@ void Terminate()
 void Update()
 {
 	Logging::GetLogSystem().DispatchListeners();
-	Memory::g_frameAllocator.Reset();
+	Memory::gFrameAllocator.Reset();
 }
 } // namespace Tge

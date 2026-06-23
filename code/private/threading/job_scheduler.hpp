@@ -45,5 +45,5 @@ private:
 	std::atomic<size_t> m_activeJobs{0};
 };
 
-extern CJobScheduler* g_jobScheduler;
+extern CJobScheduler* gJobScheduler;
 } // namespace Tge::Threading

@@ -1,5 +1,6 @@
 #include <tge/memory/tracking.hpp>
 #include <tge/memory/category_context.hpp>
+#include <tge/memory/allocation_hooks.hpp>
 #include <rpmalloc/rpmalloc.h>
 #include <new>
 #include <cstdint>
@@ -59,10 +60,12 @@ void* operator new(size_t size)
 
 	void* userPtr = GetUserPtr(rawPtr);
 	Tge::Memory::TrackAllocation(header->category, size);
-	return userPtr;
 #else
-	return rpmalloc(size);
+	void* userPtr = rpmalloc(size);
 #endif // TGE_MEMORY_TRACKING_ENABLED
+
+	Tge::Memory::NotifyAllocation(userPtr, size);
+	return userPtr;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -70,6 +73,7 @@ void operator delete(void* ptr) noexcept
 {
 	if (ptr != nullptr)
 	{
+		Tge::Memory::NotifyDeallocation(ptr);
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 		SAllocationHeader* header = GetHeader(ptr);
 		void* rawPtr = static_cast<void*>(header);
@@ -123,10 +127,12 @@ void* operator new(size_t size, std::align_val_t align)
 
 	void* userPtr = static_cast<char*>(rawPtr) + headerSize;
 	Tge::Memory::TrackAllocation(header->category, size);
-	return userPtr;
 #else
-	return rpaligned_alloc(static_cast<size_t>(align), size);
+	void* userPtr = rpaligned_alloc(static_cast<size_t>(align), size);
 #endif // TGE_MEMORY_TRACKING_ENABLED
+
+	Tge::Memory::NotifyAllocation(userPtr, size);
+	return userPtr;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -140,6 +146,7 @@ void operator delete(void* ptr, std::align_val_t align) noexcept
 {
 	if (ptr != nullptr)
 	{
+		Tge::Memory::NotifyDeallocation(ptr);
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 		size_t const alignment = static_cast<size_t>(align);
 		size_t const headerSize = GetAlignedHeaderSize(alignment);
@@ -191,11 +198,12 @@ void* operator new(size_t size, std::nothrow_t const&) noexcept
 		userPtr = GetUserPtr(rawPtr);
 		Tge::Memory::TrackAllocation(header->category, size);
 	}
-
-	return userPtr;
 #else
-	return rpmalloc(size);
+	void* userPtr = rpmalloc(size);
 #endif // TGE_MEMORY_TRACKING_ENABLED
+
+	Tge::Memory::NotifyAllocation(userPtr, size);
+	return userPtr;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -224,11 +232,12 @@ void* operator new(size_t size, std::align_val_t align, std::nothrow_t const&) n
 		userPtr = static_cast<char*>(rawPtr) + headerSize;
 		Tge::Memory::TrackAllocation(header->category, size);
 	}
-
-	return userPtr;
 #else
-	return rpaligned_alloc(static_cast<size_t>(align), size);
+	void* userPtr = rpaligned_alloc(static_cast<size_t>(align), size);
 #endif // TGE_MEMORY_TRACKING_ENABLED
+
+	Tge::Memory::NotifyAllocation(userPtr, size);
+	return userPtr;
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -35,5 +35,5 @@ private:
 	std::atomic<bool> m_shouldTerminate{false};
 };
 
-extern CThreadPool* g_threadPool;
+extern CThreadPool* gThreadPool;
 } // namespace Tge::Threading

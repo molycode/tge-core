@@ -6,32 +6,32 @@ namespace Tge::Memory
 {
 namespace
 {
-	thread_local CategoryId g_currentCategory = Category::Global;
+	thread_local CategoryId gCurrentCategory = Category::Global;
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
 CategoryId GetCurrentCategory()
 {
-	return g_currentCategory;
+	return gCurrentCategory;
 }
 
 //////////////////////////////////////////////////////////////////////////
 void SetCurrentCategory(CategoryId category)
 {
-	g_currentCategory = category;
+	gCurrentCategory = category;
 }
 
 //////////////////////////////////////////////////////////////////////////
 CScopedCategory::CScopedCategory(CategoryId category)
-	: m_previousCategory(g_currentCategory)
+	: m_previousCategory(gCurrentCategory)
 {
-	g_currentCategory = category;
+	gCurrentCategory = category;
 }
 
 //////////////////////////////////////////////////////////////////////////
 CScopedCategory::~CScopedCategory()
 {
-	g_currentCategory = m_previousCategory;
+	gCurrentCategory = m_previousCategory;
 }
 
 } // namespace Tge::Memory

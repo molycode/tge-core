@@ -7,7 +7,7 @@ namespace Tge::Memory
 {
 
 // STL-compatible allocator adapter
-// Usage: std::vector<int, CStdAllocator<int>> myVec(CStdAllocator<int>(&g_frameAllocator));
+// Usage: std::vector<int, CStdAllocator<int>> myVec(CStdAllocator<int>(&gFrameAllocator));
 template<typename T>
 class CStdAllocator final
 {

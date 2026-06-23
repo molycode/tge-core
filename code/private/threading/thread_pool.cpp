@@ -1,9 +1,11 @@
 #include "thread_pool.hpp"
 #include <tge/threading/job_system.hpp>
+#include <tge/threading/thread_name.hpp>
+#include <format>
 
 namespace Tge::Threading
 {
-CThreadPool* g_threadPool = nullptr;
+CThreadPool* gThreadPool = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 CThreadPool::CThreadPool(size_t numThreads)
@@ -62,6 +64,7 @@ void CThreadPool::Terminate()
 void CThreadPool::WorkerThread(size_t threadIndex)
 {
 	InitializeThread();
+	SetCurrentThreadName(std::format("TgeWorker {}", threadIndex).c_str());
 
 	while (true)
 	{

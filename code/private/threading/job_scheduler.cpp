@@ -3,7 +3,7 @@
 
 namespace Tge::Threading
 {
-CJobScheduler* g_jobScheduler = nullptr;
+CJobScheduler* gJobScheduler = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 void CJobScheduler::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
@@ -60,11 +60,11 @@ void CJobScheduler::ProcessNextJob()
 		}
 	}
 
-	if (job && g_threadPool)
+	if (job && gThreadPool)
 	{
 		m_activeJobs.fetch_add(1, std::memory_order_relaxed);
 
-		g_threadPool->Execute([this, jobPtr = job.release()]()
+		gThreadPool->Execute([this, jobPtr = job.release()]()
 		{
 			std::unique_ptr<IJob> ownedJob(jobPtr);
 			ownedJob->Execute();

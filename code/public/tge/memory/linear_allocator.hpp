@@ -27,5 +27,5 @@ private:
 	size_t m_offset = 0;
 };
 
-extern CLinearAllocator g_frameAllocator;
+extern CLinearAllocator gFrameAllocator;
 } // namespace Tge::Memory

@@ -17,5 +17,5 @@ public:
 	std::string_view GetName() const override { return "DefaultAllocator"; }
 };
 
-extern CDefaultAllocator g_defaultAllocator;
+extern CDefaultAllocator gDefaultAllocator;
 } // namespace Tge::Memory

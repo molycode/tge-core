@@ -6,7 +6,7 @@
 namespace Tge::Memory
 {
 
-CDefaultAllocator g_defaultAllocator;
+CDefaultAllocator gDefaultAllocator;
 
 //////////////////////////////////////////////////////////////////////////
 void* CDefaultAllocator::Allocate(size_t size, size_t alignment)

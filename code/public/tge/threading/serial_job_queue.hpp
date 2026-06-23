@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tge/non_copyable.hpp>
+#include <tge/threading/thread_name.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -138,6 +139,8 @@ private:
 
 	void WorkerThreadMain()
 	{
+		SetCurrentThreadName("TgeSerialJob");
+
 		bool shouldExit = false;
 
 		while (!shouldExit)

@@ -36,5 +36,5 @@ private:
 	std::condition_variable m_completionCondition;
 };
 
-extern CJobGroup g_defaultJobGroup;
+extern CJobGroup gDefaultJobGroup;
 } // namespace Tge::Threading

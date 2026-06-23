@@ -11,9 +11,9 @@ size_t GetNumThreads()
 {
 	size_t numThreads = 0;
 
-	if (g_threadPool)
+	if (gThreadPool)
 	{
-		numThreads = g_threadPool->GetNumThreads();
+		numThreads = gThreadPool->GetNumThreads();
 	}
 
 	return numThreads;
@@ -45,24 +45,24 @@ bool Initialize(size_t numThreads)
 		}
 	}
 
-	g_threadPool = new CThreadPool(numThreads);
-	g_jobScheduler = new CJobScheduler();
+	gThreadPool = new CThreadPool(numThreads);
+	gJobScheduler = new CJobScheduler();
 
 	return true;
 }
 
 void Terminate()
 {
-	if (g_jobScheduler)
+	if (gJobScheduler)
 	{
-		delete g_jobScheduler;
-		g_jobScheduler = nullptr;
+		delete gJobScheduler;
+		gJobScheduler = nullptr;
 	}
 
-	if (g_threadPool)
+	if (gThreadPool)
 	{
-		delete g_threadPool;
-		g_threadPool = nullptr;
+		delete gThreadPool;
+		gThreadPool = nullptr;
 	}
 }
 } // namespace Internal
