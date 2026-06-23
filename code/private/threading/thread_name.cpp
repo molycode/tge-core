@@ -21,7 +21,7 @@ void SetThreadNameHook(ThreadNameHook hook)
 }
 
 //////////////////////////////////////////////////////////////////////////
-void SetCurrentThreadName(char const* name)
+void SetCurrentThreadName(std::string_view name)
 {
 #if defined(TGE_PLATFORM_LINUX)
 	// Linux caps the OS thread name at 15 characters plus a terminator; truncate to fit. The profiler hook
@@ -29,10 +29,9 @@ void SetCurrentThreadName(char const* name)
 	// (Windows SetThreadDescription, etc.) get profiler-only naming until their OS path is added here.
 	constexpr size_t MaxOsNameLength = 15;
 	char osName[MaxOsNameLength + 1];
-	size_t const nameLength = std::strlen(name);
-	size_t const copyLength = (nameLength < MaxOsNameLength) ? nameLength : MaxOsNameLength;
+	size_t const copyLength = (name.size() < MaxOsNameLength) ? name.size() : MaxOsNameLength;
 
-	std::memcpy(osName, name, copyLength);
+	std::memcpy(osName, name.data(), copyLength);
 	osName[copyLength] = '\0';
 	pthread_setname_np(pthread_self(), osName);
 #endif // defined(TGE_PLATFORM_LINUX)

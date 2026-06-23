@@ -64,7 +64,7 @@ void CThreadPool::Terminate()
 void CThreadPool::WorkerThread(size_t threadIndex)
 {
 	InitializeThread();
-	SetCurrentThreadName(std::format("TgeWorker {}", threadIndex).c_str());
+	SetCurrentThreadName(std::format("TgeWorker {}", threadIndex));
 
 	while (true)
 	{
