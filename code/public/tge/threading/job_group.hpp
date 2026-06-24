@@ -3,6 +3,7 @@
 #include "job.hpp"
 #include <tge/non_copyable.hpp>
 #include <memory>
+#include <deque>
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
@@ -31,9 +32,19 @@ public:
 
 private:
 
-	std::atomic<size_t> m_activeJobs{0};
-	std::mutex m_waitMutex;
-	std::condition_variable m_completionCondition;
+	// Shared so a dispatched runner can outlive the CJobGroup handle (stack-local groups) without dangling.
+	struct SState final
+	{
+		// Runs one of this group's queued jobs on the calling thread; false when none queued.
+		bool RunOnePending();
+
+		std::atomic<size_t> activeJobs{ 0 };
+		std::mutex mutex;
+		std::deque<std::unique_ptr<IJob>> pending;
+		std::condition_variable completion;
+	};
+
+	std::shared_ptr<SState> m_state{ std::make_shared<SState>() };
 };
 
 extern CJobGroup gDefaultJobGroup;
