@@ -4,7 +4,24 @@
 
 namespace Tge::Threading
 {
-CJobGroup gDefaultJobGroup;
+thread_local CJobGroup::SState* CJobGroup::SState::tCurrent = nullptr;
+
+//////////////////////////////////////////////////////////////////////////
+CJobGroup::CJobGroup()
+{
+	// Inherit the currently-running group as cancellation parent, so a group created inside a job
+	// (a nested bake stage) is cancelled together with its parent — no cancellation handle to thread through.
+	if (SState::tCurrent != nullptr)
+	{
+		m_state->parent = SState::tCurrent->shared_from_this();
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool CJobGroup::SState::IsCancelled() const
+{
+	return cancelled.load(std::memory_order_relaxed) || (parent && parent->IsCancelled());
+}
 
 //////////////////////////////////////////////////////////////////////////
 bool CJobGroup::SState::RunOnePending()
@@ -25,7 +42,15 @@ bool CJobGroup::SState::RunOnePending()
 
 	if (ran)
 	{
-		job->Execute();
+		// A cancelled group drains its queue without running the bodies, so Wait() returns promptly.
+		if (!IsCancelled())
+		{
+			SState* const prev = tCurrent;
+			tCurrent = this;
+			job->Execute();
+			tCurrent = prev;
+		}
+
 		activeJobs.fetch_sub(1, std::memory_order_relaxed);
 		completion.notify_all();
 	}
@@ -81,5 +106,38 @@ bool CJobGroup::IsComplete() const
 size_t CJobGroup::GetActiveCount() const
 {
 	return m_state->activeJobs.load(std::memory_order_relaxed);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CJobGroup::Cancel()
+{
+	m_state->cancelled.store(true, std::memory_order_relaxed);
+
+	// Drop still-queued jobs so Wait() drains to zero without running them; the mutex serialises
+	// against RunOnePending so each job's activeJobs count is settled exactly once (popped or dropped).
+	std::deque<std::unique_ptr<IJob>> dropped;
+
+	{
+		std::lock_guard<std::mutex> lock(m_state->mutex);
+		dropped.swap(m_state->pending);
+	}
+
+	if (!dropped.empty())
+	{
+		m_state->activeJobs.fetch_sub(dropped.size(), std::memory_order_relaxed);
+		m_state->completion.notify_all();
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool CJobGroup::IsCancellationRequested() const
+{
+	return m_state->IsCancelled();
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool IsCurrentJobCancelled()
+{
+	return CJobGroup::SState::tCurrent != nullptr && CJobGroup::SState::tCurrent->IsCancelled();
 }
 } // namespace Tge::Threading
