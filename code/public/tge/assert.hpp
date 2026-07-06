@@ -1,8 +1,27 @@
 #pragma once
 
+#include <cstdio>
+
 namespace Tge
 {
-[[noreturn]] void FatalError(char const* message, char const* file, int line);
+// Header-only + stderr so assert carries no link dependency (no static-lib cycle) and keeps the abort off the logger it may be reporting on.
+[[noreturn]] inline void FatalError(char const* message, char const* file, int line)
+{
+	std::fprintf(stderr,
+		"\n=== FATAL ERROR ===\n"
+		"Location: %s:%d\n"
+		"Message: %s\n"
+		"===================\n",
+		file, line, message);
+
+	#if defined(_MSC_VER)
+		__debugbreak();
+	#elif defined(__GNUC__) || defined(__clang__)
+		__builtin_trap();
+	#else
+		std::abort();
+	#endif
+}
 } // namespace Tge
 
 // Fatal error macro - use for unrecoverable errors

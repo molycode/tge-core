@@ -1,7 +1,7 @@
 #include <tge/logging/log_system.hpp>
 #include <tge/logging/log.hpp>
 #include <tge/color.hpp>
-#include <tge/init/assert.hpp>
+#include <tge/assert.hpp>
 #include <tge/platform.hpp>
 
 #ifdef TGE_LOGGING_ENABLED
