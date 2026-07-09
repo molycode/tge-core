@@ -26,13 +26,14 @@ CThreadPool::~CThreadPool()
 }
 
 //////////////////////////////////////////////////////////////////////////
-void CThreadPool::Execute(std::function<void()> work)
+void CThreadPool::Execute(std::function<void()> work, EJobPriority priority)
 {
 	if (work)
 	{
 		{
 			std::lock_guard<std::mutex> lock(m_queueMutex);
-			m_workQueue.push(std::move(work));
+			m_workQueue.push(SWorkItem{std::move(work), priority, m_nextSequence});
+			++m_nextSequence;
 		}
 
 		m_condition.notify_one();
@@ -85,7 +86,7 @@ void CThreadPool::WorkerThread(size_t threadIndex)
 
 			if (!m_workQueue.empty())
 			{
-				work = std::move(m_workQueue.front());
+				work = std::move(const_cast<SWorkItem&>(m_workQueue.top()).work);
 				m_workQueue.pop();
 			}
 		}
