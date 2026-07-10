@@ -158,7 +158,7 @@ add_library(TgeThreading STATIC ${TgeThreading_FILES})
 
 target_link_libraries(TgeThreading
 	PUBLIC TgeBase
-	PRIVATE rpmalloc
+	PRIVATE rpmalloc TgeLogging
 )
 
 target_include_directories(TgeThreading
