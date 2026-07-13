@@ -624,22 +624,27 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 {
 	if (!GetLogSystem().IsInitialized())
 	{
-		// Fallback to stderr before logging system is initialized
-		switch (level)
+		// The mask is set on the channel itself, so it is meaningful before the system comes up — honour it
+		// here too, or SetLogLevel silently does nothing to anything logged this early.
+		if ((level & m_levelMask) != ELogLevel::None)
 		{
-			case ELogLevel::Info:
-				std::cout << "[Pre-init] " << message << '\n' << std::flush;
-				break;
-			case ELogLevel::Warning:
-				std::cout << "\033[33m[Pre-init] [WARNING] " << message << "\033[0m\n" << std::flush;
-				break;
-			case ELogLevel::Error:
-				std::cerr << "\033[31m[Pre-init] [ERROR] " << message << "\033[0m\n" << std::flush;
-				break;
-			case ELogLevel::None:
-			default:
-				assert(false && "Invalid log level for message");
-				break;
+			// Fallback to stderr before logging system is initialized
+			switch (level)
+			{
+				case ELogLevel::Info:
+					std::cout << "[Pre-init] " << message << '\n' << std::flush;
+					break;
+				case ELogLevel::Warning:
+					std::cout << "\033[33m[Pre-init] [WARNING] " << message << "\033[0m\n" << std::flush;
+					break;
+				case ELogLevel::Error:
+					std::cerr << "\033[31m[Pre-init] [ERROR] " << message << "\033[0m\n" << std::flush;
+					break;
+				case ELogLevel::None:
+				default:
+					assert(false && "Invalid log level for message");
+					break;
+			}
 		}
 	}
 	else
