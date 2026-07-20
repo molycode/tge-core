@@ -2,6 +2,7 @@
 
 #include <tge/logging/log_message.hpp>
 #include <tge/non_copyable.hpp>
+#include <atomic>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,6 +37,9 @@ public:
 	void SetAllLogLevels(ELogLevel level);
 	ELogLevel GetLogLevel(std::string_view channelName) const;
 
+	void SetEnabledTargets(ETarget targets);
+	ETarget GetEnabledTargets() const;
+
 	std::vector<std::string_view> GetChannelNames() const;
 
 	std::string_view GetChannelNameById(uint64_t channelId) const;
@@ -48,8 +52,9 @@ public:
 private:
 
 #ifdef TGE_LOGGING_ENABLED
-	bool           m_initialized{ false };
-	ETimestampMode m_timestampMode{ ETimestampMode::Elapsed };
+	bool                 m_initialized{ false };
+	ETimestampMode       m_timestampMode{ ETimestampMode::Elapsed };
+	std::atomic<ETarget> m_enabledTargets{ ETarget::All };
 #endif // TGE_LOGGING_ENABLED
 };
 

@@ -602,6 +602,18 @@ ETimestampMode CLogSystem::GetTimestampMode() const
 }
 
 //////////////////////////////////////////////////////////////////////////
+void CLogSystem::SetEnabledTargets(ETarget targets)
+{
+	m_enabledTargets.store(targets, std::memory_order_relaxed);
+}
+
+//////////////////////////////////////////////////////////////////////////
+ETarget CLogSystem::GetEnabledTargets() const
+{
+	return m_enabledTargets.load(std::memory_order_relaxed);
+}
+
+//////////////////////////////////////////////////////////////////////////
 CLog::CLog(std::string_view name, SColor const& color)
 	: m_name{ name }
 	, m_color{ color }
@@ -651,6 +663,8 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 	{
 		std::lock_guard lock(GetMutex());
 
+		ETarget const effective = target & GetLogSystem().GetEnabledTargets();
+
 		// Check filtering (bitmask: message level must be in channel's allowed levels)
 		if ((level & m_levelMask) != ELogLevel::None)
 		{
@@ -668,7 +682,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 				FormatTimestamp(static_cast<uint64_t>(elapsed.count()), tsBuf, sizeof(tsBuf));
 			}
 
-			if ((target & ETarget::Listeners) != ETarget::None)
+			if ((effective & ETarget::Listeners) != ETarget::None)
 			{
 				// Console path: heap-allocate a shared SLogMessage so both the history
 				// deque and the pending-dispatch queue own it without copying strings.
@@ -676,7 +690,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 					now,
 					static_cast<uint64_t>(elapsed.count()),
 					level,
-					target,
+					effective,
 					std::string_view{m_name},
 					std::move(message),
 					std::string{tsBuf},
@@ -685,12 +699,12 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 					m_color.b
 				});
 
-				if ((target & ETarget::Terminal) != ETarget::None)
+				if ((effective & ETarget::Terminal) != ETarget::None)
 				{
 					WriteToTerminal(*msg);
 				}
 
-				if ((target & ETarget::File) != ETarget::None)
+				if ((effective & ETarget::File) != ETarget::None)
 				{
 					WriteToFile(*msg);
 				}
@@ -711,7 +725,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 					now,
 					static_cast<uint64_t>(elapsed.count()),
 					level,
-					target,
+					effective,
 					std::string_view{m_name},
 					std::move(message),
 					std::string{tsBuf},
@@ -720,12 +734,12 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 					m_color.b
 				};
 
-				if ((target & ETarget::Terminal) != ETarget::None)
+				if ((effective & ETarget::Terminal) != ETarget::None)
 				{
 					WriteToTerminal(msg);
 				}
 
-				if ((target & ETarget::File) != ETarget::None)
+				if ((effective & ETarget::File) != ETarget::None)
 				{
 					WriteToFile(msg);
 				}
@@ -867,6 +881,8 @@ uint64_t CLogSystem::Register(std::string_view) { return 0; }
 bool CLogSystem::SetLogLevel(std::string_view, ELogLevel) { return false; }
 void CLogSystem::SetAllLogLevels(ELogLevel) {}
 ELogLevel CLogSystem::GetLogLevel(std::string_view) const { return ELogLevel::All; }
+void CLogSystem::SetEnabledTargets(ETarget) {}
+ETarget CLogSystem::GetEnabledTargets() const { return ETarget::All; }
 std::vector<std::string_view> CLogSystem::GetChannelNames() const { return {}; }
 std::string_view CLogSystem::GetChannelNameById(uint64_t) const { return ""; }
 void CLogSystem::RegisterListener(void*, LogMessageCallback, EMessageFormat, EHistory) {}
