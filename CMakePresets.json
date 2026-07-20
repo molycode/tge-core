@@ -65,6 +65,34 @@
 				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/linux/clang.cmake",
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
 			}
+		},
+		{
+			"name": "tge-core-windows-msvc-debug",
+			"inherits": "tge-core-base",
+			"displayName": "tge_core_windows_msvc_debug",
+			"description": "Debug build with MSVC — run from 'x64 Native Tools Command Prompt for VS 2026'",
+			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/msvc-Debug",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows/msvc.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
+		},
+		{
+			"name": "tge-core-windows-msvc-release",
+			"inherits": "tge-core-base",
+			"displayName": "tge_core_windows_msvc_release",
+			"description": "Release build with MSVC — run from 'x64 Native Tools Command Prompt for VS 2026'",
+			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/msvc-Release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows/msvc.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
 		}
 	],
 	"buildPresets": [
@@ -87,6 +115,16 @@
 			"name": "tge-core-linux-clang-release",
 			"configurePreset": "tge-core-linux-clang-release",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
+		},
+		{
+			"name": "tge-core-windows-msvc-debug",
+			"configurePreset": "tge-core-windows-msvc-debug",
+			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+		},
+		{
+			"name": "tge-core-windows-msvc-release",
+			"configurePreset": "tge-core-windows-msvc-release",
+			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
 		}
 	]
 }
