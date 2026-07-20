@@ -9,6 +9,18 @@ elseif(NOT DEFINED CMAKE_C_COMPILER)
 	set(CMAKE_CXX_COMPILER "clang++")
 endif()
 
+# Point Clang to GCC's libstdc++ for C++23 features (std::print, std::format, etc.)
+# Also bake in the RPATH so the binary finds the correct libstdc++ at runtime
+if(DEFINED ENV{TGE_GCC_PATH})
+	file(GLOB _gcc_ver_dirs LIST_DIRECTORIES true "$ENV{TGE_GCC_PATH}/lib/gcc/x86_64-pc-linux-gnu/*")
+	list(SORT _gcc_ver_dirs COMPARE NATURAL ORDER DESCENDING)
+	list(GET _gcc_ver_dirs 0 _gcc_install_dir)
+	add_compile_options(--gcc-install-dir=${_gcc_install_dir})
+	add_link_options(--gcc-install-dir=${_gcc_install_dir})
+	set(CMAKE_BUILD_RPATH "$ENV{TGE_GCC_PATH}/lib64")
+	set(CMAKE_INSTALL_RPATH "$ENV{TGE_GCC_PATH}/lib64")
+	message(STATUS "Using GCC libstdc++ from TGE_GCC_PATH: $ENV{TGE_GCC_PATH}")
+endif()
 
 if(DEFINED ENV{TGE_CLANG_PATH})
 	message(STATUS "Using Clang from TGE_CLANG_PATH: $ENV{TGE_CLANG_PATH}")
