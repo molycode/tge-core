@@ -10,7 +10,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::` - Base utilities (SNoCopyNoMove, SColor, FatalError, gLog)
 - `Tge::Logging::` - Log system (CLog, CLogSystem, ELogLevel)
 - `Tge::Memory::` - Allocators, tracking (CDefaultAllocator, CLinearAllocator, etc.)
-- `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB)
+- `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
 
