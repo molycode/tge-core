@@ -220,6 +220,21 @@ target_link_libraries(TgeGeometry
 )
 
 # ============================================================================
+# TgeMaterial (INTERFACE - header-only material vocabulary)
+# ============================================================================
+file(GLOB TgeMaterial_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/material/*.hpp
+)
+
+add_library(TgeMaterial INTERFACE)
+
+target_sources(TgeMaterial INTERFACE ${TgeMaterial_HEADERS})
+
+target_link_libraries(TgeMaterial
+	INTERFACE TgeMath
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -233,4 +248,5 @@ target_link_libraries(TgeCore INTERFACE
 	TgeIO
 	TgeInit
 	TgeGeometry
+	TgeMaterial
 )

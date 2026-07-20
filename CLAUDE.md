@@ -14,6 +14,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
+- `Tge::Material::` - Material vocabulary (SMaterialProperties, STextureTransform, ETextureSlot)
 
 ### Include Paths
 All public headers use `<tge/...>` prefix:
@@ -35,7 +36,13 @@ All public headers use `<tge/...>` prefix:
 | TgeIO | STATIC | TgeBase | File and path operations |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeIO, TgeLogging | Initialization/termination |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
+| TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
+
+`TgeGeometry` and `TgeMaterial` are engine-domain vocabulary rather than general infrastructure. They live
+here because both a loader and a renderer embed these types **by value**, so they can never version
+independently of each other — the property that defines core. Consumers who want only infrastructure should
+link the specific libs (`TgeBase`, `TgeLogging`, …) rather than the `TgeCore` umbrella.
 
 ### Initialization
 ```cpp
