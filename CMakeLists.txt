@@ -205,6 +205,21 @@ target_include_directories(TgeInit
 )
 
 # ============================================================================
+# TgeGeometry (INTERFACE - header-only geometry vocabulary)
+# ============================================================================
+file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/geometry/*.hpp
+)
+
+add_library(TgeGeometry INTERFACE)
+
+target_sources(TgeGeometry INTERFACE ${TgeGeometry_HEADERS})
+
+target_link_libraries(TgeGeometry
+	INTERFACE TgeMath
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -217,4 +232,5 @@ target_link_libraries(TgeCore INTERFACE
 	TgeThreading
 	TgeIO
 	TgeInit
+	TgeGeometry
 )

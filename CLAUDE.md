@@ -13,6 +13,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
+- `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
 
 ### Include Paths
 All public headers use `<tge/...>` prefix:
@@ -33,6 +34,7 @@ All public headers use `<tge/...>` prefix:
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system and thread pool |
 | TgeIO | STATIC | TgeBase | File and path operations |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeIO, TgeLogging | Initialization/termination |
+| TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
 
 ### Initialization
