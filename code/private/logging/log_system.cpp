@@ -520,11 +520,7 @@ void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessa
 	std::vector<std::shared_ptr<SLogMessage>> historyToFlush;
 	SListener listenerSnapshot;
 
-	if (history == EHistory::Flush)
-	{
-		// Draining first is what keeps the replay below chronological: the queue is delivered per channel.
-		DispatchListeners();
-	}
+	DispatchListeners();
 
 	{
 		std::lock_guard lock(GetMutex());
