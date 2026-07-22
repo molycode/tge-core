@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tge/module/frame_phase.hpp>
+#include <tge/module/version.hpp>
 #include <tge/non_copyable.hpp>
 #include <cstdint>
 #include <span>
@@ -9,6 +10,9 @@
 namespace Tge
 {
 class IModuleId;
+
+// Bump on any shape change to this contract - a module compiled against a different one cannot be driven safely.
+constexpr uint32_t ModuleContractVersion{ 1 };
 
 // Answering presence, preference and notification with one relation is what let the declared graph grow cycles.
 enum class EDependencyKind : uint8_t
@@ -22,6 +26,7 @@ struct SDependency final
 {
 	IModuleId*      pModule{ nullptr };
 	EDependencyKind kind{ EDependencyKind::Required };
+	SVersion        minVersion{};
 };
 
 using Dependencies = std::span<SDependency const>;
@@ -31,6 +36,8 @@ class IModuleId : public SNoCopyNoMove
 public:
 
 	virtual std::string_view GetName() const = 0;
+	virtual SVersion GetVersion() const = 0;
+	virtual uint32_t GetContractVersion() const = 0;
 
 protected:
 
