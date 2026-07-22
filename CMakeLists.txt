@@ -228,6 +228,45 @@ if(TARGET Tracy::TracyClient)
 endif()
 
 # ============================================================================
+# TgeModule (STATIC - the module contract every module compiles against)
+# ============================================================================
+file(GLOB TgeModule_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/module/*.hpp
+)
+
+# Listed rather than globbed: the driver's sources sit in the same directory and must NOT land here -- a
+# module declares a dependency on Core's identity without linking anything that can drive a module.
+add_library(TgeModule STATIC
+	${TgeModule_HEADERS}
+	code/private/module/module_id.cpp
+)
+
+target_link_libraries(TgeModule
+	PUBLIC TgeBase
+)
+
+# ============================================================================
+# TgeLifecycle (STATIC - module ordering and phase dispatch, for a composition root)
+# ============================================================================
+add_library(TgeLifecycle STATIC
+	code/private/module/module.hpp
+	code/private/module/module.cpp
+	code/private/module/module_graph.hpp
+	code/private/module/module_graph.cpp
+	code/private/module/runtime.hpp
+	code/private/module/runtime.cpp
+)
+
+target_link_libraries(TgeLifecycle
+	PUBLIC TgeModule
+	PRIVATE TgeLogging TgeInit TgeProfiling
+)
+
+target_include_directories(TgeLifecycle
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+)
+
+# ============================================================================
 # TgeGeometry (INTERFACE - header-only geometry vocabulary)
 # ============================================================================
 file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS
@@ -271,6 +310,9 @@ target_link_libraries(TgeCore INTERFACE
 	TgeIO
 	TgeInit
 	TgeProfiling
+	TgeModule
 	TgeGeometry
 	TgeMaterial
 )
+
+# TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.

@@ -37,6 +37,8 @@ All public headers use `<tge/...>` prefix:
 | TgeIO | STATIC | TgeBase | File and path operations |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeIO, TgeLogging | Initialization/termination |
 | TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |
+| TgeModule | STATIC | TgeBase | Module contract: IModule, IModuleId, SDependency, EFramePhase, SRunContext |
+| TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
@@ -45,6 +47,11 @@ All public headers use `<tge/...>` prefix:
 here because both a loader and a renderer embed these types **by value**, so they can never version
 independently of each other — the property that defines core. Consumers who want only infrastructure should
 link the specific libs (`TgeBase`, `TgeLogging`, …) rather than the `TgeCore` umbrella.
+
+`TgeModule` and `TgeLifecycle` are split for the same reason they were two targets in the engine: a module
+needs only the contract, while driving modules is the composition root's job. `TgeCore` therefore carries
+`TgeModule` and not `TgeLifecycle`. The cost of hosting the contract here is that it versions with core — any
+change to `IModule` or `EFramePhase` is a core release every module rebuilds against.
 
 ### Initialization
 ```cpp
