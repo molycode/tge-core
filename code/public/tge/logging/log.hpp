@@ -120,9 +120,9 @@ private:
 	SColor      m_color;
 	ELogLevel   m_levelMask{ ELogLevel::All };
 
-	std::vector<SListener>                             m_listeners;
+	std::vector<SListener>                            m_listeners;
 	mutable std::vector<std::shared_ptr<SLogMessage>> m_pendingDispatch;
-	mutable std::deque<std::shared_ptr<SLogMessage>>  m_history;
+	std::deque<std::shared_ptr<SLogMessage>>          m_history;
 
 	void Write(ELogLevel level, ETarget target, std::string message) const;
 };

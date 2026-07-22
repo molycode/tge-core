@@ -520,6 +520,12 @@ void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessa
 	std::vector<std::shared_ptr<SLogMessage>> historyToFlush;
 	SListener listenerSnapshot;
 
+	if (history == EHistory::Flush)
+	{
+		// Draining first is what keeps the replay below chronological: the queue is delivered per channel.
+		DispatchListeners();
+	}
+
 	{
 		std::lock_guard lock(GetMutex());
 		TGE_ASSERT(std::none_of(GetListeners().begin(), GetListeners().end(),
@@ -533,8 +539,10 @@ void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessa
 				pLog->AppendHistoryTo(historyToFlush);
 			}
 
-			std::sort(historyToFlush.begin(), historyToFlush.end(),
-				[](auto const& a, auto const& b) { return a->elapsedMs < b->elapsedMs; });
+			// Stable and on the full-resolution stamp: a millisecond holds many lines, and reshuffling
+			// those would scramble the very boot log this flush exists to replay.
+			std::stable_sort(historyToFlush.begin(), historyToFlush.end(),
+				[](auto const& a, auto const& b) { return a->timestamp < b->timestamp; });
 
 			listenerSnapshot = { key, callback, format };
 		}
@@ -684,8 +692,8 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 
 			if ((effective & ETarget::Listeners) != ETarget::None)
 			{
-				// Console path: heap-allocate a shared SLogMessage so both the history
-				// deque and the pending-dispatch queue own it without copying strings.
+				// Console path: heap-allocate a shared SLogMessage so it can move from the
+				// pending queue into the history deque without copying strings.
 				auto msg = std::make_shared<SLogMessage>(SLogMessage{
 					now,
 					static_cast<uint64_t>(elapsed.count()),
@@ -709,13 +717,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 					WriteToFile(*msg);
 				}
 
-				m_pendingDispatch.push_back(msg);
-				m_history.push_back(std::move(msg));
-
-				if (m_history.size() > MaxMessages)
-				{
-					m_history.pop_front();
-				}
+				m_pendingDispatch.push_back(std::move(msg));
 			}
 			else
 			{
@@ -807,6 +809,15 @@ void CLog::DispatchPending()
 		std::swap(toDispatch, m_pendingDispatch);
 		listenersSnapshot = m_listeners;
 		globalSnapshot    = GetListeners();
+
+		// Delivery is what turns a message into history, and it happens under the snapshot's lock so that
+		// receiving it here and replaying it from history stay mutually exclusive.
+		m_history.insert(m_history.end(), toDispatch.begin(), toDispatch.end());
+
+		while (m_history.size() > MaxMessages)
+		{
+			m_history.pop_front();
+		}
 	}
 
 	for (auto const& msg : toDispatch)
