@@ -15,6 +15,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
 - `Tge::Material::` - Material vocabulary (SMaterialProperties, STextureTransform, ETextureSlot)
+- `Tge::Profiling::` - Profiling markers and the backend hook wiring (CScopedPlotMs, RegisterHooks)
 
 ### Include Paths
 All public headers use `<tge/...>` prefix:
@@ -35,6 +36,7 @@ All public headers use `<tge/...>` prefix:
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system and thread pool |
 | TgeIO | STATIC | TgeBase | File and path operations |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeIO, TgeLogging | Initialization/termination |
+| TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |

@@ -205,6 +205,29 @@ target_include_directories(TgeInit
 )
 
 # ============================================================================
+# TgeProfiling (INTERFACE - header-only profiling vocabulary)
+# ============================================================================
+file(GLOB TgeProfiling_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/profiling/*.hpp
+)
+
+add_library(TgeProfiling INTERFACE)
+
+target_sources(TgeProfiling INTERFACE ${TgeProfiling_HEADERS})
+
+target_link_libraries(TgeProfiling
+	INTERFACE TgeBase TgeMemory TgeThreading
+)
+
+# The backend is partnered at compile time, so a consumer that never adds a Tracy client compiles the markers
+# away to nothing rather than carrying a runtime switch.
+if(TARGET Tracy::TracyClient)
+	target_link_libraries(TgeProfiling INTERFACE Tracy::TracyClient)
+	target_compile_definitions(TgeProfiling INTERFACE TGE_PROFILE_TRACY)
+	message(STATUS "[TGE-CORE] Profiling backend: Tracy")
+endif()
+
+# ============================================================================
 # TgeGeometry (INTERFACE - header-only geometry vocabulary)
 # ============================================================================
 file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS
@@ -247,6 +270,7 @@ target_link_libraries(TgeCore INTERFACE
 	TgeThreading
 	TgeIO
 	TgeInit
+	TgeProfiling
 	TgeGeometry
 	TgeMaterial
 )
