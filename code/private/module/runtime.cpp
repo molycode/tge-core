@@ -6,6 +6,7 @@
 #include <tge/profiling/profiling.hpp>
 #include <algorithm>
 #include <chrono>
+#include <format>
 #include <string>
 
 namespace Tge
@@ -49,6 +50,7 @@ bool CRuntime::Initialize(SRunContext const& context)
 	// A context that cannot tick correctly should not get as far as a Vulkan device.
 	ValidateSchedule();
 	LogFrameSchedule();
+	LogModuleVersions();
 
 	if (InitializeModules())
 	{
@@ -202,6 +204,19 @@ void CRuntime::LogFrameSchedule() const
 	}
 
 	gLog.Info("Frame schedule: {}", schedule);
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CRuntime::LogModuleVersions() const
+{
+	std::string versions;
+
+	for (auto* pModule : m_modules)
+	{
+		versions += std::format("{} {} ", pModule->GetName(), pModule->GetId()->GetVersion());
+	}
+
+	gLog.Info("Module versions: {}", versions);
 }
 
 //////////////////////////////////////////////////////////////////////////

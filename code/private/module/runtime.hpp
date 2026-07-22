@@ -33,6 +33,7 @@ private:
 	void DeclareNoTick(IModule* pModule);
 	void ValidateSchedule() const;
 	void LogFrameSchedule() const;
+	void LogModuleVersions() const;
 	bool InitializeModules();
 	void NotifyDependentsInitialized(IModule* pModule);
 	void TerminateModules();

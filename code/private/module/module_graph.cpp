@@ -1,5 +1,6 @@
 #include "module_graph.hpp"
 #include <tge/logging/loggers.hpp>
+#include <tge/module/version.hpp>
 #include <algorithm>
 #include <limits>
 #include <string>
@@ -29,6 +30,61 @@ bool IsOrderingDependency(EDependencyKind kind)
 }
 
 //////////////////////////////////////////////////////////////////////////
+bool ValidateContract(IModule* pModule)
+{
+	bool           valid{ true };
+	uint32_t const contractVersion{ pModule->GetId()->GetContractVersion() };
+
+	if (contractVersion != ModuleContractVersion)
+	{
+		gLog.Error("Module '{}' was built against module contract {}, but this runtime provides {}",
+			pModule->GetName(), contractVersion, ModuleContractVersion);
+
+		valid = false;
+	}
+
+	return valid;
+}
+
+//////////////////////////////////////////////////////////////////////////
+bool ValidateDependencies(IModule* pDependent, std::span<IModule* const> modules)
+{
+	bool valid{ true };
+
+	for (SDependency const& dependency : pDependent->GetDependencies())
+	{
+		if (dependency.pModule == nullptr)
+		{
+			gLog.Error("Module '{}' declares a null dependency", pDependent->GetName());
+
+			valid = false;
+		}
+		else if (FindLoaded(modules, dependency.pModule) == nullptr)
+		{
+			if (dependency.kind == EDependencyKind::Required)
+			{
+				gLog.Error("Module '{}' requires '{}', which this run context does not load",
+					pDependent->GetName(), dependency.pModule->GetName());
+
+				valid = false;
+			}
+		}
+		// No kind is exempt: a Notify dependency is still an interface the dependent compiles against.
+		else if (IsConstrained(dependency.minVersion)
+		     && !Satisfies(dependency.pModule->GetVersion(), dependency.minVersion))
+		{
+			gLog.Error("Module '{}' needs '{}' {} or a compatible later version, but {} is loaded",
+				pDependent->GetName(), dependency.pModule->GetName(), dependency.minVersion,
+				dependency.pModule->GetVersion());
+
+			valid = false;
+		}
+	}
+
+	return valid;
+}
+
+//////////////////////////////////////////////////////////////////////////
 bool DependsOn(IModule* pDependent, IModule* pDependency)
 {
 	bool depends{ false };
@@ -54,23 +110,10 @@ bool CModuleGraph::Resolve(std::span<IModule* const> modules)
 	// Every offender is reported, so fixing a context takes one pass rather than one boot per mistake.
 	for (auto* pModule : modules)
 	{
-		for (SDependency const& dependency : pModule->GetDependencies())
-		{
-			if (dependency.pModule == nullptr)
-			{
-				gLog.Error("Module '{}' declares a null dependency", pModule->GetName());
+		bool const contractValid     = ValidateContract(pModule);
+		bool const dependenciesValid = ValidateDependencies(pModule, modules);
 
-				resolved = false;
-			}
-			else if (dependency.kind == EDependencyKind::Required
-			      && FindLoaded(modules, dependency.pModule) == nullptr)
-			{
-				gLog.Error("Module '{}' requires '{}', which this run context does not load",
-					pModule->GetName(), dependency.pModule->GetName());
-
-				resolved = false;
-			}
-		}
+		resolved = resolved && contractValid && dependenciesValid;
 	}
 
 	if (resolved)
