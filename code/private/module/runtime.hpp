@@ -36,6 +36,7 @@ private:
 	void LogModuleVersions() const;
 	bool InitializeModules();
 	void NotifyDependentsInitialized(IModule* pModule);
+	void TerminateModule(IModule* pModule);
 	void TerminateModules();
 
 	std::vector<IModule*> m_modules;

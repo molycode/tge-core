@@ -252,7 +252,7 @@ bool CRuntime::InitializeModules()
 			else
 			{
 				gLog.Error("{} failed to initialize", pModule->GetName());
-				pModule->Terminate();
+				TerminateModule(pModule);
 
 				initialized = false;
 			}
@@ -285,8 +285,28 @@ void CRuntime::NotifyDependentsInitialized(IModule* pModule)
 }
 
 //////////////////////////////////////////////////////////////////////////
+// The "Terminating" line is the only thing that names the module if Terminate hangs or aborts.
+void CRuntime::TerminateModule(IModule* pModule)
+{
+	gLog.Info("Terminating {}...", pModule->GetName());
+
+	auto const startTime = std::chrono::high_resolution_clock::now();
+
+	pModule->Terminate();
+
+	auto const endTime = std::chrono::high_resolution_clock::now();
+	auto const duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
+	double const milliseconds = duration.count() / 1000.0;
+
+	gLog.Info("Terminated {} in {:.2f} ms", pModule->GetName(), milliseconds);
+}
+
+//////////////////////////////////////////////////////////////////////////
 void CRuntime::TerminateModules()
 {
+	bool const hadActiveModules{ !m_activeModules.empty() };
+	auto const totalStartTime = std::chrono::high_resolution_clock::now();
+
 	while (!m_activeModules.empty())
 	{
 		IModule* pModuleToTerminate = m_activeModules.back();
@@ -299,8 +319,17 @@ void CRuntime::TerminateModules()
 			}
 		}
 
-		pModuleToTerminate->Terminate();
+		TerminateModule(pModuleToTerminate);
 		m_activeModules.pop_back();
+	}
+
+	if (hadActiveModules)
+	{
+		auto const totalEndTime = std::chrono::high_resolution_clock::now();
+		auto const totalDuration = std::chrono::duration_cast<std::chrono::microseconds>(totalEndTime - totalStartTime);
+		double const totalMilliseconds = totalDuration.count() / 1000.0;
+
+		gLog.Info("All modules terminated in {:.2f} ms", totalMilliseconds);
 	}
 
 	m_modules.clear();
