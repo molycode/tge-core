@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tge/config.hpp>
+
 #include <tge/profiling/profiling.hpp>
 
 #if defined(TGE_PROFILE_TRACY)

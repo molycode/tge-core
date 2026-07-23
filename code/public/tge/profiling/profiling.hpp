@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tge/config.hpp>
+
 // TGE-owned CPU profiling vocabulary. Engine code uses ONLY the TGE_PROFILE_* markers below — the profiling
 // backend is selected HERE and nowhere else, so the engine is never married to a vendor. This is the durable
 // "seam": instrument once with these markers, swap/extend backends without touching call sites.

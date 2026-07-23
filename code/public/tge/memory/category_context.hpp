@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tge/config.hpp>
+
 #include <tge/memory/tracking.hpp>
 
 namespace Tge::Memory

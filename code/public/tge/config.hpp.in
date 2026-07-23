@@ -1,0 +1,30 @@
+#pragma once
+
+// Generated from config.hpp.in at configure time. Do not edit the generated copy.
+//
+// These flags select between two bodies of the same inline function or two layouts of the same class in the
+// public headers below, so two translation units that disagree on one is an ODR violation the linker resolves
+// silently: it keeps whichever definition it saw first. Carrying them on the command line makes that
+// disagreement a property of the LINK GRAPH -- a target that forgets to link Tge::Logging compiles the
+// logging headers a second way, and the build stays clean while the program misbehaves. Sourcing them from a
+// header every consumer includes makes the disagreement unrepresentable.
+//
+// The compile definitions on TgeBase/TgeLogging/TgeMemory/TgeProfiling remain, for consumer code that
+// branches on the same flags; both derive from the same configure-time decision, so they cannot disagree in
+// value. The guards below simply let whichever arrives first win without a redefinition.
+
+#ifndef TGE_DEBUG_ENABLED
+#cmakedefine TGE_DEBUG_ENABLED 1
+#endif // TGE_DEBUG_ENABLED
+
+#ifndef TGE_LOGGING_ENABLED
+#cmakedefine TGE_LOGGING_ENABLED 1
+#endif // TGE_LOGGING_ENABLED
+
+#ifndef TGE_MEMORY_TRACKING_ENABLED
+#cmakedefine TGE_MEMORY_TRACKING_ENABLED 1
+#endif // TGE_MEMORY_TRACKING_ENABLED
+
+#ifndef TGE_PROFILE_TRACY
+#cmakedefine TGE_PROFILE_TRACY 1
+#endif // TGE_PROFILE_TRACY

@@ -58,6 +58,12 @@ install(DIRECTORY code/public/tge
 	FILES_MATCHING PATTERN "*.hpp"
 )
 
+# The generated flag header travels with the package: an installed consumer must see the same flags the
+# vendored one does, which is the whole point of generating it.
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/generated/tge/config.hpp
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tge
+)
+
 # glm reaches consumers through tge/math/glm_include.hpp, so it must travel with the package.
 install(DIRECTORY external/glm/glm
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}

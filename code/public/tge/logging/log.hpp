@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tge/config.hpp>
 #include <tge/logging/log_message.hpp>
 #include <tge/non_copyable.hpp>
 #include <tge/color.hpp>

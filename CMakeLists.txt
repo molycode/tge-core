@@ -260,6 +260,28 @@ if(TARGET Tracy::TracyClient)
 endif()
 
 # ============================================================================
+# tge/config.hpp - the flags, in a header rather than only on the command line
+# ============================================================================
+# Generated here, after every flag above has been decided (TGE_PROFILE_TRACY is the last, and depends on
+# whether a Tracy client target exists). See config.hpp.in for why the command line alone is not enough.
+set(TGE_MEMORY_TRACKING_ENABLED ${TGE_ENABLE_MEMORY_TRACKING})
+set(TGE_LOGGING_ENABLED ${TGE_ENABLE_LOGGING})
+
+if(TARGET Tracy::TracyClient)
+	set(TGE_PROFILE_TRACY ON)
+endif()
+
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/code/public/tge/config.hpp.in
+	${CMAKE_CURRENT_BINARY_DIR}/generated/tge/config.hpp
+	@ONLY
+)
+
+target_include_directories(TgeBase INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
+)
+
+# ============================================================================
 # TgeModule (STATIC - the module contract every module compiles against)
 # ============================================================================
 file(GLOB TgeModule_HEADERS CONFIGURE_DEPENDS

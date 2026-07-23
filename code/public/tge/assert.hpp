@@ -1,5 +1,6 @@
 #pragma once
 
+#include <tge/config.hpp>
 #include <cstdio>
 
 namespace Tge
