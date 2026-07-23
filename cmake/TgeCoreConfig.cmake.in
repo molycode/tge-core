@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+
+include("${CMAKE_CURRENT_LIST_DIR}/TgeCoreTargets.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/tge_module_package.cmake")
+
+# Informational only -- the flags travel as usage requirements on the targets, so linking inherits them.
+set(TgeCore_LOGGING_ENABLED @TGE_ENABLE_LOGGING@)
+set(TgeCore_MEMORY_TRACKING_ENABLED @TGE_ENABLE_MEMORY_TRACKING@)
+set(TgeCore_DEBUG_ENABLED @TGE_DEBUG_ENABLED@)
+set(TgeCore_MODULE_CONTRACT_VERSION @TGE_MODULE_CONTRACT_VERSION@)
+
+check_required_components(TgeCore)

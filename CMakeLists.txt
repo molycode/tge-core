@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 4.3.0)
 
-project(tge-core LANGUAGES C CXX)
+project(tge-core VERSION 1.0.0 LANGUAGES C CXX)
 
+include(GNUInstallDirs)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/external.cmake)
 
 if(PROJECT_IS_TOP_LEVEL)
@@ -33,24 +34,32 @@ endif() # PROJECT_IS_TOP_LEVEL
 option(TGE_ENABLE_LOGGING "Enable logging system" ON)
 option(TGE_ENABLE_MEMORY_TRACKING "Enable memory tracking system" ON)
 
-if(PROJECT_IS_TOP_LEVEL)
-	# Debug features in Debug builds
+option(TGE_CORE_INSTALL "Generate install and export rules for tge-core" ${PROJECT_IS_TOP_LEVEL})
+
+# Deciding this only at top level left a vendored Debug build with the flag off while the installed Debug
+# package had it on -- one header, compiled two ways. A parent that has already chosen wins.
+if(NOT DEFINED TGE_DEBUG_ENABLED)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_definitions(TGE_DEBUG_ENABLED)
+		set(TGE_DEBUG_ENABLED ON)
+	else()
+		set(TGE_DEBUG_ENABLED OFF)
+	endif()
+endif()
+
+if(PROJECT_IS_TOP_LEVEL)
+	if(TGE_DEBUG_ENABLED)
 		message(STATUS "[TGE] Debug features ENABLED")
 	else()
 		message(STATUS "[TGE] Debug features DISABLED")
 	endif()
 
 	if(TGE_ENABLE_LOGGING)
-		add_compile_definitions(TGE_LOGGING_ENABLED)
 		message(STATUS "[TGE] Logging ENABLED")
 	else()
 		message(STATUS "[TGE] Logging DISABLED")
 	endif()
 
 	if(TGE_ENABLE_MEMORY_TRACKING)
-		add_compile_definitions(TGE_MEMORY_TRACKING_ENABLED)
 		message(STATUS "[TGE] Memory tracking ENABLED")
 	else()
 		message(STATUS "[TGE] Memory tracking DISABLED")
@@ -71,12 +80,18 @@ file(GLOB TgeBase_HEADERS CONFIGURE_DEPENDS
 )
 
 add_library(TgeBase INTERFACE)
+add_library(Tge::Base ALIAS TgeBase)
 
-target_sources(TgeBase INTERFACE ${TgeBase_HEADERS})
+target_sources(TgeBase PRIVATE ${TgeBase_HEADERS})
 
 target_include_directories(TgeBase INTERFACE
-	${CMAKE_CURRENT_SOURCE_DIR}/code/public
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/code/public>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+
+if(TGE_DEBUG_ENABLED)
+	target_compile_definitions(TgeBase INTERFACE TGE_DEBUG_ENABLED)
+endif()
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/platform.cmake)
 
@@ -90,14 +105,19 @@ file(GLOB TgeLogging_FILES CONFIGURE_DEPENDS
 )
 
 add_library(TgeLogging STATIC ${TgeLogging_FILES})
+add_library(Tge::Logging ALIAS TgeLogging)
 
 target_link_libraries(TgeLogging
-	PUBLIC TgeBase
+	PUBLIC Tge::Base
 )
 
 target_include_directories(TgeLogging
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
 )
+
+if(TGE_ENABLE_LOGGING)
+	target_compile_definitions(TgeLogging PUBLIC TGE_LOGGING_ENABLED)
+endif()
 
 # Copy logging config to build output
 configure_file(
@@ -116,15 +136,20 @@ file(GLOB TgeMemory_FILES CONFIGURE_DEPENDS
 )
 
 add_library(TgeMemory STATIC ${TgeMemory_FILES})
+add_library(Tge::Memory ALIAS TgeMemory)
 
 target_link_libraries(TgeMemory
-	PUBLIC TgeBase
-	PRIVATE rpmalloc TgeLogging
+	PUBLIC Tge::Base
+	PRIVATE rpmalloc Tge::Logging
 )
 
 target_include_directories(TgeMemory
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
 )
+
+if(TGE_ENABLE_MEMORY_TRACKING)
+	target_compile_definitions(TgeMemory PUBLIC TGE_MEMORY_TRACKING_ENABLED)
+endif()
 
 # ============================================================================
 # TgeMath (STATIC - math library)
@@ -136,13 +161,16 @@ file(GLOB TgeMath_FILES CONFIGURE_DEPENDS
 )
 
 add_library(TgeMath STATIC ${TgeMath_FILES})
+add_library(Tge::Math ALIAS TgeMath)
 
 target_link_libraries(TgeMath
-	PUBLIC TgeBase
+	PUBLIC Tge::Base
 )
 
 target_include_directories(TgeMath
-	PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/external/glm
+	PUBLIC
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/external/glm>
+		$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
 # ============================================================================
@@ -155,10 +183,11 @@ file(GLOB TgeThreading_FILES CONFIGURE_DEPENDS
 )
 
 add_library(TgeThreading STATIC ${TgeThreading_FILES})
+add_library(Tge::Threading ALIAS TgeThreading)
 
 target_link_libraries(TgeThreading
-	PUBLIC TgeBase
-	PRIVATE rpmalloc TgeLogging
+	PUBLIC Tge::Base
+	PRIVATE rpmalloc Tge::Logging
 )
 
 target_include_directories(TgeThreading
@@ -175,9 +204,10 @@ file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
 )
 
 add_library(TgeIO STATIC ${TgeIO_FILES})
+add_library(Tge::IO ALIAS TgeIO)
 
 target_link_libraries(TgeIO
-	PUBLIC TgeBase
+	PUBLIC Tge::Base
 )
 
 target_include_directories(TgeIO
@@ -194,10 +224,11 @@ file(GLOB TgeInit_FILES CONFIGURE_DEPENDS
 )
 
 add_library(TgeInit STATIC ${TgeInit_FILES})
+add_library(Tge::Init ALIAS TgeInit)
 
 target_link_libraries(TgeInit
-	PUBLIC TgeBase
-	PRIVATE TgeMemory TgeThreading TgeIO TgeLogging
+	PUBLIC Tge::Base
+	PRIVATE Tge::Memory Tge::Threading Tge::IO Tge::Logging
 )
 
 target_include_directories(TgeInit
@@ -212,11 +243,12 @@ file(GLOB TgeProfiling_HEADERS CONFIGURE_DEPENDS
 )
 
 add_library(TgeProfiling INTERFACE)
+add_library(Tge::Profiling ALIAS TgeProfiling)
 
-target_sources(TgeProfiling INTERFACE ${TgeProfiling_HEADERS})
+target_sources(TgeProfiling PRIVATE ${TgeProfiling_HEADERS})
 
 target_link_libraries(TgeProfiling
-	INTERFACE TgeBase TgeMemory TgeThreading
+	INTERFACE Tge::Base Tge::Memory Tge::Threading
 )
 
 # The backend is partnered at compile time, so a consumer that never adds a Tracy client compiles the markers
@@ -240,9 +272,10 @@ add_library(TgeModule STATIC
 	${TgeModule_HEADERS}
 	code/private/module/module_id.cpp
 )
+add_library(Tge::Module ALIAS TgeModule)
 
 target_link_libraries(TgeModule
-	PUBLIC TgeBase
+	PUBLIC Tge::Base
 )
 
 # ============================================================================
@@ -256,10 +289,11 @@ add_library(TgeLifecycle STATIC
 	code/private/module/runtime.hpp
 	code/private/module/runtime.cpp
 )
+add_library(Tge::Lifecycle ALIAS TgeLifecycle)
 
 target_link_libraries(TgeLifecycle
-	PUBLIC TgeModule
-	PRIVATE TgeLogging TgeInit TgeProfiling
+	PUBLIC Tge::Module
+	PRIVATE Tge::Logging Tge::Init Tge::Profiling
 )
 
 target_include_directories(TgeLifecycle
@@ -274,11 +308,12 @@ file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS
 )
 
 add_library(TgeGeometry INTERFACE)
+add_library(Tge::Geometry ALIAS TgeGeometry)
 
-target_sources(TgeGeometry INTERFACE ${TgeGeometry_HEADERS})
+target_sources(TgeGeometry PRIVATE ${TgeGeometry_HEADERS})
 
 target_link_libraries(TgeGeometry
-	INTERFACE TgeMath
+	INTERFACE Tge::Math
 )
 
 # ============================================================================
@@ -289,30 +324,36 @@ file(GLOB TgeMaterial_HEADERS CONFIGURE_DEPENDS
 )
 
 add_library(TgeMaterial INTERFACE)
+add_library(Tge::Material ALIAS TgeMaterial)
 
-target_sources(TgeMaterial INTERFACE ${TgeMaterial_HEADERS})
+target_sources(TgeMaterial PRIVATE ${TgeMaterial_HEADERS})
 
 target_link_libraries(TgeMaterial
-	INTERFACE TgeMath
+	INTERFACE Tge::Math
 )
 
 # ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
+add_library(Tge::Core ALIAS TgeCore)
 
 target_link_libraries(TgeCore INTERFACE
-	TgeBase
-	TgeLogging
-	TgeMemory
-	TgeMath
-	TgeThreading
-	TgeIO
-	TgeInit
-	TgeProfiling
-	TgeModule
-	TgeGeometry
-	TgeMaterial
+	Tge::Base
+	Tge::Logging
+	Tge::Memory
+	Tge::Math
+	Tge::Threading
+	Tge::IO
+	Tge::Init
+	Tge::Profiling
+	Tge::Module
+	Tge::Geometry
+	Tge::Material
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
+
+if(TGE_CORE_INSTALL)
+	include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/install.cmake)
+endif()

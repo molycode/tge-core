@@ -2,9 +2,11 @@ add_library(rpmalloc STATIC
 	${CMAKE_CURRENT_LIST_DIR}/../external/rpmalloc/rpmalloc/rpmalloc.c
 )
 
+# BUILD_INTERFACE only: nothing outside this repository includes rpmalloc.h, and a bare source path here
+# would make the target un-exportable.
 target_include_directories(rpmalloc
 	PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/../external/rpmalloc
+		$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/../external/rpmalloc>
 )
 
 # On MSVC, C17 mode is required for _Static_assert and <stdatomic.h>.
