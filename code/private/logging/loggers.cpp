@@ -9,6 +9,11 @@ namespace Memory
 Logging::CLog gLog{"Memory"};
 } // namespace Memory
 
+namespace Threading
+{
+Logging::CLog gLog{"Threading"};
+} // namespace Threading
+
 namespace IO
 {
 Logging::CLog gLog{"IO"};

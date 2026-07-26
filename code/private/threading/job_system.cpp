@@ -1,6 +1,7 @@
 #include <tge/threading/job_system.hpp>
 #include "thread_pool.hpp"
 #include "job_scheduler.hpp"
+#include <tge/logging/loggers.hpp>
 #include <rpmalloc/rpmalloc.h>
 #include <thread>
 
@@ -48,6 +49,8 @@ bool Initialize(size_t numThreads)
 	gThreadPool = new CThreadPool(numThreads);
 	gJobScheduler = new CJobScheduler();
 
+	gLog.Info("Initialized ({} workers)", numThreads);
+
 	return true;
 }
 
@@ -63,6 +66,8 @@ void Terminate()
 	{
 		delete gThreadPool;
 		gThreadPool = nullptr;
+
+		gLog.Info("Terminated");
 	}
 }
 } // namespace Internal

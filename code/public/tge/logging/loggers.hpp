@@ -11,6 +11,11 @@ namespace Memory
 extern Logging::CLog gLog;
 } // namespace Memory
 
+namespace Threading
+{
+extern Logging::CLog gLog;
+} // namespace Threading
+
 namespace IO
 {
 extern Logging::CLog gLog;

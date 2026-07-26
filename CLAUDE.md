@@ -59,10 +59,10 @@ change to `IModule` or `EFramePhase` is a core release every module rebuilds aga
 
 int main()
 {
-    Tge::Initialize();  // Memory -> Threading -> IO
+    Tge::Initialize();  // Memory -> Threading
     // ... application code ...
     Tge::Update();      // Per-frame (resets frame allocator)
-    Tge::Terminate();   // IO -> Threading -> Memory
+    Tge::Terminate();   // Threading -> Memory
 }
 ```
 

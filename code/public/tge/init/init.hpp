@@ -4,11 +4,11 @@
 
 namespace Tge
 {
-// Initialize all tge-core subsystems (Memory -> Threading -> IO)
+// Initialize the tge-core subsystems that need it, in dependency order.
 // numThreads: 0 = auto-detect based on hardware_concurrency
 bool Initialize(size_t numThreads = 0);
 
-// Terminate all tge-core subsystems in reverse order (IO -> Threading -> Memory)
+// Terminate them in reverse order.
 void Terminate();
 
 // Per-frame update (resets frame allocator)
