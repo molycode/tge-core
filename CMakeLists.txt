@@ -228,7 +228,7 @@ add_library(Tge::Init ALIAS TgeInit)
 
 target_link_libraries(TgeInit
 	PUBLIC Tge::Base
-	PRIVATE Tge::Memory Tge::Threading Tge::IO Tge::Logging
+	PRIVATE Tge::Memory Tge::Threading Tge::Logging
 )
 
 target_include_directories(TgeInit

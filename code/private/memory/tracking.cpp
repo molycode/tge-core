@@ -1,5 +1,5 @@
-#include "../logging/loggers.hpp"
 #include <tge/memory/tracking.hpp>
+#include <tge/logging/loggers.hpp>
 #include <array>
 #include <cassert>
 #include <mutex>

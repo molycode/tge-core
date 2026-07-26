@@ -35,7 +35,7 @@ All public headers use `<tge/...>` prefix:
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system and thread pool |
 | TgeIO | STATIC | TgeBase | File and path operations |
-| TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeIO, TgeLogging | Initialization/termination |
+| TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging | Initialization/termination |
 | TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |
 | TgeModule | STATIC | TgeBase | Module contract: IModule, IModuleId, SDependency, EFramePhase, SRunContext |
 | TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |
