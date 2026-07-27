@@ -53,6 +53,7 @@ private:
 	std::vector<IModule*> m_noTick;
 
 	bool m_running{ true };
+	bool m_initialized{ false };
 };
 
 extern CRuntime gRuntimeImpl;

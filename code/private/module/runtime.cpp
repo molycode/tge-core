@@ -61,12 +61,16 @@ bool CRuntime::Initialize(SRunContext const& context)
 		gLog.Error("Failed to initialize modules");
 	}
 
+	m_initialized = initialized;
+
 	return initialized;
 }
 
 //////////////////////////////////////////////////////////////////////////
 void CRuntime::Terminate()
 {
+	m_initialized = false;
+
 	TerminateModules();
 
 	// Terminate logging system last
@@ -96,16 +100,19 @@ void CRuntime::Update(float deltaTime)
 
 	static_assert(PhasePlotNames.size() == FramePhaseCount, "a frame phase is missing its plot name");
 
-	for (size_t index{ 0 }; index < FramePhaseCount; ++index)
+	if (m_initialized)
 	{
-		EFramePhase const phase = static_cast<EFramePhase>(index);
-
-		// Phase totals span every module in the phase, so no module-internal zone can report them.
-		TGE_PROFILE_PLOT_SCOPE_MS(PhasePlotNames[index]);
-
-		for (auto* pModule : m_schedule[index])
+		for (size_t index{ 0 }; index < FramePhaseCount; ++index)
 		{
-			pModule->Update(phase, frameDelta);
+			EFramePhase const phase = static_cast<EFramePhase>(index);
+
+			// Phase totals span every module in the phase, so no module-internal zone can report them.
+			TGE_PROFILE_PLOT_SCOPE_MS(PhasePlotNames[index]);
+
+			for (auto* pModule : m_schedule[index])
+			{
+				pModule->Update(phase, frameDelta);
+			}
 		}
 	}
 }
