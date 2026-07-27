@@ -52,7 +52,7 @@ private:
 	// ValidateSchedule exists to catch, so silence has to be declared rather than assumed.
 	std::vector<IModule*> m_noTick;
 
-	bool m_running = true;
+	bool m_running{ true };
 };
 
 extern CRuntime gRuntimeImpl;

@@ -80,7 +80,7 @@ void CRuntime::Update(float deltaTime)
 
 	// Clamped here, once, so every module advances by the same bounded timestep — the whole point of a single
 	// authoritative delta is that there is one place to do this.
-	float const frameDelta = std::min(deltaTime, MaxFrameDelta);
+	float const frameDelta{ std::min(deltaTime, MaxFrameDelta) };
 
 	// Decorated rather than reusing GetFramePhaseName so a plot cannot collide with a same-named zone --
 	// "Pace" is both a phase and a renderer zone.
@@ -168,7 +168,7 @@ void CRuntime::ValidateSchedule() const
 {
 	for (auto* pModule : m_modules)
 	{
-		bool scheduled = std::ranges::find(m_noTick, pModule) != m_noTick.end();
+		bool scheduled{ std::ranges::find(m_noTick, pModule) != m_noTick.end() };
 
 		for (auto const& phaseModules : m_schedule)
 		{
@@ -241,7 +241,7 @@ bool CRuntime::InitializeModules()
 			{
 				auto const moduleEndTime = std::chrono::high_resolution_clock::now();
 				auto const duration = std::chrono::duration_cast<std::chrono::microseconds>(moduleEndTime - moduleStartTime);
-				double const milliseconds = duration.count() / 1000.0;
+				double const milliseconds{ duration.count() / 1000.0 };
 
 				m_activeModules.emplace_back(pModule);
 
@@ -262,7 +262,7 @@ bool CRuntime::InitializeModules()
 		{
 			auto const totalEndTime = std::chrono::high_resolution_clock::now();
 			auto const totalDuration = std::chrono::duration_cast<std::chrono::microseconds>(totalEndTime - totalStartTime);
-			double const totalMilliseconds = totalDuration.count() / 1000.0;
+			double const totalMilliseconds{ totalDuration.count() / 1000.0 };
 
 			gLog.Info("All modules initialized in {:.2f} ms", totalMilliseconds);
 		}
@@ -296,7 +296,7 @@ void CRuntime::TerminateModule(IModule* pModule)
 
 	auto const endTime = std::chrono::high_resolution_clock::now();
 	auto const duration = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
-	double const milliseconds = duration.count() / 1000.0;
+	double const milliseconds{ duration.count() / 1000.0 };
 
 	gLog.Info("Terminated {} in {:.2f} ms", pModule->GetName(), milliseconds);
 }
@@ -327,7 +327,7 @@ void CRuntime::TerminateModules()
 	{
 		auto const totalEndTime = std::chrono::high_resolution_clock::now();
 		auto const totalDuration = std::chrono::duration_cast<std::chrono::microseconds>(totalEndTime - totalStartTime);
-		double const totalMilliseconds = totalDuration.count() / 1000.0;
+		double const totalMilliseconds{ totalDuration.count() / 1000.0 };
 
 		gLog.Info("All modules terminated in {:.2f} ms", totalMilliseconds);
 	}
