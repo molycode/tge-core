@@ -76,6 +76,23 @@ install(EXPORT TgeCoreTargets
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TgeCore
 )
 
+# Its own export set, so TgeCoreTargets.cmake is byte-identical whether the harness was built -- one Core
+# version installing two different packages would make the packaging gate's interface digest meaningless.
+if(TARGET TgeTesting)
+	TgeSetExportNames(TgeTesting)
+
+	install(TARGETS TgeTesting
+		EXPORT TgeCoreTestingTargets
+		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	)
+
+	install(EXPORT TgeCoreTestingTargets
+		FILE      TgeCoreTestingTargets.cmake
+		NAMESPACE Tge::
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TgeCore
+	)
+endif()
+
 configure_package_config_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/cmake/TgeCoreConfig.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/TgeCoreConfig.cmake

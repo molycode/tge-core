@@ -41,12 +41,17 @@ All public headers use `<tge/...>` prefix:
 | TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
+| TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`); behind `TGE_CORE_TESTING`, own export set |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
 
 `TgeGeometry` and `TgeMaterial` are engine-domain vocabulary rather than general infrastructure. They live
 here because both a loader and a renderer embed these types **by value**, so they can never version
 independently of each other — the property that defines core. Consumers who want only infrastructure should
 link the specific libs (`TgeBase`, `TgeLogging`, …) rather than the `TgeCore` umbrella.
+
+`TgeTesting` is off by default and outside `TgeCore` for the same reason `TgeLifecycle` is: only a test binary
+links a test harness. It names no module — a suite declares its own log-channel constants beside its tests.
+It installs through `TgeCoreTestingTargets`, so `find_package(TgeCore COMPONENTS Testing)` is what asks for it.
 
 `TgeModule` and `TgeLifecycle` are split for the same reason they were two targets in the engine: a module
 needs only the contract, while driving modules is the composition root's job. `TgeCore` therefore carries

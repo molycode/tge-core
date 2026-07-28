@@ -35,6 +35,7 @@ option(TGE_ENABLE_LOGGING "Enable logging system" ON)
 option(TGE_ENABLE_MEMORY_TRACKING "Enable memory tracking system" ON)
 
 option(TGE_CORE_INSTALL "Generate install and export rules for tge-core" ${PROJECT_IS_TOP_LEVEL})
+option(TGE_CORE_TESTING "Provide Tge::Testing, the harness every module's tests sit on" OFF)
 
 # Deciding this only at top level left a vendored Debug build with the flag off while the installed Debug
 # package had it on -- one header, compiled two ways. A parent that has already chosen wins.
@@ -375,6 +376,29 @@ target_link_libraries(TgeCore INTERFACE
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
+
+# ============================================================================
+# TgeTesting (INTERFACE - the harness every module's tests sit on)
+# ============================================================================
+# Absent from TgeCore for the same reason as TgeLifecycle: only a test binary links a test harness.
+if(TGE_CORE_TESTING)
+	if(NOT TARGET GTest::gtest)
+		find_package(GTest 1.14 REQUIRED)
+	endif()
+
+	file(GLOB TgeTesting_HEADERS CONFIGURE_DEPENDS
+		code/public/tge/testing/*.hpp
+	)
+
+	add_library(TgeTesting INTERFACE)
+	add_library(Tge::Testing ALIAS TgeTesting)
+
+	target_sources(TgeTesting PRIVATE ${TgeTesting_HEADERS})
+
+	target_link_libraries(TgeTesting
+		INTERFACE Tge::Base Tge::Logging GTest::gtest
+	)
+endif()
 
 if(TGE_CORE_INSTALL)
 	include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/install.cmake)

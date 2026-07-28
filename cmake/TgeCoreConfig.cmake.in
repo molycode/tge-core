@@ -3,6 +3,17 @@
 include("${CMAKE_CURRENT_LIST_DIR}/TgeCoreTargets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/tge_module_package.cmake")
 
+# Probed rather than substituted: this file must read the same in every Core install, or the two packages it
+# would then describe are told apart by their config rather than by what they actually carry.
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/TgeCoreTestingTargets.cmake")
+	include(CMakeFindDependencyMacro)
+	find_dependency(GTest 1.14)
+	include("${CMAKE_CURRENT_LIST_DIR}/TgeCoreTestingTargets.cmake")
+	set(TgeCore_Testing_FOUND TRUE)
+else()
+	set(TgeCore_Testing_FOUND FALSE)
+endif()
+
 # Informational only -- the flags travel as usage requirements on the targets, so linking inherits them.
 set(TgeCore_LOGGING_ENABLED @TGE_ENABLE_LOGGING@)
 set(TgeCore_MEMORY_TRACKING_ENABLED @TGE_ENABLE_MEMORY_TRACKING@)
