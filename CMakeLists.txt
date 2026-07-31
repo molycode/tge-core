@@ -216,6 +216,27 @@ target_include_directories(TgeIO
 )
 
 # ============================================================================
+# TgeCommand (STATIC - console command registration and dispatch)
+# ============================================================================
+file(GLOB TgeCommand_FILES CONFIGURE_DEPENDS
+	code/private/command/*.cpp
+	code/private/command/*.hpp
+	code/public/tge/command/*.hpp
+)
+
+add_library(TgeCommand STATIC ${TgeCommand_FILES})
+add_library(Tge::Command ALIAS TgeCommand)
+
+target_link_libraries(TgeCommand
+	PUBLIC Tge::Base
+	PRIVATE Tge::Memory Tge::Logging
+)
+
+target_include_directories(TgeCommand
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+)
+
+# ============================================================================
 # TgeInit (STATIC - initialization/termination)
 # ============================================================================
 file(GLOB TgeInit_FILES CONFIGURE_DEPENDS
@@ -229,7 +250,7 @@ add_library(Tge::Init ALIAS TgeInit)
 
 target_link_libraries(TgeInit
 	PUBLIC Tge::Base
-	PRIVATE Tge::Memory Tge::Threading Tge::Logging
+	PRIVATE Tge::Memory Tge::Threading Tge::Logging Tge::Command
 )
 
 target_include_directories(TgeInit
@@ -369,6 +390,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Threading
 	Tge::IO
 	Tge::Init
+	Tge::Command
 	Tge::Profiling
 	Tge::Module
 	Tge::Geometry

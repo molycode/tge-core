@@ -13,6 +13,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
+- `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
 - `Tge::Material::` - Material vocabulary (SMaterialProperties, STextureTransform, ETextureSlot)
 - `Tge::Profiling::` - Profiling markers and the backend hook wiring (CScopedPlotMs, RegisterHooks)
@@ -35,7 +36,8 @@ All public headers use `<tge/...>` prefix:
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system and thread pool |
 | TgeIO | STATIC | TgeBase | File and path operations |
-| TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging | Initialization/termination |
+| TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
+| TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |
 | TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |
 | TgeModule | STATIC | TgeBase | Module contract: IModule, IModuleId, SDependency, EFramePhase, SRunContext |
 | TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |

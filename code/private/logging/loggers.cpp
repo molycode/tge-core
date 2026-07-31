@@ -18,4 +18,9 @@ namespace IO
 {
 Logging::CLog gLog{"IO"};
 } // namespace IO
+
+namespace Command
+{
+Logging::CLog gLog{"Command"};
+} // namespace Command
 } // namespace Tge

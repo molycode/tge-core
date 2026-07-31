@@ -21,6 +21,7 @@ set(tgeCoreTargets
 	TgeThreading
 	TgeIO
 	TgeInit
+	TgeCommand
 	TgeProfiling
 	TgeModule
 	TgeLifecycle
@@ -39,6 +40,7 @@ install(TARGETS
 		TgeThreading
 		TgeIO
 		TgeInit
+		TgeCommand
 		TgeProfiling
 		TgeModule
 		TgeLifecycle

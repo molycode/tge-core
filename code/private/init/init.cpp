@@ -16,6 +16,12 @@ bool Initialize(size_t numThreads);
 void Terminate();
 } // namespace Threading::Internal
 
+// Nothing to initialize - the registry is usable from static-init onwards. Only the group sweep needs a hook.
+namespace Command::Internal
+{
+void Terminate();
+} // namespace Command::Internal
+
 //////////////////////////////////////////////////////////////////////////
 bool Initialize(size_t numThreads)
 {
@@ -37,6 +43,8 @@ bool Initialize(size_t numThreads)
 //////////////////////////////////////////////////////////////////////////
 void Terminate()
 {
+	// Ahead of Memory so the group sweep's deallocation tracking still lands.
+	Command::Internal::Terminate();
 	Threading::Internal::Terminate();
 	Memory::Internal::Terminate();
 }

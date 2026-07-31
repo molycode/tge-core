@@ -20,4 +20,9 @@ namespace IO
 {
 extern Logging::CLog gLog;
 } // namespace IO
+
+namespace Command
+{
+extern Logging::CLog gLog;
+} // namespace Command
 } // namespace Tge
