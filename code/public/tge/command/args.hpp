@@ -7,8 +7,7 @@
 
 namespace Tge::Command
 {
-// The project compiles -fno-exceptions, so std::stof/std::stoi call std::terminate on a non-numeric
-// argument rather than reporting one — a typo in the console would take the process down.
+// Under -fno-exceptions std::stof/std::stoi terminate on bad input, so a console typo would kill the process.
 inline bool ParseFloat(std::string_view const text, float& outValue)
 {
 	char const* const first = text.data();
