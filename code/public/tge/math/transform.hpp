@@ -77,4 +77,14 @@ inline Quat QuaternionSlerp(Quat const& a, Quat const& b, float t)
 {
 	return glm::slerp(a, b, t);
 }
+
+inline Quat QuaternionFromTo(Vec3 const& from, Vec3 const& to)
+{
+	return glm::rotation(from, to);
+}
+
+inline Quat QuaternionInverse(Quat const& q)
+{
+	return glm::inverse(q);
+}
 } // namespace Tge::Math
