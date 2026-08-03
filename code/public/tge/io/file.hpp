@@ -22,6 +22,8 @@ public:
 	static bool WriteAllBytes(std::string_view path, void const* data, size_t size);
 	static bool WriteAllText(std::string_view path, std::string_view text);
 
+	static bool Delete(std::string_view path);
+
 	static size_t GetFileSize(std::string_view path);
 	static uint64_t GetLastWriteTime(std::string_view path);
 };

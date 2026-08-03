@@ -108,6 +108,18 @@ bool CFile::WriteAllText(std::string_view path, std::string_view text)
 }
 
 //////////////////////////////////////////////////////////////////////////
+// A path that was already absent is the caller's desired state, so it reports success; only a filesystem
+// error does not.
+bool CFile::Delete(std::string_view path)
+{
+	std::error_code ec;
+
+	std::filesystem::remove(path, ec);
+
+	return !ec;
+}
+
+//////////////////////////////////////////////////////////////////////////
 size_t CFile::GetFileSize(std::string_view path)
 {
 	std::error_code ec;
