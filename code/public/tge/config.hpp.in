@@ -28,3 +28,9 @@
 #ifndef TGE_PROFILE_TRACY
 #cmakedefine TGE_PROFILE_TRACY 1
 #endif // TGE_PROFILE_TRACY
+
+// Not #cmakedefine like its neighbours: CMAKE_BUILD_TYPE is empty under a multi-config generator, which would
+// leave the macro undefined rather than empty.
+#ifndef TGE_BUILD_TYPE
+#define TGE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+#endif // TGE_BUILD_TYPE
