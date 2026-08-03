@@ -5,7 +5,11 @@ include("${CMAKE_CURRENT_LIST_DIR}/tge_module_package.cmake")
 
 # Probed rather than substituted: this file must read the same in every Core install, or the two packages it
 # would then describe are told apart by their config rather than by what they actually carry.
-if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/TgeCoreTestingTargets.cmake")
+#
+# Only when asked for: a consumer that wants Core alone must not acquire a test harness's dependencies merely
+# because the harness happens to be installed in the same prefix.
+if("Testing" IN_LIST TgeCore_FIND_COMPONENTS
+   AND EXISTS "${CMAKE_CURRENT_LIST_DIR}/TgeCoreTestingTargets.cmake")
 	include(CMakeFindDependencyMacro)
 	find_dependency(GTest 1.14)
 	include("${CMAKE_CURRENT_LIST_DIR}/TgeCoreTestingTargets.cmake")
