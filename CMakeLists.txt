@@ -37,6 +37,10 @@ option(TGE_ENABLE_MEMORY_TRACKING "Enable memory tracking system" ON)
 option(TGE_CORE_INSTALL "Generate install and export rules for tge-core" ${PROJECT_IS_TOP_LEVEL})
 option(TGE_CORE_TESTING "Provide Tge::Testing, the harness every module's tests sit on" OFF)
 
+# OFF by default where every module repository defaults its own suite ON: core vendors no googletest, so a
+# bare standalone configure has no GTest to find. Whoever supplies one turns this on.
+option(TGE_CORE_BUILD_TESTS "Build tge-core's own test suite (needs GTest 1.14 on the prefix path)" OFF)
+
 # Deciding this only at top level left a vendored Debug build with the flag off while the installed Debug
 # package had it on -- one header, compiled two ways. A parent that has already chosen wins.
 if(NOT DEFINED TGE_DEBUG_ENABLED)
@@ -457,6 +461,11 @@ if(TGE_CORE_TESTING)
 	target_link_libraries(TgeTesting
 		INTERFACE Tge::Base Tge::Logging GTest::gtest
 	)
+endif()
+
+if(TGE_CORE_BUILD_TESTS)
+	enable_testing()
+	add_subdirectory(tests)
 endif()
 
 if(TGE_CORE_INSTALL)
