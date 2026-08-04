@@ -445,8 +445,13 @@ target_link_libraries(TgeCore INTERFACE
 # ============================================================================
 # Absent from TgeCore for the same reason as TgeLifecycle: only a test binary links a test harness.
 if(TGE_CORE_TESTING)
+	# Both branches announce themselves: a parent that entered googletest first wins this silently, and the
+	# arm not taken is the one nobody can see from the log afterwards.
 	if(NOT TARGET GTest::gtest)
 		find_package(GTest 1.14 REQUIRED)
+		message(STATUS "[TgeCore] GTest: package ${GTest_VERSION} from ${GTest_DIR}")
+	else()
+		message(STATUS "[TgeCore] GTest: already provided")
 	endif()
 
 	file(GLOB TgeTesting_HEADERS CONFIGURE_DEPENDS

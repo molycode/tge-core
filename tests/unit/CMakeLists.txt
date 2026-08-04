@@ -3,6 +3,9 @@
 
 if(NOT TARGET GTest::gtest)
 	find_package(GTest 1.14 REQUIRED)
+	message(STATUS "[TgeCore] GTest (unit tests): package ${GTest_VERSION} from ${GTest_DIR}")
+else()
+	message(STATUS "[TgeCore] GTest (unit tests): already provided")
 endif()
 
 add_executable(TgeCoreUnitTests
