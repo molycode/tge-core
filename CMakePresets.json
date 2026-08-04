@@ -7,12 +7,12 @@
 	},
 	"configurePresets": [
 		{
-			"name": "tge-core-base",
+			"name": "base",
 			"hidden": true
 		},
 		{
-			"name": "tge-core-linux-gcc-debug",
-			"inherits": "tge-core-base",
+			"name": "linux-gcc-debug",
+			"inherits": "base",
 			"displayName": "tge_core_linux_gcc_debug",
 			"description": "Debug build with GCC (uses TGE_GCC_PATH or system GCC)",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
@@ -25,8 +25,8 @@
 			}
 		},
 		{
-			"name": "tge-core-linux-gcc-release",
-			"inherits": "tge-core-base",
+			"name": "linux-gcc-release",
+			"inherits": "base",
 			"displayName": "tge_core_linux_gcc_release",
 			"description": "Release build with GCC (uses TGE_GCC_PATH or system GCC)",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
@@ -39,8 +39,8 @@
 			}
 		},
 		{
-			"name": "tge-core-linux-clang-debug",
-			"inherits": "tge-core-base",
+			"name": "linux-clang-debug",
+			"inherits": "base",
 			"displayName": "tge_core_linux_clang_debug",
 			"description": "Debug build with Clang (uses TGE_CLANG_PATH or system Clang)",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
@@ -53,8 +53,8 @@
 			}
 		},
 		{
-			"name": "tge-core-linux-clang-release",
-			"inherits": "tge-core-base",
+			"name": "linux-clang-release",
+			"inherits": "base",
 			"displayName": "tge_core_linux_clang_release",
 			"description": "Release build with Clang (uses TGE_CLANG_PATH or system Clang)",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" },
@@ -67,8 +67,8 @@
 			}
 		},
 		{
-			"name": "tge-core-windows-msvc-debug",
-			"inherits": "tge-core-base",
+			"name": "windows-msvc-debug",
+			"inherits": "base",
 			"displayName": "tge_core_windows_msvc_debug",
 			"description": "Debug build with MSVC — run from 'x64 Native Tools Command Prompt for VS 2026'",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
@@ -81,8 +81,8 @@
 			}
 		},
 		{
-			"name": "tge-core-windows-msvc-release",
-			"inherits": "tge-core-base",
+			"name": "windows-msvc-release",
+			"inherits": "base",
 			"displayName": "tge_core_windows_msvc_release",
 			"description": "Release build with MSVC — run from 'x64 Native Tools Command Prompt for VS 2026'",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" },
@@ -97,33 +97,33 @@
 	],
 	"buildPresets": [
 		{
-			"name": "tge-core-linux-gcc-debug",
-			"configurePreset": "tge-core-linux-gcc-debug",
+			"name": "linux-gcc-debug",
+			"configurePreset": "linux-gcc-debug",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
 		},
 		{
-			"name": "tge-core-linux-gcc-release",
-			"configurePreset": "tge-core-linux-gcc-release",
+			"name": "linux-gcc-release",
+			"configurePreset": "linux-gcc-release",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
 		},
 		{
-			"name": "tge-core-linux-clang-debug",
-			"configurePreset": "tge-core-linux-clang-debug",
+			"name": "linux-clang-debug",
+			"configurePreset": "linux-clang-debug",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
 		},
 		{
-			"name": "tge-core-linux-clang-release",
-			"configurePreset": "tge-core-linux-clang-release",
+			"name": "linux-clang-release",
+			"configurePreset": "linux-clang-release",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
 		},
 		{
-			"name": "tge-core-windows-msvc-debug",
-			"configurePreset": "tge-core-windows-msvc-debug",
+			"name": "windows-msvc-debug",
+			"configurePreset": "windows-msvc-debug",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
 		},
 		{
-			"name": "tge-core-windows-msvc-release",
-			"configurePreset": "tge-core-windows-msvc-release",
+			"name": "windows-msvc-release",
+			"configurePreset": "windows-msvc-release",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
 		}
 	]
