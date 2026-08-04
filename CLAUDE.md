@@ -14,6 +14,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
 - `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
+- `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
 - `Tge::Material::` - Material vocabulary (SMaterialProperties, STextureTransform, ETextureSlot)
 - `Tge::Profiling::` - Profiling markers and the backend hook wiring (CScopedPlotMs, RegisterHooks)
@@ -41,6 +42,8 @@ All public headers use `<tge/...>` prefix:
 | TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |
 | TgeModule | STATIC | TgeBase | Module contract: IModule, IModuleId, SDependency, EFramePhase, SRunContext |
 | TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |
+| TgeEventsPublic | STATIC | TgeModule | The event interface, `gEvents` and the module's identity |
+| TgeEvents | STATIC | TgeEventsPublic | The dispatcher and the module that drains its queue |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
 | TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`); behind `TGE_CORE_TESTING`, own export set |
@@ -59,6 +62,12 @@ It installs through `TgeCoreTestingTargets`, so `find_package(TgeCore COMPONENTS
 needs only the contract, while driving modules is the composition root's job. `TgeCore` therefore carries
 `TgeModule` and not `TgeLifecycle`. The cost of hosting the contract here is that it versions with core — any
 change to `IModule` or `EFramePhase` is a core release every module rebuilds against.
+
+`TgeEventsPublic` and `TgeEvents` split on the same line and are both outside `TgeCore`. Events lives here
+rather than in a repository of its own because it depends on nothing but the module contract while nearly
+every module depends on it — a subsystem with that shape is core, not a peer. It stays out of the umbrella
+because `QueueEmit`'s backlog is drained by a frame phase: a consumer that runs no frame loop must ask for
+an event system rather than inherit one whose queue nothing empties.
 
 ### Initialization
 ```cpp

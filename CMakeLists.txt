@@ -345,6 +345,41 @@ target_include_directories(TgeLifecycle
 )
 
 # ============================================================================
+# TgeEventsPublic (STATIC - the event interface, its globals and the module's identity)
+# ============================================================================
+file(GLOB TgeEvents_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/events/*.hpp
+)
+
+# Listed rather than globbed: the dispatcher's sources sit in the same directory and must NOT land here -- a
+# module emits and subscribes without linking anything that can drive the queue.
+add_library(TgeEventsPublic STATIC
+	${TgeEvents_HEADERS}
+	code/private/events/globals.cpp
+	code/private/events/module_id.cpp
+)
+add_library(Tge::EventsPublic ALIAS TgeEventsPublic)
+
+target_link_libraries(TgeEventsPublic
+	PUBLIC Tge::Module
+)
+
+# ============================================================================
+# TgeEvents (STATIC - the dispatcher and the module that drains its queue)
+# ============================================================================
+add_library(TgeEvents STATIC
+	code/private/events/system.hpp
+	code/private/events/system.cpp
+	code/private/events/module.hpp
+	code/private/events/module.cpp
+)
+add_library(Tge::Events ALIAS TgeEvents)
+
+target_link_libraries(TgeEvents
+	PUBLIC Tge::EventsPublic
+)
+
+# ============================================================================
 # TgeGeometry (INTERFACE - header-only geometry vocabulary)
 # ============================================================================
 file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS
@@ -398,6 +433,8 @@ target_link_libraries(TgeCore INTERFACE
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
+# TgeEvents and TgeEventsPublic likewise: QueueEmit's backlog is drained by a frame phase, so a consumer that
+# runs no frame loop would acquire a queue nothing empties. Both are named explicitly by whoever wants them.
 
 # ============================================================================
 # TgeTesting (INTERFACE - the harness every module's tests sit on)

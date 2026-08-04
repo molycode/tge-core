@@ -4,6 +4,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tge_module_package.cmake)
 
 TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/code/private/module/module_id.cpp ${PROJECT_VERSION})
 
+# Events ships inside this package, so it cannot version independently of it.
+TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/code/private/events/module_id.cpp ${PROJECT_VERSION})
+
 # Recorded in the package config so a consumer can see which contract the installed binaries speak.
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/code/public/tge/module/module.hpp moduleContractSource)
 
@@ -25,6 +28,8 @@ set(tgeCoreTargets
 	TgeProfiling
 	TgeModule
 	TgeLifecycle
+	TgeEventsPublic
+	TgeEvents
 	TgeGeometry
 	TgeMaterial
 	TgeCore
@@ -44,6 +49,8 @@ install(TARGETS
 		TgeProfiling
 		TgeModule
 		TgeLifecycle
+		TgeEventsPublic
+		TgeEvents
 		TgeGeometry
 		TgeMaterial
 		TgeCore
