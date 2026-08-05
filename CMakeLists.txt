@@ -432,6 +432,22 @@ target_link_libraries(TgeEntity
 )
 
 # ============================================================================
+# TgeLight (INTERFACE - header-only light vocabulary)
+# ============================================================================
+file(GLOB TgeLight_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/light/*.hpp
+)
+
+add_library(TgeLight INTERFACE)
+add_library(Tge::Light ALIAS TgeLight)
+
+target_sources(TgeLight PRIVATE ${TgeLight_HEADERS})
+
+target_link_libraries(TgeLight
+	INTERFACE Tge::Math
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -451,6 +467,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Geometry
 	Tge::Material
 	Tge::Entity
+	Tge::Light
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.

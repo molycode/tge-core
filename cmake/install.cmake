@@ -33,6 +33,7 @@ set(tgeCoreTargets
 	TgeGeometry
 	TgeMaterial
 	TgeEntity
+	TgeLight
 	TgeCore
 )
 
@@ -55,6 +56,7 @@ install(TARGETS
 		TgeGeometry
 		TgeMaterial
 		TgeEntity
+		TgeLight
 		TgeCore
 		rpmalloc
 	EXPORT TgeCoreTargets
