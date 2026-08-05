@@ -448,6 +448,22 @@ target_link_libraries(TgeLight
 )
 
 # ============================================================================
+# TgeExposure (INTERFACE - header-only exposure vocabulary)
+# ============================================================================
+file(GLOB TgeExposure_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/exposure/*.hpp
+)
+
+add_library(TgeExposure INTERFACE)
+add_library(Tge::Exposure ALIAS TgeExposure)
+
+target_sources(TgeExposure PRIVATE ${TgeExposure_HEADERS})
+
+target_link_libraries(TgeExposure
+	INTERFACE Tge::Math
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -468,6 +484,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Material
 	Tge::Entity
 	Tge::Light
+	Tge::Exposure
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.

@@ -11,12 +11,14 @@ endif()
 add_executable(TgeCoreUnitTests
 	main.cpp
 	test_event_system.cpp
+	test_exposure_curve.cpp
 )
 
 target_link_libraries(TgeCoreUnitTests
 	PRIVATE
 		GTest::gtest
 		Tge::Events
+		Tge::Exposure
 )
 
 # The dispatcher is private by design; reaching in beats widening a public header for a test.
