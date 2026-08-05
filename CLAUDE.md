@@ -17,6 +17,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
 - `Tge::Material::` - Material vocabulary (SMaterialProperties, STextureTransform, ETextureSlot)
+- `Tge::Entity::` - Entity-handle vocabulary (SEntity)
 - `Tge::Profiling::` - Profiling markers and the backend hook wiring (CScopedPlotMs, RegisterHooks)
 
 ### Include Paths
@@ -46,12 +47,13 @@ All public headers use `<tge/...>` prefix:
 | TgeEvents | STATIC | TgeEventsPublic | The dispatcher and the module that drains its queue |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
+| TgeEntity | INTERFACE | TgeBase | Entity-handle vocabulary shared by a scene and whatever animates it |
 | TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`); behind `TGE_CORE_TESTING`, own export set |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
 
-`TgeGeometry` and `TgeMaterial` are engine-domain vocabulary rather than general infrastructure. They live
-here because both a loader and a renderer embed these types **by value**, so they can never version
-independently of each other — the property that defines core. Consumers who want only infrastructure should
+`TgeGeometry`, `TgeMaterial` and `TgeEntity` are engine-domain vocabulary rather than general
+infrastructure. They live here because their producers and consumers embed these types **by value**, so they
+can never version independently of each other — the property that defines core. Consumers who want only infrastructure should
 link the specific libs (`TgeBase`, `TgeLogging`, …) rather than the `TgeCore` umbrella.
 
 `TgeTesting` is off by default and outside `TgeCore` for the same reason `TgeLifecycle` is: only a test binary

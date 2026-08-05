@@ -416,6 +416,22 @@ target_link_libraries(TgeMaterial
 )
 
 # ============================================================================
+# TgeEntity (INTERFACE - header-only entity-handle vocabulary)
+# ============================================================================
+file(GLOB TgeEntity_HEADERS CONFIGURE_DEPENDS
+	code/public/tge/entity/*.hpp
+)
+
+add_library(TgeEntity INTERFACE)
+add_library(Tge::Entity ALIAS TgeEntity)
+
+target_sources(TgeEntity PRIVATE ${TgeEntity_HEADERS})
+
+target_link_libraries(TgeEntity
+	INTERFACE Tge::Base
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -434,6 +450,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Module
 	Tge::Geometry
 	Tge::Material
+	Tge::Entity
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
