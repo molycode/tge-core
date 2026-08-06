@@ -2,3 +2,4 @@
 # a renderer, a scene or a window belongs to whoever composes those.
 
 add_subdirectory(unit)
+add_subdirectory(threading)
