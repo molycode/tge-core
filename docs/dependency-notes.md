@@ -16,17 +16,26 @@ Core-only consumer could not configure at all once Core was installed with the h
 
 Model it on tge-scene's gate (9 steps) or tge-renderer's (7).
 
-## OPEN — the demo's two benchmarks are stranded, and one does not compile
+## RESOLVED 2026-08-06 — the two benchmarks arrived, and the broken one was repaired
 
-`benchmarks/threading/bench_parallel_for.cpp` and `benchmarks/events/bench_event_system.cpp` both measure
-core mechanisms and link only `Tge::Core` / `Tge::Events`, so they belong here. Moving them needs a
-`benchmark` submodule added to this repo, **and** a fix: `bench_event_system.cpp` fails with 13 ×
-`'EEvent' has not been declared`. That type went away in the typed-payload migration and the benchmark was
-never updated.
+`benchmarks/threading/bench_parallel_for.cpp` and `benchmarks/events/bench_event_system.cpp` measure core
+mechanisms and link only `Tge::Core` / `Tge::Events`, so they now live here rather than in the demo.
 
-It has been broken ever since and nobody noticed, because `benchmarks/` is `EXCLUDE_FROM_ALL` by default.
-Re-verified 2026-08-06: the benchmark names `EEvent::PipelinesSettled` at five sites and `enum class EEvent`
-exists nowhere in this repository's `code/`.
+**No `benchmark` submodule was added, and that was the wrong prescription.** This repository already declines
+to vendor googletest — `TGE_CORE_BUILD_TESTS` is off by default precisely so whoever supplies a harness turns
+it on. `TGE_CORE_BUILD_BENCHMARKS` follows that rule exactly: `benchmarks/CMakeLists.txt` resolves Google
+Benchmark through the same `if(NOT TARGET …) find_package(…)` handoff the unit suite uses for GTest, and the
+consuming tree supplies its own checkout. **When adding a dependency to a repository, check first whether an
+existing dependency of the same KIND is already handled a particular way** — core's answer for test harnesses
+was already written down, and a benchmark harness is the same kind of thing.
+
+The repair: `EEvent::PipelinesSettled` became a locally-defined `SBenchEvent` driven through the templated
+`Subscribe<T>` / `Emit<T>` / `QueueEmit<T>` API. Defining the event type in the benchmark is not a shortcut —
+it is what the unit suite already does, because **core sits below every module and may not name a module's
+event**.
+
+Control: the pre-fix source was restored over the repaired one and shown to fail with exactly the 13
+`'EEvent' has not been declared` errors recorded here, then to build clean again once restored.
 
 ## RESOLVED by this file — `docs/` was gitignored here
 

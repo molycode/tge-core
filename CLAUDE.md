@@ -105,6 +105,16 @@ cmake --preset linux-gcc_16-debug
 cmake --build --preset linux-gcc_16-debug
 ```
 
+### Tests and benchmarks
+Core vendors neither googletest nor Google Benchmark, so both are off by default and whoever supplies a
+harness turns them on: `TGE_CORE_BUILD_TESTS` (`tests/` — `TgeCoreUnitTests`, `TgeCoreThreadingTests`) and
+`TGE_CORE_BUILD_BENCHMARKS` (`benchmarks/` — `TgeCoreThreadingBenchmarks`, `TgeCoreEventsBenchmarks`). Each
+resolves its harness through `if(NOT TARGET …) find_package(…)`, so a consuming tree that already entered one
+wins and no second checkout is configured.
+
+A benchmark is an instrument, never a gate — the suites answer whether core is correct, the benchmarks only
+tell you what a tuning constant should be. Both benchmark binaries land in `<build-dir>/benchmarks/`.
+
 ## Remote Setup
 
 **GitHub is the primary dev repo. Gitea is a read-only mirror that follows it — never push to Gitea directly.**

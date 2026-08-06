@@ -41,6 +41,10 @@ option(TGE_CORE_TESTING "Provide Tge::Testing, the harness every module's tests 
 # bare standalone configure has no GTest to find. Whoever supplies one turns this on.
 option(TGE_CORE_BUILD_TESTS "Build tge-core's own test suite (needs GTest 1.14 on the prefix path)" OFF)
 
+# Off for the same reason, and separate from the suite: a benchmark is an instrument, not a gate, so a
+# consumer that wants the proof does not thereby want the measurement.
+option(TGE_CORE_BUILD_BENCHMARKS "Build tge-core's micro-benchmarks (needs Google Benchmark on the prefix path)" OFF)
+
 # Deciding this only at top level left a vendored Debug build with the flag off while the installed Debug
 # package had it on -- one header, compiled two ways. A parent that has already chosen wins.
 if(NOT DEFINED TGE_DEBUG_ENABLED)
@@ -522,6 +526,10 @@ endif()
 if(TGE_CORE_BUILD_TESTS)
 	enable_testing()
 	add_subdirectory(tests)
+endif()
+
+if(TGE_CORE_BUILD_BENCHMARKS)
+	add_subdirectory(benchmarks)
 endif()
 
 if(TGE_CORE_INSTALL)
