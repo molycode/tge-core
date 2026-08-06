@@ -12,9 +12,9 @@ cmake-build-*/
 *~
 .DS_Store
 
-# Session documentation (project-specific, not for repo)
+# Session scratch (project-specific, not for repo). docs/ is NOT scratch: it is the one repository every
+# consumer takes, so the pool's charter and this module's own mechanism notes belong in it.
 tasks/
-docs/
 
 # QtCreator files
 CMakeLists.txt.user
