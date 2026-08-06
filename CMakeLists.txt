@@ -85,7 +85,7 @@ tge_suppress_external_warnings(rpmalloc)
 # TgeBase (INTERFACE - header-only base utilities)
 # ============================================================================
 file(GLOB TgeBase_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/*.hpp
+	public/tge/*.hpp
 )
 
 add_library(TgeBase INTERFACE)
@@ -94,7 +94,7 @@ add_library(Tge::Base ALIAS TgeBase)
 target_sources(TgeBase PRIVATE ${TgeBase_HEADERS})
 
 target_include_directories(TgeBase INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/code/public>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
@@ -108,9 +108,9 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/platform.cmake)
 # TgeLogging (STATIC - logging system)
 # ============================================================================
 file(GLOB TgeLogging_FILES CONFIGURE_DEPENDS
-	code/private/logging/*.cpp
-	code/private/logging/*.hpp
-	code/public/tge/logging/*.hpp
+	private/logging/*.cpp
+	private/logging/*.hpp
+	public/tge/logging/*.hpp
 )
 
 add_library(TgeLogging STATIC ${TgeLogging_FILES})
@@ -121,7 +121,7 @@ target_link_libraries(TgeLogging
 )
 
 target_include_directories(TgeLogging
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 if(TGE_ENABLE_LOGGING)
@@ -130,7 +130,7 @@ endif()
 
 # Copy logging config to build output
 configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/code/private/logging/logging.cfg.in
+	${CMAKE_CURRENT_SOURCE_DIR}/private/logging/logging.cfg.in
 	${CMAKE_BINARY_DIR}/configs/logging.cfg
 	COPYONLY
 )
@@ -139,9 +139,9 @@ configure_file(
 # TgeMemory (STATIC - memory management with rpmalloc)
 # ============================================================================
 file(GLOB TgeMemory_FILES CONFIGURE_DEPENDS
-	code/private/memory/*.cpp
-	code/private/memory/*.hpp
-	code/public/tge/memory/*.hpp
+	private/memory/*.cpp
+	private/memory/*.hpp
+	public/tge/memory/*.hpp
 )
 
 add_library(TgeMemory STATIC ${TgeMemory_FILES})
@@ -153,7 +153,7 @@ target_link_libraries(TgeMemory
 )
 
 target_include_directories(TgeMemory
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 if(TGE_ENABLE_MEMORY_TRACKING)
@@ -164,9 +164,9 @@ endif()
 # TgeMath (STATIC - math library)
 # ============================================================================
 file(GLOB TgeMath_FILES CONFIGURE_DEPENDS
-	code/private/math/*.cpp
-	code/private/math/*.hpp
-	code/public/tge/math/*.hpp
+	private/math/*.cpp
+	private/math/*.hpp
+	public/tge/math/*.hpp
 )
 
 add_library(TgeMath STATIC ${TgeMath_FILES})
@@ -186,9 +186,9 @@ target_include_directories(TgeMath
 # TgeThreading (STATIC - job system and thread pool)
 # ============================================================================
 file(GLOB TgeThreading_FILES CONFIGURE_DEPENDS
-	code/private/threading/*.cpp
-	code/private/threading/*.hpp
-	code/public/tge/threading/*.hpp
+	private/threading/*.cpp
+	private/threading/*.hpp
+	public/tge/threading/*.hpp
 )
 
 add_library(TgeThreading STATIC ${TgeThreading_FILES})
@@ -200,16 +200,16 @@ target_link_libraries(TgeThreading
 )
 
 target_include_directories(TgeThreading
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 # ============================================================================
 # TgeIO (STATIC - file and path operations)
 # ============================================================================
 file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
-	code/private/io/*.cpp
-	code/private/io/*.hpp
-	code/public/tge/io/*.hpp
+	private/io/*.cpp
+	private/io/*.hpp
+	public/tge/io/*.hpp
 )
 
 add_library(TgeIO STATIC ${TgeIO_FILES})
@@ -220,16 +220,16 @@ target_link_libraries(TgeIO
 )
 
 target_include_directories(TgeIO
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 # ============================================================================
 # TgeCommand (STATIC - console command registration and dispatch)
 # ============================================================================
 file(GLOB TgeCommand_FILES CONFIGURE_DEPENDS
-	code/private/command/*.cpp
-	code/private/command/*.hpp
-	code/public/tge/command/*.hpp
+	private/command/*.cpp
+	private/command/*.hpp
+	public/tge/command/*.hpp
 )
 
 add_library(TgeCommand STATIC ${TgeCommand_FILES})
@@ -241,16 +241,16 @@ target_link_libraries(TgeCommand
 )
 
 target_include_directories(TgeCommand
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 # ============================================================================
 # TgeInit (STATIC - initialization/termination)
 # ============================================================================
 file(GLOB TgeInit_FILES CONFIGURE_DEPENDS
-	code/private/init/*.cpp
-	code/private/init/*.hpp
-	code/public/tge/init/*.hpp
+	private/init/*.cpp
+	private/init/*.hpp
+	public/tge/init/*.hpp
 )
 
 add_library(TgeInit STATIC ${TgeInit_FILES})
@@ -262,14 +262,14 @@ target_link_libraries(TgeInit
 )
 
 target_include_directories(TgeInit
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 # ============================================================================
 # TgeProfiling (INTERFACE - header-only profiling vocabulary)
 # ============================================================================
 file(GLOB TgeProfiling_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/profiling/*.hpp
+	public/tge/profiling/*.hpp
 )
 
 add_library(TgeProfiling INTERFACE)
@@ -302,7 +302,7 @@ if(TARGET Tracy::TracyClient)
 endif()
 
 configure_file(
-	${CMAKE_CURRENT_SOURCE_DIR}/code/public/tge/config.hpp.in
+	${CMAKE_CURRENT_SOURCE_DIR}/public/tge/config.hpp.in
 	${CMAKE_CURRENT_BINARY_DIR}/generated/tge/config.hpp
 	@ONLY
 )
@@ -315,14 +315,14 @@ target_include_directories(TgeBase INTERFACE
 # TgeModule (STATIC - the module contract every module compiles against)
 # ============================================================================
 file(GLOB TgeModule_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/module/*.hpp
+	public/tge/module/*.hpp
 )
 
 # Listed rather than globbed: the driver's sources sit in the same directory and must NOT land here -- a
 # module declares a dependency on Core's identity without linking anything that can drive a module.
 add_library(TgeModule STATIC
 	${TgeModule_HEADERS}
-	code/private/module/module_id.cpp
+	private/module/module_id.cpp
 )
 add_library(Tge::Module ALIAS TgeModule)
 
@@ -334,12 +334,12 @@ target_link_libraries(TgeModule
 # TgeLifecycle (STATIC - module ordering and phase dispatch, for a composition root)
 # ============================================================================
 add_library(TgeLifecycle STATIC
-	code/private/module/module.hpp
-	code/private/module/module.cpp
-	code/private/module/module_graph.hpp
-	code/private/module/module_graph.cpp
-	code/private/module/runtime.hpp
-	code/private/module/runtime.cpp
+	private/module/module.hpp
+	private/module/module.cpp
+	private/module/module_graph.hpp
+	private/module/module_graph.cpp
+	private/module/runtime.hpp
+	private/module/runtime.cpp
 )
 add_library(Tge::Lifecycle ALIAS TgeLifecycle)
 
@@ -349,22 +349,22 @@ target_link_libraries(TgeLifecycle
 )
 
 target_include_directories(TgeLifecycle
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/code/private
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
 # ============================================================================
 # TgeEventsPublic (STATIC - the event interface, its globals and the module's identity)
 # ============================================================================
 file(GLOB TgeEvents_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/events/*.hpp
+	public/tge/events/*.hpp
 )
 
 # Listed rather than globbed: the dispatcher's sources sit in the same directory and must NOT land here -- a
 # module emits and subscribes without linking anything that can drive the queue.
 add_library(TgeEventsPublic STATIC
 	${TgeEvents_HEADERS}
-	code/private/events/globals.cpp
-	code/private/events/module_id.cpp
+	private/events/globals.cpp
+	private/events/module_id.cpp
 )
 add_library(Tge::EventsPublic ALIAS TgeEventsPublic)
 
@@ -376,10 +376,10 @@ target_link_libraries(TgeEventsPublic
 # TgeEvents (STATIC - the dispatcher and the module that drains its queue)
 # ============================================================================
 add_library(TgeEvents STATIC
-	code/private/events/system.hpp
-	code/private/events/system.cpp
-	code/private/events/module.hpp
-	code/private/events/module.cpp
+	private/events/system.hpp
+	private/events/system.cpp
+	private/events/module.hpp
+	private/events/module.cpp
 )
 add_library(Tge::Events ALIAS TgeEvents)
 
@@ -391,7 +391,7 @@ target_link_libraries(TgeEvents
 # TgeGeometry (INTERFACE - header-only geometry vocabulary)
 # ============================================================================
 file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/geometry/*.hpp
+	public/tge/geometry/*.hpp
 )
 
 add_library(TgeGeometry INTERFACE)
@@ -407,7 +407,7 @@ target_link_libraries(TgeGeometry
 # TgeMaterial (INTERFACE - header-only material vocabulary)
 # ============================================================================
 file(GLOB TgeMaterial_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/material/*.hpp
+	public/tge/material/*.hpp
 )
 
 add_library(TgeMaterial INTERFACE)
@@ -423,7 +423,7 @@ target_link_libraries(TgeMaterial
 # TgeEntity (INTERFACE - header-only entity-handle vocabulary)
 # ============================================================================
 file(GLOB TgeEntity_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/entity/*.hpp
+	public/tge/entity/*.hpp
 )
 
 add_library(TgeEntity INTERFACE)
@@ -439,7 +439,7 @@ target_link_libraries(TgeEntity
 # TgeLight (INTERFACE - header-only light vocabulary)
 # ============================================================================
 file(GLOB TgeLight_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/light/*.hpp
+	public/tge/light/*.hpp
 )
 
 add_library(TgeLight INTERFACE)
@@ -455,7 +455,7 @@ target_link_libraries(TgeLight
 # TgeExposure (INTERFACE - header-only exposure vocabulary)
 # ============================================================================
 file(GLOB TgeExposure_HEADERS CONFIGURE_DEPENDS
-	code/public/tge/exposure/*.hpp
+	public/tge/exposure/*.hpp
 )
 
 add_library(TgeExposure INTERFACE)
@@ -510,7 +510,7 @@ if(TGE_CORE_TESTING)
 	endif()
 
 	file(GLOB TgeTesting_HEADERS CONFIGURE_DEPENDS
-		code/public/tge/testing/*.hpp
+		public/tge/testing/*.hpp
 	)
 
 	add_library(TgeTesting INTERFACE)

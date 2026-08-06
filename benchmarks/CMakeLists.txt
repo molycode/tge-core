@@ -35,7 +35,7 @@ target_link_libraries(TgeCoreEventsBenchmarks
 # Reaching into the private header beats widening a public one, the same call the unit suite makes.
 target_include_directories(TgeCoreEventsBenchmarks
 	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/../code/private/events
+		${CMAKE_CURRENT_SOURCE_DIR}/../private/events
 )
 
 set_target_properties(TgeCoreThreadingBenchmarks TgeCoreEventsBenchmarks PROPERTIES

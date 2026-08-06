@@ -39,8 +39,8 @@ target_link_libraries(TgeCoreUnitTests
 # The dispatcher and the module graph are private by design; reaching in beats widening a public header.
 target_include_directories(TgeCoreUnitTests
 	PRIVATE
-		${CMAKE_CURRENT_SOURCE_DIR}/../../code/private/events
-		${CMAKE_CURRENT_SOURCE_DIR}/../../code/private/module
+		${CMAKE_CURRENT_SOURCE_DIR}/../../private/events
+		${CMAKE_CURRENT_SOURCE_DIR}/../../private/module
 )
 
 add_test(NAME TgeCoreUnitTests COMMAND TgeCoreUnitTests)

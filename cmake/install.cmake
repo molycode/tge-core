@@ -2,13 +2,13 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/tge_module_package.cmake)
 
-TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/code/private/module/module_id.cpp ${PROJECT_VERSION})
+TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/private/module/module_id.cpp ${PROJECT_VERSION})
 
 # Events ships inside this package, so it cannot version independently of it.
-TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/code/private/events/module_id.cpp ${PROJECT_VERSION})
+TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/private/events/module_id.cpp ${PROJECT_VERSION})
 
 # Recorded in the package config so a consumer can see which contract the installed binaries speak.
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/code/public/tge/module/module.hpp moduleContractSource)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/public/tge/module/module.hpp moduleContractSource)
 
 if(NOT moduleContractSource MATCHES "ModuleContractVersion\\{ *([0-9]+) *\\}")
 	message(FATAL_ERROR "tge-core: no ModuleContractVersion literal found in module.hpp")
@@ -68,7 +68,7 @@ install(TARGETS
 	INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(DIRECTORY code/public/tge
+install(DIRECTORY public/tge
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 	FILES_MATCHING PATTERN "*.hpp"
 )
