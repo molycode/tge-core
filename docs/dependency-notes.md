@@ -80,3 +80,45 @@ and **72** in a `TGE_ENABLE_LOGGING=OFF` build, which drops the four log-listene
 ## Own dependencies
 
 Modest: glm (75 MiB of history, compiled whole) and rpmalloc (3 MiB).
+
+## OPEN 2026-08-07 — Core is the mechanism the family's edge removal will run through
+
+Stated intent (Thomas, 2026-08-07): **no `tge-*` repository sits above or below another. Core is the sole
+exception — the one repository every other builds on.** Measured against that, the family stands at:
+
+| module | public (interface) edges | private (implementation) edges |
+|---|---|---|
+| tge-window | none | none |
+| tge-asset-loader | none | none |
+| tge-renderer | `Tge::AssetLoaderPublic` | none |
+| tge-scene | `Tge::AssetLoaderPublic` | `Tge::RendererPublic` |
+| tge-animation | none | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
+
+**There is no cycle today.** tge-renderer names nothing above it — zero references to Animation in its
+`CMakeLists.txt`, `public/` or `private/`. Animation → Renderer is a plain downward edge. The reason it works
+is Core: `tge-core/public/tge/geometry/vertex.hpp:21,29` owns `SSkinVertex` and `SMorphDelta`, so the Renderer
+draws skinned meshes without knowing the Animation module exists. **That is the mechanism every remaining edge
+should be dissolved by** — shared vocabulary in Core, typed events for the wiring, no module naming another.
+
+**Why this concerns Core specifically.** This repository is the sole intended exception to the peer rule, and
+its vocabulary namespaces are what make the rule achievable. `Tge::Geometry`, `Tge::Material`, `Tge::Light`,
+`Tge::Entity` and `Tge::Exposure` exist so producers and consumers can embed the same types by value without
+naming each other — and `SSkinVertex` is the working proof, letting the Renderer skin meshes with no
+dependency on the Animation module.
+
+**Expect the remaining edge work to propose moving types here.** The nearest candidate is tge-asset-loader's
+`model_data.hpp` (`STextureData`, `SMaterialData`, `SMeshData`, `SNodeData`, …), which is the whole of the
+Renderer's only interface-level sibling edge and possibly the Scene's too.
+
+Each such move must be weighed against what this repository's own `CLAUDE.md` already states: **a type hosted
+here versions with Core, and every module rebuilds against every change to it.** The test for admitting a type
+is the one already written down — producers and consumers embed it *by value*, so it can never version
+independently of them. A type that fails that test buys peer-ness at the price of coupling everything to Core's
+release cadence.
+
+**The second payoff, new on 2026-08-07.** A dev layer is planned for these repos: an app per module that boots
+a minimal running environment so the module can be proven at runtime, top-level only, installed never. Such an
+app can vendor its *downward* closure today with no cycle. What it cannot do is reach sideways — a Renderer dev
+app cannot open a scene with animated models, because Scene and Animation sit above it. **Every edge dissolved
+is a dev app that gains that reach**, and once no sibling library edges remain, any dev app may vendor any
+combination freely.
