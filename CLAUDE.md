@@ -115,6 +115,27 @@ wins and no second checkout is configured.
 A benchmark is an instrument, never a gate — the suites answer whether core is correct, the benchmarks only
 tell you what a tuning constant should be. Both benchmark binaries land in `<build-dir>/benchmarks/`.
 
+### The packaging gate
+
+`tests/packaging/verify_package_interface.sh` is this module's own gate, and it configures a COPY of the
+module placed OUTSIDE the engine tree — a module still sitting inside its parent resolves an upward `../../`
+reach against that parent, so an in-place arm passes while the module is not self-sufficient at all. Needs
+`TGE_GCC_PATH` and `TGE_CMAKE` (4.3+), and refuses to run rather than measure a toolchain nobody asked for;
+`TGE_CORE_DEPENDENCY_ROOT` says where googletest is checked out, and is only needed while this module has no
+superproject to take one from.
+
+- **googletest gets a prefix of its own**, which no sibling gate does. Every consuming step then runs against
+  Core's prefix alone, so "no googletest on the path" is a fact about where the consumer looks rather than
+  about a prefix something deleted from. Measured, not assumed: a shared prefix with `lib/cmake/GTest`
+  removed still satisfies `find_dependency(GTest)` through CMake's `FindGTest` module, so the
+  mutilated-prefix control the siblings use would have passed here for free.
+- **Steps 5 and 6 are the standing regression for the `COMPONENTS Testing` bug**: a Core installed *with* the
+  harness, consumed by someone who never asked for it, on a path with no googletest at all. A Testing block
+  that loaded because it is installed rather than because it was requested fails there.
+- **Adding a test binary means adding it to step 3's list by name.** A module added `EXCLUDE_FROM_ALL` has
+  its test binaries excluded too, and a suite that configures, builds nothing and reports nothing is
+  indistinguishable from a passing gate — so the loop names what it expects rather than running what it finds.
+
 ## Remote Setup
 
 **GitHub is the primary dev repo. Gitea is a read-only mirror that follows it — never push to Gitea directly.**

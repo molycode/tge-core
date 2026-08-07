@@ -4,17 +4,28 @@ Split out of the workspace-level `TGE_DEPENDENCY_HANDOFF.md` on 2026-08-06, so e
 repository whose session will act on it. Everything here was measured on Thomas's machine, not inferred.
 The cross-cutting index lives in `tge-demo/docs/dependency-notes.md`.
 
-## OPEN — this is the only packaged module with no packaging gate
+## RESOLVED 2026-08-07 — the packaging gate arrived
 
-Every other module has `tests/packaging/verify_package_interface.sh`. tge-core has `install.cmake` and
-`TgeCoreConfig.cmake.in` — it genuinely ships a package — but no gate and no scripts at all.
+`tests/packaging/verify_package_interface.sh`, 9 steps and 15 checks, modelled on tge-scene's. It installs
+googletest, builds and installs Core out of tree with the harness and both suites on, runs both suites,
+consumes the result from packages alone, and proves the `Testing` component is requested rather than
+inherited. It re-measures the counts recorded below: 76 and 15.
 
-**It is the module every other package's closure resolves through, so it is the worst one to leave
-unproven.** Its `Testing` component and the googletest-vs-`find_package` handoff are exactly the sort of
-thing an install gets silently wrong; the `COMPONENTS Testing` bug fixed in s147 was not harmless, since a
-Core-only consumer could not configure at all once Core was installed with the harness.
+**Two things this module needed that no sibling gate has.** googletest gets a prefix of its OWN rather than
+sharing Core's, so every consuming step runs against Core's prefix alone and "no googletest" is a property of
+the search path. Measured rather than assumed — a shared prefix with `lib/cmake/GTest` deleted still
+satisfies `find_dependency(GTest)` through CMake's `FindGTest` module, so the mutilated-prefix control every
+sibling uses would have passed here for free. And step 9 installs Core a second time with
+`TGE_CORE_TESTING=OFF` to hold `install.cmake` to its claim that the two installs publish a byte-identical
+package. They do.
 
-Model it on tge-scene's gate (9 steps) or tge-renderer's (7).
+The `COMPONENTS Testing` bug fixed in s147 now has a standing regression rather than a memory of one: steps 5
+and 6 consume a Core installed *with* the harness from a path carrying no googletest, which is exactly the
+shape that broke.
+
+Control: six mutations of the installed prefix, each turning red the step that covers it — the s147 config
+restored to loading unconditionally, `tge_module_package.cmake` deleted, the generated `tge/config.hpp`
+deleted, glm deleted, and the config's contract-version scrape moved to 99.
 
 ## RESOLVED 2026-08-06 — the two benchmarks arrived, and the broken one was repaired
 
