@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tge/math/types.hpp>
+#include <cstddef>
 #include <cstdint>
 
 namespace Tge::Geometry
@@ -32,4 +33,24 @@ struct SMorphDelta final
 	Math::Vec4 normal{ 0.0f, 0.0f, 0.0f, 0.0f };
 	Math::Vec4 tangent{ 0.0f, 0.0f, 0.0f, 0.0f };
 };
+
+// Offsets are pinned because these upload verbatim and are read back by offset, so a reorder corrupts
+// without changing the size.
+static_assert(sizeof(SVertex)  == 80 && alignof(SVertex)  == 4);
+static_assert(offsetof(SVertex, position)  ==  0);
+static_assert(offsetof(SVertex, color)     == 12);
+static_assert(offsetof(SVertex, texCoord0) == 28);
+static_assert(offsetof(SVertex, texCoord1) == 36);
+static_assert(offsetof(SVertex, normal)    == 44);
+static_assert(offsetof(SVertex, tangent)   == 56);
+static_assert(offsetof(SVertex, bitangent) == 68);
+
+static_assert(sizeof(SSkinVertex) == 32 && alignof(SSkinVertex) == 4);
+static_assert(offsetof(SSkinVertex, joints)  ==  0);
+static_assert(offsetof(SSkinVertex, weights) == 16);
+
+static_assert(sizeof(SMorphDelta) == 48 && alignof(SMorphDelta) == 4);
+static_assert(offsetof(SMorphDelta, position) ==  0);
+static_assert(offsetof(SMorphDelta, normal)   == 16);
+static_assert(offsetof(SMorphDelta, tangent)  == 32);
 } // namespace Tge::Geometry

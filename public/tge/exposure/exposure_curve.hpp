@@ -129,4 +129,8 @@ private:
 
 	uint32_t m_numKeys{ 0u };
 };
+
+// The keys are stored inline, so MaxExposureCurveKeys is ABI rather than a tuning constant.
+static_assert(sizeof(SExposureCurveKey) ==   8 && alignof(SExposureCurveKey) == 4);
+static_assert(sizeof(CExposureCurve)    == 132 && alignof(CExposureCurve)    == 4);
 } // namespace Tge::Exposure

@@ -22,4 +22,6 @@ struct STextureTransform final
 		       rotation == 0.0f && texCoord == 0;
 	}
 };
+
+static_assert(sizeof(STextureTransform) == 24 && alignof(STextureTransform) == 4);
 } // namespace Tge::Material

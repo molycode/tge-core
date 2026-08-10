@@ -10,8 +10,7 @@ namespace Tge::Light
 // of it is a cache of that transform. Each consumer pairs this with placement in whatever form suits it.
 struct SLight final
 {
-	// Mirrored as bare literals in the shaders (lights.glsl, tge_light_cull.comp, shadows.glsl) — nothing
-	// checks these agree, so a renumbering here is silent there.
+	// Consumers mirror these values as bare literals with nothing cross-checking them, so they are ABI.
 	enum class EType : uint32_t { Directional = 0, Point = 1, Spot = 2 };
 
 	EType      type{ EType::Point };
@@ -21,4 +20,10 @@ struct SLight final
 	float      innerConeAngle{ 0.0f };             // half-angle in radians (spot only)
 	float      outerConeAngle{ Math::QuarterPi };  // half-angle in radians (spot only, per spec)
 };
+
+static_assert(sizeof(SLight) == 32 && alignof(SLight) == 4);
+
+static_assert(static_cast<uint32_t>(SLight::EType::Directional) == 0u);
+static_assert(static_cast<uint32_t>(SLight::EType::Point)       == 1u);
+static_assert(static_cast<uint32_t>(SLight::EType::Spot)        == 2u);
 } // namespace Tge::Light

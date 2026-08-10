@@ -87,4 +87,7 @@ struct SMaterialProperties final
 
 	bool operator==(SMaterialProperties const&) const = default;
 };
+
+// Size only: at this field count per-offset pins would be noise, so a same-size reorder still passes here.
+static_assert(sizeof(SMaterialProperties) == 180 && alignof(SMaterialProperties) == 4);
 } // namespace Tge::Material

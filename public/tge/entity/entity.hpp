@@ -21,6 +21,8 @@ struct SEntity final
 
 	bool operator==(SEntity const&) const = default;
 };
+
+static_assert(sizeof(SEntity) == 8 && alignof(SEntity) == 4);
 } // namespace Tge::Entity
 
 template<>
