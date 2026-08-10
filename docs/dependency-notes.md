@@ -4,6 +4,70 @@ Split out of the workspace-level `TGE_DEPENDENCY_HANDOFF.md` on 2026-08-06, so e
 repository whose session will act on it. Everything here was measured on Thomas's machine, not inferred.
 The cross-cutting index lives in `tge-demo/docs/dependency-notes.md`.
 
+## OPEN 2026-08-10 — a vocabulary layout mismatch between two modules is undetectable, and needs its own session
+
+**The question that framed it (Thomas):** module A is built against a Core whose `struct S { float f1; float
+f2; }`, module B against a Core where those two fields were swapped. Both are 8 bytes, both 4-aligned. An
+application linking A and B has no way to notice.
+
+**Why it is silent rather than merely undetected.** The vocabulary targets are `INTERFACE`, so every consumer
+compiles its own copy of the layout. Inline functions and templates emit weak symbols; the linker keeps one
+definition and discards the duplicates, which is what it is supposed to do. The result is one version's code
+operating on another version's layout. The linker is not failing to catch this — it is actively what makes it
+invisible.
+
+**Nothing currently in place covers it, and each for a different reason:**
+
+- The `sizeof`/`offsetof` asserts beside each vocabulary type (`6647d44`) stop the **author**: swapping the
+  fields moves `offsetof` and fails the build here, forcing the change to be made deliberately. But once a
+  Core ships with corrected numbers, each module compiles cleanly against whichever header it has. **They make
+  the change deliberate; they do not make the mismatch detectable.** A same-size reorder is exactly the case.
+- `ModuleContractVersion` describes `IModule`/`EFramePhase`, is hand-maintained, and stays `1` when a
+  vocabulary field moves.
+- The pin gate proves every declarer of Core agrees, but it works only where one gate can see the whole graph.
+  **Under released binaries there is no such vantage point** — which is why this is a real problem rather than
+  a theoretical one, and why it is not urgent yet.
+
+**The mechanism to build on already exists here, and its comment already states the reason it works.**
+`CModuleId`'s constructor takes `contractVersion` as a *default argument*:
+
+> *"contractVersion is a default argument so it is evaluated in the MODULE's translation unit; an inline
+> virtual returning the constant would be deduped by the linker and every module would report one value."*
+
+A default argument is evaluated at the call site, inside each module's own TU, against whichever Core header
+that module saw. That is precisely the property needed, and the COMDAT hazard that defeats the obvious
+alternative is already understood there.
+
+**The shape of the fix:** a second default argument carrying a digest computed from the layout itself rather
+than from a maintained number —
+
+```cpp
+constexpr uint64_t VocabularyLayoutDigest()   // FNV-1a over sizeof + every offsetof
+```
+
+— baked per module the same way, and compared in `CModuleGraph::Resolve` beside the contract check it already
+performs at `module_graph.cpp:38`. A swap moves the `offsetof` values, so the digest changes with nobody
+touching it, and the boot fails naming both modules.
+
+**Placement is the design question for that session**, and it is a genuine trade rather than a detail:
+
+| | catches a same-size swap | when |
+|---|---|---|
+| `static_assert` (shipped) | no — author only | compile, here |
+| inline namespace keyed on the release **version** | only if someone bumped it | link |
+| inline namespace keyed on the **digest** | yes, automatically | link |
+| digest in `CModuleId` | yes, automatically | boot |
+
+**A version-keyed inline namespace is the trap to avoid**: a swap that ships without a version bump keeps the
+same mangled names and stays silent, so it inherits exactly the weakness of a hand-maintained number. The
+digest is the load-bearing half; the namespace is a placement that buys link-time over boot-time and costs a
+build-system step, since a namespace name must be an identifier at preprocessing time. `CModuleId` needs no
+codegen. nlohmann/json is the reference implementation of the namespace form and is vendored in this graph.
+
+**Residual fuse, to state in whatever ships:** the digest enumerates types and fields, so a newly *added*
+type is uncovered until someone adds it — the same list-as-fuse problem the asserts have. A reorder of
+existing fields is covered for free, which is the case that prompted this.
+
 ## RESOLVED 2026-08-07 — the packaging gate arrived
 
 `tests/packaging/verify_package_interface.sh`, 9 steps and 15 checks, modelled on tge-scene's. It installs
