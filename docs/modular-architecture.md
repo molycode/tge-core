@@ -89,12 +89,27 @@ The pool satisfies this today, measured rather than intended: **no module links 
 target.** Every cross-module edge resolves to a `*Public` library, and only composition roots — the demo, the
 rendering-test harness — link implementations.
 
-| repository | contracts it declares beyond Core |
-|---|---|
-| `tge-window`, `tge-asset-loader` | none |
-| `tge-renderer` | `Tge::AssetLoaderPublic` — `IRenderer::CreateMeshes` takes an `SModelData` |
-| `tge-scene` | `Tge::AssetLoaderPublic`, `Tge::RendererPublic` |
-| `tge-animation` | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
+**This table is the pool's single copy.** It lived in all six modules' `docs/dependency-notes.md` and in the
+consuming tree's index as well, and every copy went stale the day the two public edges were removed. A module
+repository states only what it can verify from **its own** tree — its own link lines — and the synthesis
+across siblings lives here, in the one repository every consumer already takes. Re-measure it from the
+`target_link_libraries` calls; do not adjust it from memory.
+
+Measured 2026-08-10:
+
+| repository | public (interface) edges | private (implementation) edges |
+|---|---|---|
+| `tge-window` | none | none |
+| `tge-asset-loader` | none | none |
+| `tge-renderer` | **none** | `Tge::WindowPublic`, `Tge::AssetLoaderPublic` |
+| `tge-scene` | **none** | `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
+| `tge-animation` | none | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
+
+**Every module's interface now reaches Core and nothing else**, and what remains is entirely implementation.
+The renderer's last interface edge was one `#include` naming a single type behind a `shared_ptr`, already
+forward-declared in the same header — it needed no vocabulary move into Core to remove, and the belief that
+`CreateMeshes` embedded an `SModelData` *by value*, which this table used to give as the reason for the edge,
+was simply wrong.
 
 That the composing modules declare more than the leaf ones is the shape of the pool, not a violation of it.
 Scene's job is to drive a renderer, so an edge to the renderer's public interface is Scene describing what it

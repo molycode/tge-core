@@ -85,15 +85,12 @@ Modest: glm (75 MiB of history, compiled whole) and rpmalloc (3 MiB).
 ## OPEN 2026-08-07 — Core is the mechanism the family's edge removal will run through
 
 Stated intent (Thomas, 2026-08-07): **no `tge-*` repository sits above or below another. Core is the sole
-exception — the one repository every other builds on.** Measured against that, the family stands at:
+exception — the one repository every other builds on.**
+This module's own edges, which is all this file states: **none.** This repository is the base every other builds on; it links no sibling.
 
-| module | public (interface) edges | private (implementation) edges |
-|---|---|---|
-| tge-window | none | none |
-| tge-asset-loader | none | none |
-| tge-renderer | `Tge::AssetLoaderPublic` | none |
-| tge-scene | `Tge::AssetLoaderPublic` | `Tge::RendererPublic` |
-| tge-animation | none | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
+The family-wide table used to be copied here and into every sibling. Every copy went stale together the day
+the two public edges were removed, so it now lives once, in `tge-core/docs/modular-architecture.md`. A
+repository states only what it can verify from its own tree.
 
 **There is no cycle today.** tge-renderer names nothing above it — zero references to Animation in its
 `CMakeLists.txt`, `public/` or `private/`. Animation → Renderer is a plain downward edge. The reason it works
