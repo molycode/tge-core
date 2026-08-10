@@ -55,8 +55,9 @@ Control: the pre-fix source was restored over the repaired one and shown to fail
 (this module's own mechanism: `IModule`, `EFramePhase`, `SRunContext`, `CModuleGraph`) into the one
 repository every consumer takes.
 
-The rule is now narrowed to `tasks/` alone, so real documentation can live here. **Both of those documents
-still sit in `tge-demo/docs/` and moving them is the follow-up** — this only unblocked it.
+The rule is now narrowed to `tasks/` alone, so real documentation can live here. **Both documents now live in
+this directory** (moved 2026-08-10); they cross-reference each other by relative link and moved together, so
+nothing had to be rewritten, and no repository referenced either of them from outside.
 
 ## The trap this repository's test layout exposed
 
