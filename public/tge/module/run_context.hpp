@@ -2,6 +2,7 @@
 
 #include <tge/module/frame_phase.hpp>
 #include <span>
+#include <string_view>
 
 namespace Tge
 {
@@ -21,5 +22,10 @@ struct SRunContext final
 	std::span<IModule* const>       modules;
 	std::span<SScheduleEntry const> schedule;
 	std::span<IModule* const>       noTick;
+
+	// A relative path resolves against the working directory, which belongs to whoever launched the process
+	// rather than to the app. One that must land somewhere definite declares it absolute here.
+	std::string_view logsDir{ "logs" };
+	std::string_view configDir{ "configs" };
 };
 } // namespace Tge

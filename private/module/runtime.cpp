@@ -28,7 +28,7 @@ extern IRuntime* const gRuntime = static_cast<IRuntime*>(&gRuntimeImpl);
 bool CRuntime::Initialize(SRunContext const& context)
 {
 	// Initialize logging system first - must happen before any logging
-	Logging::GetLogSystem().Initialize();
+	Logging::GetLogSystem().Initialize("tge", context.logsDir, context.configDir);
 
 	bool initialized{ false };
 
