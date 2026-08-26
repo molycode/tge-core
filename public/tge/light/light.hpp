@@ -19,9 +19,10 @@ struct SLight final
 	float      range{ 0.0f };                      // 0 = infinite
 	float      innerConeAngle{ 0.0f };             // half-angle in radians (spot only)
 	float      outerConeAngle{ Math::QuarterPi };  // half-angle in radians (spot only, per spec)
+	float      sourceRadius{ 0.35f };              // the emitter's own size: geometry within it does not occlude this light
 };
 
-static_assert(sizeof(SLight) == 32 && alignof(SLight) == 4);
+static_assert(sizeof(SLight) == 36 && alignof(SLight) == 4);
 
 static_assert(static_cast<uint32_t>(SLight::EType::Directional) == 0u);
 static_assert(static_cast<uint32_t>(SLight::EType::Point)       == 1u);
