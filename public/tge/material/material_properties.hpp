@@ -43,6 +43,9 @@ struct SMaterialProperties final
 	// primitive without NORMAL is shaded from the derived geometric normal instead — glTF 3.7.2.1.
 	bool hasVertexNormals{ true };
 
+	// Tge-specific: false where an analytic light already carries this emitter, so indirect must not count it twice.
+	bool emissiveIndirect{ true };
+
 	// KHR_materials_emissive_strength extension
 	float emissiveStrength{ 1.0f };
 
