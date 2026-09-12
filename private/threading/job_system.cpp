@@ -36,7 +36,7 @@ namespace Internal
 {
 bool Initialize(size_t numThreads)
 {
-	if (numThreads == 0)
+	if (numThreads == AutoThreadCount)
 	{
 		numThreads = std::thread::hardware_concurrency();
 

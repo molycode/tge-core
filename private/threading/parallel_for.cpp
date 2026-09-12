@@ -21,7 +21,7 @@ uint32_t ComputeParallelChunkCount(uint32_t numItems, uint32_t grainSize)
 	}
 	else
 	{
-		gLog.Warning("ParallelFor ran serially: the job system is not initialized");
+		gLog.Warning("ParallelFor ran serially: the job system has no worker threads");
 	}
 
 	return numChunks;
