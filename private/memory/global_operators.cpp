@@ -5,6 +5,8 @@
 #include <new>
 #include <cstdint>
 
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
+
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 
 namespace
@@ -245,3 +247,5 @@ void* operator new[](size_t size, std::align_val_t align, std::nothrow_t const& 
 {
 	return ::operator new(size, align, tag);
 }
+
+#endif // TGE_GLOBAL_ALLOCATOR_ENABLED

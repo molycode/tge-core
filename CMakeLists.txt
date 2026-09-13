@@ -33,6 +33,7 @@ endif() # PROJECT_IS_TOP_LEVEL
 # Options
 option(TGE_ENABLE_LOGGING "Enable logging system" ON)
 option(TGE_ENABLE_MEMORY_TRACKING "Enable memory tracking system" ON)
+option(TGE_ENABLE_GLOBAL_ALLOCATOR "Route global new and delete through rpmalloc" ON)
 
 option(TGE_CORE_INSTALL "Generate install and export rules for tge-core" ${PROJECT_IS_TOP_LEVEL})
 option(TGE_CORE_TESTING "Provide Tge::Testing, the harness every module's tests sit on" OFF)
@@ -158,6 +159,11 @@ target_include_directories(TgeMemory
 
 if(TGE_ENABLE_MEMORY_TRACKING)
 	target_compile_definitions(TgeMemory PUBLIC TGE_MEMORY_TRACKING_ENABLED)
+endif()
+
+# Off for valgrind, heaptrack and massif: they follow malloc, and rpmalloc takes its pages from mmap.
+if(TGE_ENABLE_GLOBAL_ALLOCATOR)
+	target_compile_definitions(TgeMemory PUBLIC TGE_GLOBAL_ALLOCATOR_ENABLED)
 endif()
 
 # ============================================================================
@@ -295,6 +301,7 @@ endif()
 # Generated here, after every flag above has been decided (TGE_PROFILE_TRACY is the last, and depends on
 # whether a Tracy client target exists). See config.hpp.in for why the command line alone is not enough.
 set(TGE_MEMORY_TRACKING_ENABLED ${TGE_ENABLE_MEMORY_TRACKING})
+set(TGE_GLOBAL_ALLOCATOR_ENABLED ${TGE_ENABLE_GLOBAL_ALLOCATOR})
 set(TGE_LOGGING_ENABLED ${TGE_ENABLE_LOGGING})
 
 if(TARGET Tracy::TracyClient)
