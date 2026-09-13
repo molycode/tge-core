@@ -1,7 +1,7 @@
 # A closure probe: this project resolves nothing for itself, so the only thing that can satisfy Tge::Core's
 # link interface is what the package itself carries. rpmalloc is the one that matters -- it reaches the link
 # as a $<LINK_ONLY:> genex behind Tge::Memory, and nothing evaluates one of those until something is linked.
-cmake_minimum_required(VERSION 4.3.0)
+cmake_minimum_required(VERSION 3.28.0)
 
 project(TgeCoreClosure LANGUAGES CXX)
 

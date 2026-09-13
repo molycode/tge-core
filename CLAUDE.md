@@ -98,7 +98,7 @@ int main()
 - **rpmalloc** (git submodule) - Fast memory allocator (global new/delete override)
 
 ## Build
-Requires CMake 4.x (`cmake --version` to verify — system cmake may be too old).
+Requires CMake 3.28+ (`cmake --version` to verify).
 
 ```bash
 cmake --preset linux-gcc_16-debug
@@ -120,7 +120,7 @@ tell you what a tuning constant should be. Both benchmark binaries land in `<bui
 `tests/packaging/verify_package_interface.sh` is this module's own gate, and it configures a COPY of the
 module placed OUTSIDE the engine tree — a module still sitting inside its parent resolves an upward `../../`
 reach against that parent, so an in-place arm passes while the module is not self-sufficient at all. Needs
-`TGE_GCC_PATH` and `TGE_CMAKE` (4.3+), and refuses to run rather than measure a toolchain nobody asked for;
+`TGE_GCC_PATH` and `TGE_CMAKE` (3.28+), and refuses to run rather than measure a toolchain nobody asked for;
 `TGE_CORE_DEPENDENCY_ROOT` says where googletest is checked out, and is only needed while this module has no
 superproject to take one from.
 

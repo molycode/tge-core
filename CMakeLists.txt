@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3.0)
+cmake_minimum_required(VERSION 3.28.0)
 
 project(tge-core VERSION 1.0.0 LANGUAGES C CXX)
 
@@ -8,6 +8,10 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/external.cmake)
 if(PROJECT_IS_TOP_LEVEL)
 	set(CMAKE_CXX_STANDARD 23)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+	# No target here declares a module, and leaving this on makes every Clang build need clang-scan-deps,
+	# which most distributions ship in a separate package.
+	set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 	if(NOT CYGWIN)
 		set(CMAKE_CXX_EXTENSIONS OFF)

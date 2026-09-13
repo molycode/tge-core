@@ -5,7 +5,7 @@ A standalone C++23 foundation library providing logging, assertions, memory mana
 ## Requirements
 
 - C++23 compiler (GCC 15+ or Clang 22+)
-- CMake 4.1+
+- CMake 3.28+
 - Ninja (recommended)
 
 ## Dependencies

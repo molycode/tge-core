@@ -2,7 +2,7 @@
 # can satisfy Tge::Testing -- googletest above all -- is the find_dependency the component declares. It is
 # also the arm that says the component is really optional: the same probe against a Core installed without
 # the harness, or against a prefix with no googletest on it, must fail to configure.
-cmake_minimum_required(VERSION 4.3.0)
+cmake_minimum_required(VERSION 3.28.0)
 
 project(TgeCoreTestingClosure LANGUAGES CXX)
 
