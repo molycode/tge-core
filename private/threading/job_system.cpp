@@ -54,20 +54,21 @@ bool Initialize(size_t numThreads)
 	return true;
 }
 
+// The pool goes first: until its workers are joined, they can still be inside the scheduler's job wrapper.
 void Terminate()
 {
-	if (gJobScheduler)
-	{
-		delete gJobScheduler;
-		gJobScheduler = nullptr;
-	}
-
 	if (gThreadPool)
 	{
 		delete gThreadPool;
 		gThreadPool = nullptr;
 
 		gLog.Info("Terminated");
+	}
+
+	if (gJobScheduler)
+	{
+		delete gJobScheduler;
+		gJobScheduler = nullptr;
 	}
 }
 } // namespace Internal
