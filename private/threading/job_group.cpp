@@ -51,7 +51,8 @@ bool CJobGroup::SState::RunOnePending()
 			tCurrent = prev;
 		}
 
-		activeJobs.fetch_sub(1, std::memory_order_relaxed);
+		// Release, so a Wait() that reads zero (acquire) also sees everything the job body wrote.
+		activeJobs.fetch_sub(1, std::memory_order_release);
 		completion.notify_all();
 	}
 
@@ -124,7 +125,7 @@ void CJobGroup::Cancel()
 
 	if (!dropped.empty())
 	{
-		m_state->activeJobs.fetch_sub(dropped.size(), std::memory_order_relaxed);
+		m_state->activeJobs.fetch_sub(dropped.size(), std::memory_order_release);
 		m_state->completion.notify_all();
 	}
 }
