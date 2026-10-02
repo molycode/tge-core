@@ -30,11 +30,13 @@
 // - std::aligned_storage (deprecated) -> alignas
 // - NULL -> nullptr
 // - Added cache-line alignment to prevent false sharing
+// - Values move in and out, so the node a value leaves no longer holds a second copy until the next Dequeue
 
 #pragma once
 
 #include <tge/non_copyable.hpp>
 #include <atomic>
+#include <utility>
 
 namespace Tge::Threading
 {
@@ -50,22 +52,31 @@ public:
 		front->next.store(nullptr, std::memory_order_relaxed);
 	}
 
+	// Frees nodes directly: draining through Dequeue assigns each value, which GCC's -Wfree-nonheap-object misreads.
 	~CMpscQueue()
 	{
-		T output;
-		while (Dequeue(output)) {}
-		SBufferNode* front = m_head.load(std::memory_order_relaxed);
-		delete reinterpret_cast<SBufferNodeAligned*>(front);
+		SBufferNode* node = m_tail.load(std::memory_order_relaxed);
+
+		while (node != nullptr)
+		{
+			SBufferNode* next = node->next.load(std::memory_order_relaxed);
+			delete reinterpret_cast<SBufferNodeAligned*>(node);
+			node = next;
+		}
 	}
 
 	void Enqueue(T const& input)
 	{
 		SBufferNode* node = reinterpret_cast<SBufferNode*>(new SBufferNodeAligned);
 		node->data = input;
-		node->next.store(nullptr, std::memory_order_relaxed);
+		Push(node);
+	}
 
-		SBufferNode* prevHead = m_head.exchange(node, std::memory_order_acq_rel);
-		prevHead->next.store(node, std::memory_order_release);
+	void Enqueue(T&& input)
+	{
+		SBufferNode* node = reinterpret_cast<SBufferNode*>(new SBufferNodeAligned);
+		node->data = std::move(input);
+		Push(node);
 	}
 
 	bool Dequeue(T& output)
@@ -78,7 +89,7 @@ public:
 			return false;
 		}
 
-		output = next->data;
+		output = std::move(next->data);
 		m_tail.store(next, std::memory_order_release);
 		delete reinterpret_cast<SBufferNodeAligned*>(tail);
 		return true;
@@ -93,6 +104,14 @@ private:
 		T data;
 		std::atomic<SBufferNode*> next;
 	};
+
+	void Push(SBufferNode* node)
+	{
+		node->next.store(nullptr, std::memory_order_relaxed);
+
+		SBufferNode* prevHead = m_head.exchange(node, std::memory_order_acq_rel);
+		prevHead->next.store(node, std::memory_order_release);
+	}
 
 	// Align to cache line boundary to prevent false sharing
 	// C4324: padding is intentional — cache-line alignment prevents false sharing
