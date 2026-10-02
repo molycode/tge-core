@@ -26,6 +26,12 @@ if(TGE_ENABLE_LOGGING)
 	target_sources(TgeCoreUnitTests PRIVATE test_log_listener.cpp)
 endif()
 
+# The harness's own proof, so only where the harness is provided.
+if(TGE_ENABLE_LOGGING AND TARGET Tge::Testing)
+	target_sources(TgeCoreUnitTests PRIVATE test_expected_log.cpp)
+	target_link_libraries(TgeCoreUnitTests PRIVATE Tge::Testing)
+endif()
+
 target_link_libraries(TgeCoreUnitTests
 	PRIVATE
 		GTest::gtest

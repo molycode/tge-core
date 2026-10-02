@@ -52,7 +52,7 @@ All public headers use `<tge/...>` prefix:
 | TgeEntity | INTERFACE | TgeBase | Entity-handle vocabulary shared by a scene and whatever animates it |
 | TgeLight | INTERFACE | TgeMath | Punctual-light vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeExposure | INTERFACE | TgeMath | Exposure-curve vocabulary shared by a renderer and whatever serializes it |
-| TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`); behind `TGE_CORE_TESTING`, own export set |
+| TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`, `CExpectedLog`); behind `TGE_CORE_TESTING`, own export set |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
 
 `TgeGeometry`, `TgeMaterial`, `TgeEntity`, `TgeLight` and `TgeExposure` are engine-domain vocabulary rather than general
