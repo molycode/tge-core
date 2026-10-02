@@ -76,9 +76,10 @@ int main()
 
 `Initialize()` accepts an optional thread count. It defaults to `Threading::AutoThreadCount`, which sizes
 the pool from hardware concurrency; any other value is taken literally, and `0` asks for no worker threads
-at all. A pool with no workers is a supported state rather than a broken one: `ParallelFor` takes its
-serial branch and a job group's `Wait()` runs the group's own jobs on the calling thread. Only a bare
-`CThreadPool::Execute` has nowhere to go, and queues work that nothing will run.
+at all. An app started through `gRuntime` chooses it with `SRunContext::numWorkerThreads`. A pool with no
+workers is a supported state rather than a broken one: `ParallelFor` takes its serial branch and a job
+group's `Wait()` runs the group's own jobs on the calling thread. Only a bare `CThreadPool::Execute` has
+nowhere to go, and queues work that nothing will run.
 
 ---
 

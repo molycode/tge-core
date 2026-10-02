@@ -1,6 +1,8 @@
 #pragma once
 
 #include <tge/module/frame_phase.hpp>
+#include <tge/threading/job_system.hpp>
+#include <cstddef>
 #include <span>
 #include <string_view>
 
@@ -27,5 +29,8 @@ struct SRunContext final
 	// rather than to the app. One that must land somewhere definite declares it absolute here.
 	std::string_view logsDir{ "logs" };
 	std::string_view configDir{ "configs" };
+
+	// Core's job workers. 0 suits an app that queues no jobs: a group's Wait() then runs its own jobs.
+	size_t numWorkerThreads{ Threading::AutoThreadCount };
 };
 } // namespace Tge

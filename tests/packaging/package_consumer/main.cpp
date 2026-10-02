@@ -9,6 +9,8 @@
 #include <tge/module/run_context.hpp>
 #include <tge/module/runtime.hpp>
 #include <tge/module/version.hpp>
+#include <tge/threading/job_system.hpp>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <string_view>
@@ -32,7 +34,8 @@ SScheduleEntry const Schedule[]
 	{ EFramePhase::FrameStart, Core::gModule }
 };
 
-SRunContext const Context{ Modules, Schedule, {} };
+// No workers: the default never yields that, so a pool of none proves the context's count reached it.
+SRunContext const Context{ .modules = Modules, .schedule = Schedule, .noTick = {}, .numWorkerThreads = 0 };
 
 constexpr float TickDelta{ 1.0f / 60.0f };
 
@@ -177,6 +180,24 @@ bool VerifyGeneratedConfigShipped()
 
 	return shipped;
 }
+
+bool VerifyWorkerCountFollowsTheContext()
+{
+	size_t const numWorkers{ Threading::GetNumThreads() };
+	bool const   followed{ numWorkers == Context.numWorkerThreads };
+
+	if (followed)
+	{
+		gLog.Info("Core package sizes its job pool from the run context ({} workers)", numWorkers);
+	}
+	else
+	{
+		gLog.Error("Core package started {} job workers where the run context asked for {}",
+		           numWorkers, Context.numWorkerThreads);
+	}
+
+	return followed;
+}
 } // namespace
 
 int main()
@@ -189,10 +210,11 @@ int main()
 		bool const eventsVerified{ VerifyQueuedEventDispatches() };
 		bool const mathVerified{ VerifyMathRoundTrip() };
 		bool const configVerified{ VerifyGeneratedConfigShipped() };
+		bool const workersVerified{ VerifyWorkerCountFollowsTheContext() };
 
 		// Ahead of Terminate, which takes the log system down with it and would leave the gate's marker
 		// coming out of the pre-init fallback path.
-		if (identityVerified && eventsVerified && mathVerified && configVerified)
+		if (identityVerified && eventsVerified && mathVerified && configVerified && workersVerified)
 		{
 			gLog.Info("Consumer linked the packaged Core implementation from packages alone");
 

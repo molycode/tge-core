@@ -16,7 +16,7 @@ IModuleId* CModule::GetId() const
 //////////////////////////////////////////////////////////////////////////
 bool CModule::Initialize()
 {
-	return Tge::Initialize();
+	return Tge::Initialize(m_numWorkerThreads);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -29,5 +29,11 @@ void CModule::Terminate()
 void CModule::Update(EFramePhase phase, float deltaTime)
 {
 	Tge::Update();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CModule::SetNumWorkerThreads(size_t numWorkerThreads)
+{
+	m_numWorkerThreads = numWorkerThreads;
 }
 } // namespace Tge::Core

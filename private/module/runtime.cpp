@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include "module.hpp"
 #include <tge/logging/loggers.hpp>
 #include <tge/logging/log_system.hpp>
 #include <tge/module/module.hpp>
@@ -51,6 +52,8 @@ bool CRuntime::Initialize(SRunContext const& context)
 	ValidateSchedule();
 	LogFrameSchedule();
 	LogModuleVersions();
+
+	Core::gModuleImpl.SetNumWorkerThreads(context.numWorkerThreads);
 
 	if (InitializeModules())
 	{

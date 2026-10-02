@@ -1,6 +1,8 @@
 #pragma once
 
 #include <tge/module/module.hpp>
+#include <tge/threading/job_system.hpp>
+#include <cstddef>
 
 namespace Tge::Core
 {
@@ -20,6 +22,12 @@ public:
 	void OnDependencyInitialized(IModuleId* pDependency) override {}
 	void OnDependencyTerminating(IModuleId* pDependency) override {}
 	// ~Tge::IModule
+
+	void SetNumWorkerThreads(size_t numWorkerThreads);
+
+private:
+
+	size_t m_numWorkerThreads{ Threading::AutoThreadCount };
 };
 
 extern CModule gModuleImpl;
