@@ -1,8 +1,9 @@
-# A second binary, and the split is the point: CJobGroup cancellation and ParallelFor chunking are decided by
-# the scheduler, so these need Tge::Initialize where every unit beside them needs nothing above core.
+# A second binary, and the split is the point: these need Tge::Initialize where every unit beside them needs nothing
+# above core.
 
 add_executable(TgeCoreThreadingTests
 	main.cpp
+	test_event_loop.cpp
 	test_job_group.cpp
 	test_parallel_for.cpp
 )

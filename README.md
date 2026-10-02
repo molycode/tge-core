@@ -37,7 +37,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeLogging` | Logging system |
 | `TgeMemory` | Memory allocators and tracking |
 | `TgeMath` | Math library (GLM-based) |
-| `TgeThreading` | Job system and thread pool |
+| `TgeThreading` | Job system, thread pool and event loop |
 | `TgeIO` | File and path operations |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
@@ -461,6 +461,30 @@ queue.Enqueue(event);
 // Consumer thread only
 MyEvent e;
 while (queue.Dequeue(e)) { /* process e */ }
+```
+
+#### Event loop — `<tge/threading/event_loop.hpp>`
+
+One thread for **waiting**: it blocks in `epoll` and runs short callbacks, one at a time, when a descriptor turns
+readable, a timer falls due, or another thread posts work. Jobs must never block, so waiting on a socket or a deadline
+belongs here, and heavy work back on the job system. The consumer owns it; `Tge::Initialize` never starts one. Linux
+only for now: elsewhere `Initialize` logs an Error and returns false.
+
+```cpp
+Tge::Threading::CEventLoop loop;
+
+if (loop.Initialize("MyNet"))
+{
+    // Any thread. Watches and timers belong to the loop thread, so set them up from a post.
+    loop.Post([&loop, socket]()
+    {
+        // Level-triggered, and hang-up counts as readable: unwatch once the peer is gone.
+        loop.Watch(socket, []() { /* read until EAGAIN */ });
+        loop.ScheduleAt(std::chrono::steady_clock::now() + std::chrono::seconds{ 1 }, []() { /* once */ });
+    });
+}
+
+loop.Terminate();   // joins after the pass in progress; what has not run is destroyed, never run
 ```
 
 ---

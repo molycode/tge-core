@@ -193,7 +193,7 @@ target_include_directories(TgeMath
 )
 
 # ============================================================================
-# TgeThreading (STATIC - job system and thread pool)
+# TgeThreading (STATIC - job system, thread pool and event loop)
 # ============================================================================
 file(GLOB TgeThreading_FILES CONFIGURE_DEPENDS
 	private/threading/*.cpp

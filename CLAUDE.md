@@ -11,7 +11,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Logging::` - Log system (CLog, CLogSystem, ELogLevel)
 - `Tge::Memory::` - Allocators, tracking (CDefaultAllocator, CLinearAllocator, etc.)
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
-- `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob)
+- `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob) and an event loop for waiting (CEventLoop)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
 - `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
 - `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
@@ -38,7 +38,7 @@ All public headers use `<tge/...>` prefix:
 | TgeLogging | STATIC | TgeBase | Logging system |
 | TgeMemory | STATIC | TgeBase, rpmalloc, TgeLogging | Memory allocators and tracking |
 | TgeMath | STATIC | TgeBase, GLM | Math library |
-| TgeThreading | STATIC | TgeBase, rpmalloc | Job system and thread pool |
+| TgeThreading | STATIC | TgeBase, rpmalloc | Job system, thread pool and event loop |
 | TgeIO | STATIC | TgeBase | File and path operations |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |
