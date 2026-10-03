@@ -1,3 +1,6 @@
+# Shipped with the package as well, so a consumer silences its own vendored dependencies with these whether it
+# vendors core or finds it.
+
 # tge_add_external(source_dir [EXCLUDE_FROM_ALL] ...)
 #
 # Adds a vendored/submodule dependency as a subdirectory, isolated from the
@@ -5,7 +8,9 @@
 # automatically marked SYSTEM so their headers don't generate warnings in
 # consuming code.
 #
-# Use this for all subdirectory-based external dependencies.
+# The isolation drops every directory-level option, sanitizer flags included: a consumer that sanitizes
+# through add_compile_options and needs the dependency instrumented adds it itself and calls
+# tge_suppress_external_warnings_in_directory() instead.
 # For inline-defined targets (not via add_subdirectory), use tge_suppress_external_warnings().
 function(tge_add_external source_dir)
 	get_directory_property(_saved_opts COMPILE_OPTIONS)
@@ -43,4 +48,19 @@ function(tge_suppress_external_warnings target_name)
 			endif()
 		endif()
 	endif()
+endfunction()
+
+# tge_suppress_external_warnings_in_directory(dir)
+#
+# tge_suppress_external_warnings() for every target a subdirectory and the subdirectories below it define.
+function(tge_suppress_external_warnings_in_directory dir)
+	get_property(_targets DIRECTORY ${dir} PROPERTY BUILDSYSTEM_TARGETS)
+	foreach(_target ${_targets})
+		tge_suppress_external_warnings(${_target})
+	endforeach()
+
+	get_property(_subdirs DIRECTORY ${dir} PROPERTY SUBDIRECTORIES)
+	foreach(_subdir ${_subdirs})
+		tge_suppress_external_warnings_in_directory(${_subdir})
+	endforeach()
 endfunction()

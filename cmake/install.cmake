@@ -126,5 +126,6 @@ install(FILES
 		${CMAKE_CURRENT_BINARY_DIR}/TgeCoreConfig.cmake
 		${CMAKE_CURRENT_BINARY_DIR}/TgeCoreConfigVersion.cmake
 		${CMAKE_CURRENT_SOURCE_DIR}/cmake/tge_module_package.cmake
+		${CMAKE_CURRENT_SOURCE_DIR}/cmake/external.cmake
 	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TgeCore
 )

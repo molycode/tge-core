@@ -2,6 +2,7 @@
 
 include("${CMAKE_CURRENT_LIST_DIR}/TgeCoreTargets.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/tge_module_package.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/external.cmake")
 
 # Probed rather than substituted: this file must read the same in every Core install, or the two packages it
 # would then describe are told apart by their config rather than by what they actually carry.

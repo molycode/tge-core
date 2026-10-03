@@ -75,6 +75,10 @@ every module depends on it — a subsystem with that shape is core, not a peer. 
 because `QueueEmit`'s backlog is drained by a frame phase: a consumer that runs no frame loop must ask for
 an event system rather than inherit one whose queue nothing empties.
 
+The package also ships `cmake/external.cmake`: `tge_suppress_external_warnings(target)` and
+`tge_suppress_external_warnings_in_directory(dir)` give a consumer's vendored dependencies `-w`, whether it vendors
+core or finds it as a package.
+
 ### Initialization
 ```cpp
 #include <tge/init.hpp>

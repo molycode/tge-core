@@ -19,6 +19,13 @@ if(TgeCore_Testing_FOUND)
 	message(FATAL_ERROR "the Core package supplied its Testing component to a consumer that never asked")
 endif()
 
+# A consumer vendoring its own dependencies silences them with these, so the package must define them too.
+foreach(command tge_suppress_external_warnings tge_suppress_external_warnings_in_directory)
+	if(NOT COMMAND ${command})
+		message(FATAL_ERROR "the installed TgeCoreConfig defined no ${command}")
+	endif()
+endforeach()
+
 add_executable(TgeCorePackageConsumer main.cpp)
 
 # Lifecycle and Events by name, because Tge::Core carries neither. Composing a runtime and draining the event
