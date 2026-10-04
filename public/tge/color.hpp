@@ -16,6 +16,8 @@ struct SColor final
 		: r(red), g(green), b(blue), a(alpha)
 	{
 	}
+
+	constexpr bool operator==(SColor const&) const = default;
 };
 
 struct SColorHDR final
