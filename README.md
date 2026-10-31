@@ -466,10 +466,15 @@ while (queue.Dequeue(e)) { /* process e */ }
 
 #### Event loop — `<tge/threading/event_loop.hpp>`
 
-One thread for **waiting**: it blocks in `epoll` and runs short callbacks, one at a time, when a descriptor turns
-readable, a timer falls due, or another thread posts work. Jobs must never block, so waiting on a socket or a deadline
-belongs here, and heavy work back on the job system. The consumer owns it; `Tge::Initialize` never starts one. Linux
-only for now: elsewhere `Initialize` logs an Error and returns false.
+One thread for **waiting**: it blocks in `epoll` on Linux and `WaitForMultipleObjects` on Windows, and runs short
+callbacks, one at a time, when a watched socket or handle turns readable, a timer falls due, or another thread posts
+work. Jobs must never block, so waiting on a socket or a deadline belongs here, and heavy work back on the job system.
+The consumer owns it; `Tge::Initialize` never starts one. Elsewhere `Initialize` logs an Error and returns false.
+
+A watch names an `SWaitable` (`<tge/threading/waitable.hpp>`): the native descriptor, `SOCKET` or `HANDLE`, and its
+kind. Linux ignores the kind. On Windows a `Socket` is polled with `WSAPoll`, any number of them, so the consumer starts
+Winsock; an `Event` is any handle a wait can name, at most 62 per loop, readable while signalled, and the wait that
+reports an auto-reset event resets it.
 
 ```cpp
 Tge::Threading::CEventLoop loop;
@@ -479,8 +484,8 @@ if (loop.Initialize("MyNet"))
     // Any thread. Watches and timers belong to the loop thread, so set them up from a post.
     loop.Post([&loop, socket]()
     {
-        // Level-triggered, and hang-up counts as readable: unwatch once the peer is gone.
-        loop.Watch(socket, []() { /* read until EAGAIN */ });
+        // Level-triggered, and hang-up or error count as readable: unwatch once the peer is gone.
+        loop.Watch({ static_cast<uintptr_t>(socket), Tge::Threading::EWaitableKind::Socket }, []() { /* read until EAGAIN */ });
         loop.ScheduleAt(std::chrono::steady_clock::now() + std::chrono::seconds{ 1 }, []() { /* once */ });
     });
 }

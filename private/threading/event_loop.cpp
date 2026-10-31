@@ -76,7 +76,7 @@ void CEventLoop::Post(std::function<void()> callback)
 }
 
 //////////////////////////////////////////////////////////////////////////
-std::optional<SWatchId> CEventLoop::Watch(int descriptor, std::function<void()> onReadable)
+std::optional<SWatchId> CEventLoop::Watch(SWaitable waitable, std::function<void()> onReadable)
 {
 	TGE_ASSERT(IsLoopThread(), "Watch called off the event loop thread");
 	TGE_ASSERT(onReadable != nullptr, "Watch with an empty callback");
@@ -84,10 +84,10 @@ std::optional<SWatchId> CEventLoop::Watch(int descriptor, std::function<void()> 
 	std::optional<SWatchId> watch{};
 	SWatchId const id{ m_state->nextId };
 
-	if (m_state->poller.Add(descriptor, id.value))
+	if (m_state->poller.Add(waitable, id.value))
 	{
 		++m_state->nextId;
-		m_state->watches.emplace_back(id, descriptor, std::move(onReadable));
+		m_state->watches.emplace_back(id, waitable, std::move(onReadable));
 		watch = id;
 	}
 
@@ -105,7 +105,7 @@ void CEventLoop::Unwatch(SWatchId watch)
 
 	if (found != m_state->watches.end())
 	{
-		m_state->poller.Remove(found->descriptor);
+		m_state->poller.Remove(found->waitable);
 		m_state->watches.erase(found);
 	}
 }

@@ -206,7 +206,7 @@ add_library(Tge::Threading ALIAS TgeThreading)
 
 target_link_libraries(TgeThreading
 	PUBLIC Tge::Base
-	PRIVATE rpmalloc Tge::Logging
+	PRIVATE rpmalloc Tge::Logging $<$<PLATFORM_ID:Windows>:ws2_32>
 )
 
 target_include_directories(TgeThreading

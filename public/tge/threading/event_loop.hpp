@@ -2,6 +2,7 @@
 
 #include <tge/non_copyable.hpp>
 #include <tge/threading/timer_id.hpp>
+#include <tge/threading/waitable.hpp>
 #include <tge/threading/watch_id.hpp>
 #include <chrono>
 #include <functional>
@@ -32,7 +33,7 @@ public:
 
 	// The rest is for the loop thread only, so set watches and timers up from a posted callback.
 	// Level-triggered, and hang-up or error count as readable: a callback that reads end-of-file must Unwatch.
-	std::optional<SWatchId> Watch(int descriptor, std::function<void()> onReadable);
+	std::optional<SWatchId> Watch(SWaitable waitable, std::function<void()> onReadable);
 	void Unwatch(SWatchId watch);
 	STimerId ScheduleAt(std::chrono::steady_clock::time_point when, std::function<void()> callback);
 	// Cancelling a timer that has already run does nothing.

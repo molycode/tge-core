@@ -1,9 +1,8 @@
 #include <gtest/gtest.h>
 #include <tge/platform.hpp>
-
-#if defined(TGE_PLATFORM_LINUX)
 #include <tge/threading/event_loop.hpp>
 #include <tge/threading/job_system.hpp>
+#include <tge/threading/waitable.hpp>
 #include <array>
 #include <chrono>
 #include <cstdint>
@@ -13,7 +12,24 @@
 #include <semaphore>
 #include <thread>
 #include <vector>
+
+#if defined(TGE_PLATFORM_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif // WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#else
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #include <unistd.h>
+#endif // defined(TGE_PLATFORM_WINDOWS)
 
 using namespace Tge::Threading;
 using namespace std::chrono_literals;
@@ -22,6 +38,14 @@ namespace
 {
 constexpr std::chrono::seconds Patience{ 10 };
 
+#if defined(TGE_PLATFORM_WINDOWS)
+using NativeSocket = SOCKET;
+constexpr NativeSocket NoSocket{ INVALID_SOCKET };
+#else
+using NativeSocket = int;
+constexpr NativeSocket NoSocket{ -1 };
+#endif // defined(TGE_PLATFORM_WINDOWS)
+
 // Tests terminate the loop before their locals go; TearDown is only the backstop for one that stopped at an ASSERT.
 class CEventLoopTest : public testing::Test
 {
@@ -29,38 +53,95 @@ protected:
 
 	void SetUp() override
 	{
+#if defined(TGE_PLATFORM_WINDOWS)
+		WSADATA data{};
+		ASSERT_EQ(WSAStartup(MAKEWORD(2, 2), &data), 0);
+#endif // defined(TGE_PLATFORM_WINDOWS)
+
 		ASSERT_TRUE(m_loop.Initialize("TgeTestLoop"));
 	}
 
 	void TearDown() override
 	{
 		m_loop.Terminate();
+
+#if defined(TGE_PLATFORM_WINDOWS)
+		WSACleanup();
+#endif // defined(TGE_PLATFORM_WINDOWS)
 	}
 
 	CEventLoop m_loop;
 };
 
-bool OpenPipe(std::array<int, 2>& ends)
+SWaitable ToWaitable(NativeSocket socket)
 {
-	return pipe(ends.data()) == 0;
+	return SWaitable{ static_cast<uintptr_t>(socket), EWaitableKind::Socket };
 }
 
-void ClosePipe(std::array<int, 2> const& ends)
+void CloseSocket(NativeSocket socket)
 {
-	close(ends[0]);
-	close(ends[1]);
+#if defined(TGE_PLATFORM_WINDOWS)
+	closesocket(socket);
+#else
+	close(socket);
+#endif // defined(TGE_PLATFORM_WINDOWS)
 }
 
-bool WriteByte(std::array<int, 2> const& ends)
+bool SetNonBlocking(NativeSocket socket)
+{
+#if defined(TGE_PLATFORM_WINDOWS)
+	u_long isNonBlocking{ 1 };
+	return ioctlsocket(socket, FIONBIO, &isNonBlocking) == 0;
+#else
+	int const flags{ fcntl(socket, F_GETFL, 0) };
+	return flags >= 0 && fcntl(socket, F_SETFL, flags | O_NONBLOCK) == 0;
+#endif // defined(TGE_PLATFORM_WINDOWS)
+}
+
+bool BindToLoopback(NativeSocket socket, sockaddr_in& bound)
+{
+	sockaddr_in loopback{};
+	loopback.sin_family = AF_INET;
+	loopback.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	socklen_t length{ static_cast<socklen_t>(sizeof(bound)) };
+
+	return bind(socket, reinterpret_cast<sockaddr const*>(&loopback), static_cast<socklen_t>(sizeof(loopback))) == 0
+		&& getsockname(socket, reinterpret_cast<sockaddr*>(&bound), &length) == 0;
+}
+
+// Two UDP sockets on loopback, connected to each other: a byte the second sends makes the first readable.
+bool OpenSocketPair(std::array<NativeSocket, 2>& ends)
+{
+	std::array<sockaddr_in, 2> bound{};
+	bool isOpen{ true };
+
+	for (size_t index{ 0 }; index < ends.size(); ++index)
+	{
+		ends[index] = socket(AF_INET, SOCK_DGRAM, 0);
+		isOpen = isOpen && ends[index] != NoSocket && BindToLoopback(ends[index], bound[index]);
+	}
+
+	return isOpen
+		&& connect(ends[0], reinterpret_cast<sockaddr const*>(&bound[1]), static_cast<socklen_t>(sizeof(bound[1]))) == 0
+		&& connect(ends[1], reinterpret_cast<sockaddr const*>(&bound[0]), static_cast<socklen_t>(sizeof(bound[0]))) == 0;
+}
+
+void CloseSocketPair(std::array<NativeSocket, 2> const& ends)
+{
+	CloseSocket(ends[0]);
+	CloseSocket(ends[1]);
+}
+
+bool WriteByte(std::array<NativeSocket, 2> const& ends)
 {
 	char const byte{ 'x' };
-	return write(ends[1], &byte, 1) == 1;
+	return send(ends[1], &byte, 1, 0) == 1;
 }
 
-bool ReadByte(std::array<int, 2> const& ends)
+bool ReadByte(std::array<NativeSocket, 2> const& ends)
 {
 	char byte{ 0 };
-	return read(ends[0], &byte, 1) == 1;
+	return recv(ends[0], &byte, 1, 0) == 1;
 }
 } // namespace
 
@@ -151,27 +232,27 @@ TEST_F(CEventLoopTest, CallbacksRunOnTheLoopThread)
 //////////////////////////////////////////////////////////////////////////
 TEST_F(CEventLoopTest, ReadableDescriptorRunsItsCallback)
 {
-	std::array<int, 2> pipeEnds{ -1, -1 };
+	std::array<NativeSocket, 2> ends{ NoSocket, NoSocket };
 	uint32_t numReads{ 0 };
 	std::binary_semaphore done{ 0 };
 
-	ASSERT_TRUE(OpenPipe(pipeEnds));
+	ASSERT_TRUE(OpenSocketPair(ends));
 
-	m_loop.Post([this, &pipeEnds, &numReads, &done]()
+	m_loop.Post([this, &ends, &numReads, &done]()
 	{
-		std::optional<SWatchId> const watch{ m_loop.Watch(pipeEnds[0], [&pipeEnds, &numReads, &done]()
+		std::optional<SWatchId> const watch{ m_loop.Watch(ToWaitable(ends[0]), [&ends, &numReads, &done]()
 		{
-			numReads += ReadByte(pipeEnds) ? 1u : 0u;
+			numReads += ReadByte(ends) ? 1u : 0u;
 			done.release();
 		}) };
 
 		EXPECT_TRUE(watch.has_value());
 	});
 
-	EXPECT_TRUE(WriteByte(pipeEnds));
+	EXPECT_TRUE(WriteByte(ends));
 	EXPECT_TRUE(done.try_acquire_for(Patience));
 	m_loop.Terminate();
-	ClosePipe(pipeEnds);
+	CloseSocketPair(ends);
 
 	EXPECT_EQ(numReads, 1u);
 }
@@ -179,16 +260,16 @@ TEST_F(CEventLoopTest, ReadableDescriptorRunsItsCallback)
 //////////////////////////////////////////////////////////////////////////
 TEST_F(CEventLoopTest, UnwatchedDescriptorStaysQuiet)
 {
-	std::array<int, 2> pipeEnds{ -1, -1 };
+	std::array<NativeSocket, 2> ends{ NoSocket, NoSocket };
 	bool isWatched{ false };
 	bool hasRun{ false };
 	std::binary_semaphore done{ 0 };
 
-	ASSERT_TRUE(OpenPipe(pipeEnds));
+	ASSERT_TRUE(OpenSocketPair(ends));
 
-	m_loop.Post([this, &pipeEnds, &isWatched, &hasRun]()
+	m_loop.Post([this, &ends, &isWatched, &hasRun]()
 	{
-		std::optional<SWatchId> const watch{ m_loop.Watch(pipeEnds[0], [&hasRun]() { hasRun = true; }) };
+		std::optional<SWatchId> const watch{ m_loop.Watch(ToWaitable(ends[0]), [&hasRun]() { hasRun = true; }) };
 
 		isWatched = watch.has_value();
 
@@ -198,14 +279,14 @@ TEST_F(CEventLoopTest, UnwatchedDescriptorStaysQuiet)
 		}
 	});
 
-	EXPECT_TRUE(WriteByte(pipeEnds));
+	EXPECT_TRUE(WriteByte(ends));
 
-	// Two hops: the second post runs only after a wait that would have reported the pipe.
+	// Two hops: the second post runs only after a wait that would have reported the socket.
 	m_loop.Post([this, &done]() { m_loop.Post([&done]() { done.release(); }); });
 
 	EXPECT_TRUE(done.try_acquire_for(Patience));
 	m_loop.Terminate();
-	ClosePipe(pipeEnds);
+	CloseSocketPair(ends);
 
 	EXPECT_TRUE(isWatched);
 	EXPECT_FALSE(hasRun);
@@ -214,17 +295,17 @@ TEST_F(CEventLoopTest, UnwatchedDescriptorStaysQuiet)
 //////////////////////////////////////////////////////////////////////////
 TEST_F(CEventLoopTest, CallbackMayUnwatchItsOwnDescriptor)
 {
-	std::array<int, 2> pipeEnds{ -1, -1 };
+	std::array<NativeSocket, 2> ends{ NoSocket, NoSocket };
 	std::optional<SWatchId> watch{};
 	uint32_t numRuns{ 0 };
 	std::binary_semaphore done{ 0 };
 
-	ASSERT_TRUE(OpenPipe(pipeEnds));
+	ASSERT_TRUE(OpenSocketPair(ends));
 
-	// Never read, so the pipe stays readable: only the Unwatch keeps the callback from running on every pass.
-	m_loop.Post([this, &pipeEnds, &watch, &numRuns, &done]()
+	// Never read, so the socket stays readable: only the Unwatch keeps the callback from running on every pass.
+	m_loop.Post([this, &ends, &watch, &numRuns, &done]()
 	{
-		watch = m_loop.Watch(pipeEnds[0], [this, &watch, &numRuns, &done]()
+		watch = m_loop.Watch(ToWaitable(ends[0]), [this, &watch, &numRuns, &done]()
 		{
 			++numRuns;
 
@@ -236,10 +317,10 @@ TEST_F(CEventLoopTest, CallbackMayUnwatchItsOwnDescriptor)
 		});
 	});
 
-	EXPECT_TRUE(WriteByte(pipeEnds));
+	EXPECT_TRUE(WriteByte(ends));
 	EXPECT_TRUE(done.try_acquire_for(Patience));
 	m_loop.Terminate();
-	ClosePipe(pipeEnds);
+	CloseSocketPair(ends);
 
 	EXPECT_EQ(numRuns, 1u);
 }
@@ -248,7 +329,7 @@ TEST_F(CEventLoopTest, CallbackMayUnwatchItsOwnDescriptor)
 TEST_F(CEventLoopTest, PostThatPostsAgainLeavesRoomForDescriptors)
 {
 	constexpr uint32_t MaxReposts{ 1000 };
-	std::array<int, 2> pipeEnds{ -1, -1 };
+	std::array<NativeSocket, 2> ends{ NoSocket, NoSocket };
 	std::function<void()> repost{};
 	std::optional<SWatchId> watch{};
 	uint32_t numReposts{ 0 };
@@ -256,8 +337,8 @@ TEST_F(CEventLoopTest, PostThatPostsAgainLeavesRoomForDescriptors)
 	bool hasWatchRun{ false };
 	std::binary_semaphore done{ 0 };
 
-	ASSERT_TRUE(OpenPipe(pipeEnds));
-	EXPECT_TRUE(WriteByte(pipeEnds));
+	ASSERT_TRUE(OpenSocketPair(ends));
+	EXPECT_TRUE(WriteByte(ends));
 
 	repost = [this, &repost, &numReposts, &hasWatchRun]()
 	{
@@ -269,9 +350,9 @@ TEST_F(CEventLoopTest, PostThatPostsAgainLeavesRoomForDescriptors)
 		}
 	};
 
-	m_loop.Post([this, &pipeEnds, &repost, &watch, &numReposts, &repostsBeforeWatch, &hasWatchRun, &done]()
+	m_loop.Post([this, &ends, &repost, &watch, &numReposts, &repostsBeforeWatch, &hasWatchRun, &done]()
 	{
-		watch = m_loop.Watch(pipeEnds[0], [this, &watch, &numReposts, &repostsBeforeWatch, &hasWatchRun, &done]()
+		watch = m_loop.Watch(ToWaitable(ends[0]), [this, &watch, &numReposts, &repostsBeforeWatch, &hasWatchRun, &done]()
 		{
 			repostsBeforeWatch = numReposts;
 			hasWatchRun = true;
@@ -285,10 +366,165 @@ TEST_F(CEventLoopTest, PostThatPostsAgainLeavesRoomForDescriptors)
 
 	EXPECT_TRUE(done.try_acquire_for(Patience));
 	m_loop.Terminate();
-	ClosePipe(pipeEnds);
+	CloseSocketPair(ends);
 
 	EXPECT_LT(repostsBeforeWatch, MaxReposts);
 }
+
+//////////////////////////////////////////////////////////////////////////
+TEST_F(CEventLoopTest, ReadableSocketAmongManyRunsItsCallback)
+{
+	// More than one WSAPoll call takes on Windows.
+	constexpr size_t NumPairs{ 100 };
+	std::array<std::array<NativeSocket, 2>, NumPairs> pairs{};
+	std::vector<size_t> ran{};
+	bool areOpen{ true };
+	std::binary_semaphore done{ 0 };
+
+	for (std::array<NativeSocket, 2>& ends : pairs)
+	{
+		areOpen = OpenSocketPair(ends) && areOpen;
+	}
+
+	ASSERT_TRUE(areOpen);
+
+	m_loop.Post([this, &pairs, &ran, &done]()
+	{
+		for (size_t index{ 0 }; index < pairs.size(); ++index)
+		{
+			std::optional<SWatchId> const watch{ m_loop.Watch(ToWaitable(pairs[index][0]), [&pairs, &ran, &done, index]()
+			{
+				EXPECT_TRUE(ReadByte(pairs[index]));
+				ran.push_back(index);
+
+				if (index == NumPairs - 1)
+				{
+					done.release();
+				}
+			}) };
+
+			EXPECT_TRUE(watch.has_value());
+		}
+	});
+
+	EXPECT_TRUE(WriteByte(pairs.back()));
+	EXPECT_TRUE(done.try_acquire_for(Patience));
+	m_loop.Terminate();
+
+	for (std::array<NativeSocket, 2> const& ends : pairs)
+	{
+		CloseSocketPair(ends);
+	}
+
+	EXPECT_EQ(ran, (std::vector<size_t>{ NumPairs - 1 }));
+}
+
+//////////////////////////////////////////////////////////////////////////
+TEST_F(CEventLoopTest, RefusedConnectCountsAsReadable)
+{
+	// Bound but never listening, so it refuses, and bound throughout, so no other socket takes its port meanwhile.
+	NativeSocket const refuser{ socket(AF_INET, SOCK_STREAM, 0) };
+	NativeSocket const client{ socket(AF_INET, SOCK_STREAM, 0) };
+	sockaddr_in address{};
+	std::optional<SWatchId> watch{};
+	std::binary_semaphore done{ 0 };
+
+	ASSERT_TRUE(refuser != NoSocket && client != NoSocket && BindToLoopback(refuser, address) && SetNonBlocking(client));
+	EXPECT_NE(connect(client, reinterpret_cast<sockaddr const*>(&address), static_cast<socklen_t>(sizeof(address))), 0);
+
+	m_loop.Post([this, client, &watch, &done]()
+	{
+		watch = m_loop.Watch(ToWaitable(client), [this, &watch, &done]()
+		{
+			m_loop.Unwatch(*watch);
+			done.release();
+		});
+
+		EXPECT_TRUE(watch.has_value());
+	});
+
+	EXPECT_TRUE(done.try_acquire_for(Patience));
+	m_loop.Terminate();
+	CloseSocket(client);
+	CloseSocket(refuser);
+}
+
+#if defined(TGE_PLATFORM_WINDOWS)
+//////////////////////////////////////////////////////////////////////////
+TEST_F(CEventLoopTest, AutoResetEventRunsItsCallbackOncePerSignal)
+{
+	HANDLE const event{ CreateEventW(nullptr, FALSE, FALSE, nullptr) };
+	uint32_t numRuns{ 0 };
+	std::binary_semaphore watched{ 0 };
+	std::binary_semaphore ran{ 0 };
+	std::binary_semaphore done{ 0 };
+
+	ASSERT_NE(event, nullptr);
+
+	m_loop.Post([this, event, &numRuns, &watched, &ran]()
+	{
+		std::optional<SWatchId> const watch{ m_loop.Watch(SWaitable{ reinterpret_cast<uintptr_t>(event), EWaitableKind::Event }, [&numRuns, &ran]()
+		{
+			++numRuns;
+
+			if (numRuns == 1u)
+			{
+				ran.release();
+			}
+		}) };
+
+		EXPECT_TRUE(watch.has_value());
+		watched.release();
+	});
+
+	EXPECT_TRUE(watched.try_acquire_for(Patience));
+	EXPECT_NE(SetEvent(event), 0);
+	EXPECT_TRUE(ran.try_acquire_for(Patience));
+
+	// Two hops: the second post runs only after a wait that would have reported the event again.
+	m_loop.Post([this, &done]() { m_loop.Post([&done]() { done.release(); }); });
+
+	EXPECT_TRUE(done.try_acquire_for(Patience));
+	m_loop.Terminate();
+	CloseHandle(event);
+
+	EXPECT_EQ(numRuns, 1u);
+}
+
+//////////////////////////////////////////////////////////////////////////
+TEST_F(CEventLoopTest, ManualResetEventRunsItsCallbackUntilReset)
+{
+	constexpr uint32_t NumRunsBeforeReset{ 3 };
+	HANDLE const event{ CreateEventW(nullptr, TRUE, FALSE, nullptr) };
+	uint32_t numRuns{ 0 };
+	std::binary_semaphore done{ 0 };
+
+	ASSERT_NE(event, nullptr);
+
+	m_loop.Post([this, event, &numRuns, &done]()
+	{
+		std::optional<SWatchId> const watch{ m_loop.Watch(SWaitable{ reinterpret_cast<uintptr_t>(event), EWaitableKind::Event }, [this, event, &numRuns, &done]()
+		{
+			++numRuns;
+
+			if (numRuns == NumRunsBeforeReset)
+			{
+				ResetEvent(event);
+				m_loop.Post([this, &done]() { m_loop.Post([&done]() { done.release(); }); });
+			}
+		}) };
+
+		EXPECT_TRUE(watch.has_value());
+	});
+
+	EXPECT_NE(SetEvent(event), 0);
+	EXPECT_TRUE(done.try_acquire_for(Patience));
+	m_loop.Terminate();
+	CloseHandle(event);
+
+	EXPECT_EQ(numRuns, NumRunsBeforeReset);
+}
+#endif // defined(TGE_PLATFORM_WINDOWS)
 
 //////////////////////////////////////////////////////////////////////////
 TEST_F(CEventLoopTest, TimersRunInDeadlineOrder)
@@ -349,4 +585,3 @@ TEST_F(CEventLoopTest, TerminateDropsPendingTimer)
 
 	EXPECT_FALSE(hasRun);
 }
-#endif // defined(TGE_PLATFORM_LINUX)
