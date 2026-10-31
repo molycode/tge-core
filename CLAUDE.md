@@ -13,7 +13,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob) and an event loop for waiting (CEventLoop)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
-- `Tge::Net::` - IPv4 sockets and host lookups for Linux and Windows (CSocketLibrary, CUdpSocket, CStreamSocket, CStreamListener, CAddressLookup)
+- `Tge::Net::` - IPv4 sockets, host lookups and root certificates for Linux and Windows (CSocketLibrary, CUdpSocket, CStreamSocket, CStreamListener, CAddressLookup, ReadSystemRootCertificates)
 - `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
 - `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
@@ -41,7 +41,7 @@ All public headers use `<tge/...>` prefix:
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system, thread pool and event loop |
 | TgeIO | STATIC | TgeBase | File and path operations |
-| TgeNet | STATIC | TgeBase (ws2_32 on Windows) | IPv4 sockets and host lookups; Linux and Windows only, outside TgeCore, linked by name |
+| TgeNet | STATIC | TgeBase (ws2_32 and crypt32 on Windows) | IPv4 sockets, host lookups, root certificates; Linux and Windows only, outside TgeCore, linked by name |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |
 | TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |

@@ -41,7 +41,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeIO` | File and path operations |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
-| `TgeNet` | IPv4 sockets and host lookups for Linux and Windows; outside `TgeCore`, linked by name |
+| `TgeNet` | IPv4 sockets, host lookups and root certificates for Linux and Windows; outside `TgeCore`, linked by name |
 
 ### Build Options
 
@@ -601,6 +601,14 @@ It runs on glibc's `getaddrinfo_a` or Windows' `GetAddrInfoExW`. A lookup the sy
 its state, so `Terminate` leaks that state on purpose; a LeakSanitizer run suppresses
 `leak:Tge::Net::CAddressLookup::Start`.
 
+#### Root certificates — `<tge/net/root_certificates.hpp>`
+
+`ReadSystemRootCertificates()` returns the system's trusted roots as DER, for a TLS library to verify servers with.
+On Linux they come from `SSL_CERT_FILE` / `SSL_CERT_DIR` when either is set (`errc::invalid_argument` if they hold
+none), else from the first distribution bundle or folder found (`errc::no_such_file_or_directory` if none); PEM
+blocks are decoded, and a file without one is taken as one DER certificate if it starts as one. On Windows they are
+the `ROOT` store's certificates usable for server authentication.
+
 ---
 
 ## Namespace Summary
@@ -613,4 +621,4 @@ its state, so `Terminate` leaks that state on purpose; a LeakSanitizer run suppr
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
 | `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter` |
-| `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup` |
+| `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |

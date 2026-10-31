@@ -3,6 +3,7 @@
 add_executable(TgeCoreNetTests
 	main.cpp
 	test_address_lookup.cpp
+	test_certificates.cpp
 	test_parse_ipv4.cpp
 	test_stream_socket.cpp
 	test_support.cpp
@@ -14,6 +15,11 @@ target_link_libraries(TgeCoreNetTests
 	PRIVATE
 		GTest::gtest
 		Tge::Net
+)
+
+# The certificate decoder is private by design; reaching in beats widening a public header.
+target_include_directories(TgeCoreNetTests
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../private/net
 )
 
 add_test(NAME TgeCoreNetTests COMMAND TgeCoreNetTests)

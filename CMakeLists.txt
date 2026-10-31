@@ -234,7 +234,7 @@ target_include_directories(TgeIO
 )
 
 # ============================================================================
-# TgeNet (STATIC - IPv4 sockets and host lookup)
+# TgeNet (STATIC - IPv4 sockets, host lookup and the system's root certificates)
 # ============================================================================
 # Linux and Windows only: anywhere else its sources stop at #error, which would fail every build of all.
 if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
@@ -249,7 +249,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
 
 	target_link_libraries(TgeNet
 		PUBLIC Tge::Base
-		PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32>
+		PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32> $<$<PLATFORM_ID:Windows>:crypt32>
 	)
 
 	target_include_directories(TgeNet
