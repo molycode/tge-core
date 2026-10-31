@@ -234,7 +234,7 @@ target_include_directories(TgeIO
 )
 
 # ============================================================================
-# TgeNet (STATIC - IPv4 sockets)
+# TgeNet (STATIC - IPv4 sockets and host lookup)
 # ============================================================================
 # Linux and Windows only: anywhere else its sources stop at #error, which would fail every build of all.
 if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")

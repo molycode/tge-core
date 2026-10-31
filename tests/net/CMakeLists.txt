@@ -2,6 +2,7 @@
 
 add_executable(TgeCoreNetTests
 	main.cpp
+	test_address_lookup.cpp
 	test_parse_ipv4.cpp
 	test_stream_socket.cpp
 	test_support.cpp

@@ -41,7 +41,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeIO` | File and path operations |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
-| `TgeNet` | IPv4 sockets for Linux and Windows; outside `TgeCore`, linked by name |
+| `TgeNet` | IPv4 sockets and host lookups for Linux and Windows; outside `TgeCore`, linked by name |
 
 ### Build Options
 
@@ -584,6 +584,23 @@ reports a refusal as `connection_refused`, an oversized datagram arrives truncat
 surfaces from `Receive` (or `PollConnected`) as its error. `CStreamListener`, `SetBlocking` and
 `WaitForReadable(socket, timeout)` serve simple blocking servers such as test fixtures.
 
+#### Host names — `<tge/net/address_lookup.hpp>`
+
+```cpp
+Tge::Net::CAddressLookup lookup;                   // one lookup at a time, started again once answered
+lookup.Start("master.example.org");                // returns at once; an error here means it never started
+
+// Polled, on a timer: nothing is called back, so no system thread runs the caller's code.
+std::optional<std::expected<uint32_t, std::error_code>> const answer{ lookup.Poll() };   // empty while resolving
+
+lookup.Terminate();                                // never waits: a lookup still running is left to the system
+```
+
+An answer is the host's first IPv4 address, in host order, or the resolver's error (`gai_strerror` text on Linux).
+It runs on glibc's `getaddrinfo_a` or Windows' `GetAddrInfoExW`. A lookup the system cannot cancel keeps writing into
+its state, so `Terminate` leaks that state on purpose; a LeakSanitizer run suppresses
+`leak:Tge::Net::CAddressLookup::Start`.
+
 ---
 
 ## Namespace Summary
@@ -596,4 +613,4 @@ surfaces from `Receive` (or `PollConnected`) as its error. `CStreamListener`, `S
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
 | `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter` |
-| `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable` |
+| `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup` |
