@@ -570,6 +570,24 @@ relative one is ignored, as the XDG specification says). Otherwise Linux uses `$
 `.local/state` and `.cache` (an error when `HOME` is not absolute), and Windows the Known Folders: Config and Data in
 roaming AppData, State and Cache in local AppData.
 
+#### Whole files — `<tge/io/read_whole_file.hpp>`, `<tge/io/write_file_atomically.hpp>`, `<tge/io/is_busy.hpp>`
+
+```cpp
+std::expected<std::string, std::error_code> const text{ Tge::IO::ReadWholeFile("settings.json", 1 << 20) };
+std::expected<void, std::error_code> const saved{ Tge::IO::WriteFileAtomically("settings.json", json) };
+```
+
+`ReadWholeFile` reads regular files only (`is_a_directory`, `invalid_argument` for anything else) and refuses one
+larger than its cap before reading it (`file_too_large`); a FIFO cannot hang it. `WriteFileAtomically` writes a file
+beside the target, flushes it and renames it over the target, so neither a crash nor a second writer can tear it; a
+symlinked target stays linked, and on Linux it keeps its mode. On Windows the rename replaces a target that a virus
+scanner or an indexer holds open with delete sharing; one held without it fails, and so does a read-only one. The
+replacement takes the folder's permissions there.
+
+`IsBusy(error)` says another process holds a file, worth trying again shortly. Windows refuses that way to rename a
+folder while any file inside it is open, which a virus scanner does right after the files are written. Linux never
+does.
+
 ---
 
 ### Net — `Tge::Net::`
@@ -635,5 +653,5 @@ the `ROOT` store's certificates usable for server authentication.
 | `Tge::Memory::` | Allocators, tracking, `CategoryId`, `CScopedCategory` |
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
-| `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder` |
+| `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder`, `ReadWholeFile`, `WriteFileAtomically`, `IsBusy` |
 | `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |
