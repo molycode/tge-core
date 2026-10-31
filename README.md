@@ -38,7 +38,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeMemory` | Memory allocators and tracking |
 | `TgeMath` | Math library (GLM-based) |
 | `TgeThreading` | Job system, thread pool and event loop |
-| `TgeIO` | Files, paths and user folders |
+| `TgeIO` | Files, paths, user folders and folder watches |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
 | `TgeNet` | IPv4 sockets, host lookups and root certificates for Linux and Windows; outside `TgeCore`, linked by name |
@@ -588,6 +588,27 @@ replacement takes the folder's permissions there.
 folder while any file inside it is open, which a virus scanner does right after the files are written. Linux never
 does.
 
+#### Folder watches — `<tge/io/directory_watch.hpp>`
+
+```cpp
+Tge::IO::CDirectoryWatch watch;
+watch.Initialize(folder, Tge::IO::EWatchScope::Tree);  // or Folder: its own entries only
+
+// On the loop thread:
+loop.Watch(watch.GetWaitable(), [&]()
+{
+    std::expected<Tge::IO::SDirectoryChanges, std::error_code> const changes{ watch.ReadChanges() };
+    // changes->paths: relative to the folder; changes->hasOverflowed: some were lost
+    // An error: the watch ended (the folder removed or unreadable). Unwatch first, then Terminate.
+});
+```
+
+`ReadChanges` never waits, and one read may carry only part of a burst of changes. Changes made before the owner
+first reads wait in the system, so `Initialize` may run before the loop does, on a thread that outlives the watch
+(Windows cancels a thread's pending reads when it exits). Linux watches each folder of a tree with inotify, follows
+symlinked folders and stops at a loop; Windows uses `ReadDirectoryChangesW` and takes one of the 62 event slots of the
+loop, and does not notice a renamed root.
+
 ---
 
 ### Net — `Tge::Net::`
@@ -653,5 +674,5 @@ the `ROOT` store's certificates usable for server authentication.
 | `Tge::Memory::` | Allocators, tracking, `CategoryId`, `CScopedCategory` |
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
-| `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder`, `ReadWholeFile`, `WriteFileAtomically`, `IsBusy` |
+| `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder`, `ReadWholeFile`, `WriteFileAtomically`, `IsBusy`, `CDirectoryWatch` |
 | `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |

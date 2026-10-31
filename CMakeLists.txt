@@ -214,7 +214,7 @@ target_include_directories(TgeThreading
 )
 
 # ============================================================================
-# TgeIO (STATIC - files, paths and user folders)
+# TgeIO (STATIC - files, paths, user folders and folder watches)
 # ============================================================================
 file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
 	private/io/*.cpp

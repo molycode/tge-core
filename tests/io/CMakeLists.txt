@@ -1,5 +1,8 @@
+# A binary of its own, like the threading suite: the folder watch runs on an event loop, which needs Tge::Initialize.
+
 add_executable(TgeCoreIOTests
 	main.cpp
+	test_directory_watch.cpp
 	test_is_busy.cpp
 	test_read_whole_file.cpp
 	test_support.cpp
@@ -10,7 +13,7 @@ add_executable(TgeCoreIOTests
 target_link_libraries(TgeCoreIOTests
 	PRIVATE
 		GTest::gtest
-		Tge::IO
+		Tge::Core
 )
 
 add_test(NAME TgeCoreIOTests COMMAND TgeCoreIOTests)
