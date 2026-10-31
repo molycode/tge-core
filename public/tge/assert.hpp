@@ -30,7 +30,7 @@ namespace Tge
 	#define TGE_FATAL(msg) ::Tge::FatalError(msg, __FILE__, __LINE__)
 #else
 	#if defined(_MSC_VER)
-		#define TGE_FATAL(msg) __debugbreak()
+		#define TGE_FATAL(msg) (__debugbreak(), __assume(0))
 	#elif defined(__GNUC__) || defined(__clang__)
 		#define TGE_FATAL(msg) __builtin_trap()
 	#else
