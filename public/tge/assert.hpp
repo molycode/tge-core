@@ -17,6 +17,7 @@ namespace Tge
 
 	#if defined(_MSC_VER)
 		__debugbreak();
+		__assume(0);
 	#elif defined(__GNUC__) || defined(__clang__)
 		__builtin_trap();
 	#else
