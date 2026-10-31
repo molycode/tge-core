@@ -457,6 +457,46 @@ TEST_F(CEventLoopTest, RefusedConnectCountsAsReadable)
 	CloseSocket(refuser);
 }
 
+//////////////////////////////////////////////////////////////////////////
+TEST_F(CEventLoopTest, RefusedDatagramCountsAsReadable)
+{
+	NativeSocket const probe{ socket(AF_INET, SOCK_DGRAM, 0) };
+	NativeSocket const client{ socket(AF_INET, SOCK_DGRAM, 0) };
+	sockaddr_in closed{};
+	sockaddr_in local{};
+	std::optional<SWatchId> watch{};
+	std::binary_semaphore watched{ 0 };
+	std::binary_semaphore done{ 0 };
+
+	// Bound and closed again, so the datagram draws ICMP "port unreachable".
+	ASSERT_TRUE(probe != NoSocket && BindToLoopback(probe, closed));
+	CloseSocket(probe);
+	ASSERT_TRUE(client != NoSocket && BindToLoopback(client, local));
+	ASSERT_EQ(connect(client, reinterpret_cast<sockaddr const*>(&closed), static_cast<socklen_t>(sizeof(closed))), 0);
+
+	m_loop.Post([this, client, &watch, &watched, &done]()
+	{
+		watch = m_loop.Watch(ToWaitable(client), [this, &watch, &done]()
+		{
+			m_loop.Unwatch(*watch);
+			done.release();
+		});
+
+		EXPECT_TRUE(watch.has_value());
+		watched.release();
+	});
+
+	// Sent once the loop waits, so the refusal has to wake it.
+	EXPECT_TRUE(watched.try_acquire_for(Patience));
+
+	char const byte{ 'x' };
+
+	EXPECT_EQ(send(client, &byte, 1, 0), 1);
+	EXPECT_TRUE(done.try_acquire_for(Patience));
+	m_loop.Terminate();
+	CloseSocket(client);
+}
+
 #if defined(TGE_PLATFORM_WINDOWS)
 //////////////////////////////////////////////////////////////////////////
 TEST_F(CEventLoopTest, AutoResetEventRunsItsCallbackOncePerSignal)
