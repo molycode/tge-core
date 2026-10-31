@@ -41,6 +41,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeIO` | File and path operations |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
+| `TgeNet` | IPv4 sockets for Linux and Windows; outside `TgeCore`, linked by name |
 
 ### Build Options
 
@@ -556,6 +557,35 @@ uint32_t val = reader.Read<uint32_t>();
 
 ---
 
+### Net — `Tge::Net::`
+
+Non-blocking IPv4 sockets for Linux and Windows. Errors are `std::error_code`, compared with `std::errc`
+(`operation_would_block`, `connection_refused`, …), and nothing is logged inside: the caller knows the context.
+`TgeCore` does not carry it, so a consumer that never opens a socket links no Winsock; link `Tge::Net` by name.
+Only Linux and Windows build it.
+
+#### Sockets — `<tge/net/udp_socket.hpp>`, `<tge/net/stream_socket.hpp>`, `<tge/net/stream_listener.hpp>`
+
+```cpp
+Tge::Net::CSocketLibrary library;       // owned by main: WSAStartup on Windows, nothing on Linux
+library.Initialize();
+
+Tge::Net::CUdpSocket socket;
+socket.Initialize({ 0, 0 });            // creates and binds: any address, any port
+socket.DisableConnectionResetReports(); // ICMP "port unreachable" stays out of an unconnected socket, as on Linux
+socket.Send({ 0x7F000001, 27910 }, datagram);
+
+// With a Tge::Threading::CEventLoop: Receive until it reports errc::operation_would_block.
+loop.Watch(socket.GetWaitable(), onReadable);
+```
+
+Windows is made to behave as Linux does: sockets are never inherited by child processes, a connected UDP socket
+reports a refusal as `connection_refused`, an oversized datagram arrives truncated, and a stream's failed connect
+surfaces from `Receive` (or `PollConnected`) as its error. `CStreamListener`, `SetBlocking` and
+`WaitForReadable(socket, timeout)` serve simple blocking servers such as test fixtures.
+
+---
+
 ## Namespace Summary
 
 | Namespace | Contents |
@@ -566,3 +596,4 @@ uint32_t val = reader.Read<uint32_t>();
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
 | `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter` |
+| `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable` |

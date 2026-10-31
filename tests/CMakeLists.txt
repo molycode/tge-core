@@ -3,3 +3,7 @@
 
 add_subdirectory(unit)
 add_subdirectory(threading)
+
+if(TARGET TgeNet)
+	add_subdirectory(net)
+endif()

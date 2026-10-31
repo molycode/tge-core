@@ -234,6 +234,30 @@ target_include_directories(TgeIO
 )
 
 # ============================================================================
+# TgeNet (STATIC - IPv4 sockets)
+# ============================================================================
+# Linux and Windows only: anywhere else its sources stop at #error, which would fail every build of all.
+if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
+	file(GLOB TgeNet_FILES CONFIGURE_DEPENDS
+		private/net/*.cpp
+		private/net/*.hpp
+		public/tge/net/*.hpp
+	)
+
+	add_library(TgeNet STATIC ${TgeNet_FILES})
+	add_library(Tge::Net ALIAS TgeNet)
+
+	target_link_libraries(TgeNet
+		PUBLIC Tge::Base
+		PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32>
+	)
+
+	target_include_directories(TgeNet
+		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
+	)
+endif()
+
+# ============================================================================
 # TgeCommand (STATIC - console command registration and dispatch)
 # ============================================================================
 file(GLOB TgeCommand_FILES CONFIGURE_DEPENDS
@@ -505,6 +529,7 @@ target_link_libraries(TgeCore INTERFACE
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
 # TgeEvents and TgeEventsPublic likewise: QueueEmit's backlog is drained by a frame phase, so a consumer that
 # runs no frame loop would acquire a queue nothing empties. Both are named explicitly by whoever wants them.
+# TgeNet too: a consumer that never opens a socket should not link Winsock.
 
 # ============================================================================
 # TgeTesting (INTERFACE - the harness every module's tests sit on)

@@ -28,12 +28,13 @@ endforeach()
 
 add_executable(TgeCorePackageConsumer main.cpp)
 
-# Lifecycle and Events by name, because Tge::Core carries neither. Composing a runtime and draining the event
-# queue are the application's job, so the umbrella stops at what a module may link.
+# Lifecycle, Events and Net by name, because Tge::Core carries none of them. Composing a runtime and draining
+# the event queue are the application's job, so the umbrella stops at what a module may link.
 target_link_libraries(TgeCorePackageConsumer PRIVATE
 	Tge::Core
 	Tge::Lifecycle
 	Tge::Events
+	Tge::Net
 )
 
 if(NOT DEFINED TgeCore_MODULE_CONTRACT_VERSION)
