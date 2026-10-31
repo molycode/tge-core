@@ -38,7 +38,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeMemory` | Memory allocators and tracking |
 | `TgeMath` | Math library (GLM-based) |
 | `TgeThreading` | Job system, thread pool and event loop |
-| `TgeIO` | File and path operations |
+| `TgeIO` | Files, paths and user folders |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
 | `TgeNet` | IPv4 sockets, host lookups and root certificates for Linux and Windows; outside `TgeCore`, linked by name |
@@ -555,6 +555,21 @@ Tge::IO::CBinaryReader reader(data);
 uint32_t val = reader.Read<uint32_t>();
 ```
 
+What follows is newer: errors are `std::error_code`, compared with `std::errc`, paths are
+`std::filesystem::path`, nothing throws or logs, and it runs on Linux and Windows.
+
+#### User folders — `<tge/io/get_user_folder.hpp>`
+
+```cpp
+// Config, Data, State or Cache; the application adds its own folder name.
+std::expected<std::filesystem::path, std::error_code> const data{ Tge::IO::GetUserFolder(Tge::IO::EUserFolder::Data) };
+```
+
+An absolute `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME` or `XDG_CACHE_HOME` wins on both platforms (a
+relative one is ignored, as the XDG specification says). Otherwise Linux uses `$HOME/.config`, `.local/share`,
+`.local/state` and `.cache` (an error when `HOME` is not absolute), and Windows the Known Folders: Config and Data in
+roaming AppData, State and Cache in local AppData.
+
 ---
 
 ### Net — `Tge::Net::`
@@ -620,5 +635,5 @@ the `ROOT` store's certificates usable for server authentication.
 | `Tge::Memory::` | Allocators, tracking, `CategoryId`, `CScopedCategory` |
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
-| `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter` |
+| `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder` |
 | `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |

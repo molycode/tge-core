@@ -254,7 +254,7 @@ step "3. Every one of the module's suites runs against the out-of-tree build"
 # Each by name. A module added EXCLUDE_FROM_ALL has its test binaries excluded too, and a suite that
 # configures, builds nothing and reports nothing is indistinguishable from a passing gate -- so the loop
 # names what it expects to find rather than running whatever happens to be there.
-for suite in TgeCoreUnitTests TgeCoreThreadingTests TgeCoreNetTests
+for suite in TgeCoreUnitTests TgeCoreThreadingTests TgeCoreNetTests TgeCoreIOTests
 do
 	binary="${MODULE_BUILD}/tests/${suite}"
 

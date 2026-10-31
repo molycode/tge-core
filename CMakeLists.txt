@@ -214,7 +214,7 @@ target_include_directories(TgeThreading
 )
 
 # ============================================================================
-# TgeIO (STATIC - file and path operations)
+# TgeIO (STATIC - files, paths and user folders)
 # ============================================================================
 file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
 	private/io/*.cpp
@@ -227,6 +227,7 @@ add_library(Tge::IO ALIAS TgeIO)
 
 target_link_libraries(TgeIO
 	PUBLIC Tge::Base
+	PRIVATE $<$<PLATFORM_ID:Windows>:shell32> $<$<PLATFORM_ID:Windows>:ole32>
 )
 
 target_include_directories(TgeIO

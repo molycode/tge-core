@@ -12,7 +12,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Memory::` - Allocators, tracking (CDefaultAllocator, CLinearAllocator, etc.)
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob) and an event loop for waiting (CEventLoop)
-- `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory)
+- `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory); user folders (GetUserFolder)
 - `Tge::Net::` - IPv4 sockets, host lookups and root certificates for Linux and Windows (CSocketLibrary, CUdpSocket, CStreamSocket, CStreamListener, CAddressLookup, ReadSystemRootCertificates)
 - `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
 - `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
@@ -40,7 +40,7 @@ All public headers use `<tge/...>` prefix:
 | TgeMemory | STATIC | TgeBase, rpmalloc, TgeLogging | Memory allocators and tracking |
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system, thread pool and event loop |
-| TgeIO | STATIC | TgeBase | File and path operations |
+| TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths and user folders |
 | TgeNet | STATIC | TgeBase (ws2_32 and crypt32 on Windows) | IPv4 sockets, host lookups, root certificates; Linux and Windows only, outside TgeCore, linked by name |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |
@@ -113,7 +113,7 @@ cmake --build --preset linux-gcc_16-debug
 
 ### Tests and benchmarks
 Core vendors neither googletest nor Google Benchmark, so both are off by default and whoever supplies a
-harness turns them on: `TGE_CORE_BUILD_TESTS` (`tests/` — `TgeCoreUnitTests`, `TgeCoreThreadingTests`, `TgeCoreNetTests`) and
+harness turns them on: `TGE_CORE_BUILD_TESTS` (`tests/` — `TgeCoreUnitTests`, `TgeCoreThreadingTests`, `TgeCoreNetTests`, `TgeCoreIOTests`) and
 `TGE_CORE_BUILD_BENCHMARKS` (`benchmarks/` — `TgeCoreThreadingBenchmarks`, `TgeCoreEventsBenchmarks`). Each
 resolves its harness through `if(NOT TARGET …) find_package(…)`, so a consuming tree that already entered one
 wins and no second checkout is configured.
