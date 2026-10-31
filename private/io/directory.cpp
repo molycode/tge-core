@@ -1,15 +1,19 @@
 #include <tge/io/directory.hpp>
+#include <tge/platform.hpp>
 #include <filesystem>
 
-#ifdef __linux__
+#if defined(TGE_PLATFORM_LINUX)
 #include <unistd.h>
 #include <linux/limits.h>
-#endif
-
-#ifdef _WIN32
+#elif defined(TGE_PLATFORM_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif // WIN32_LEAN_AND_MEAN
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif // NOMINMAX
 #include <windows.h>
-#endif
+#endif // defined(TGE_PLATFORM_LINUX)
 
 namespace Tge::IO
 {
@@ -112,7 +116,7 @@ std::string CDirectory::GetCurrentWorkingDirectory()
 //////////////////////////////////////////////////////////////////////////
 std::string CDirectory::GetExecutableDirectory()
 {
-#ifdef __linux__
+#if defined(TGE_PLATFORM_LINUX)
 	char buffer[PATH_MAX];
 	ssize_t const len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
 
@@ -124,7 +128,7 @@ std::string CDirectory::GetExecutableDirectory()
 	}
 
 	return "";
-#elif defined(_WIN32)
+#elif defined(TGE_PLATFORM_WINDOWS)
 	wchar_t buffer[MAX_PATH];
 	DWORD const len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
 
@@ -137,6 +141,6 @@ std::string CDirectory::GetExecutableDirectory()
 	return "";
 #else
 	#error "Unsupported platform: GetExecutableDirectory() not implemented"
-#endif
+#endif // defined(TGE_PLATFORM_LINUX)
 }
 } // namespace Tge::IO
