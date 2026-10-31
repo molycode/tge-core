@@ -23,12 +23,14 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <windows.h>
-#else
+#elif defined(TGE_PLATFORM_LINUX)
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#else
+#error "Unsupported platform"
 #endif // defined(TGE_PLATFORM_WINDOWS)
 
 using namespace Tge::Threading;
@@ -41,9 +43,11 @@ constexpr std::chrono::seconds Patience{ 10 };
 #if defined(TGE_PLATFORM_WINDOWS)
 using NativeSocket = SOCKET;
 constexpr NativeSocket NoSocket{ INVALID_SOCKET };
-#else
+#elif defined(TGE_PLATFORM_LINUX)
 using NativeSocket = int;
 constexpr NativeSocket NoSocket{ -1 };
+#else
+#error "Unsupported platform"
 #endif // defined(TGE_PLATFORM_WINDOWS)
 
 // Tests terminate the loop before their locals go; TearDown is only the backstop for one that stopped at an ASSERT.
@@ -82,8 +86,10 @@ void CloseSocket(NativeSocket socket)
 {
 #if defined(TGE_PLATFORM_WINDOWS)
 	closesocket(socket);
-#else
+#elif defined(TGE_PLATFORM_LINUX)
 	close(socket);
+#else
+#error "Unsupported platform"
 #endif // defined(TGE_PLATFORM_WINDOWS)
 }
 
@@ -92,9 +98,11 @@ bool SetNonBlocking(NativeSocket socket)
 #if defined(TGE_PLATFORM_WINDOWS)
 	u_long isNonBlocking{ 1 };
 	return ioctlsocket(socket, FIONBIO, &isNonBlocking) == 0;
-#else
+#elif defined(TGE_PLATFORM_LINUX)
 	int const flags{ fcntl(socket, F_GETFL, 0) };
 	return flags >= 0 && fcntl(socket, F_SETFL, flags | O_NONBLOCK) == 0;
+#else
+#error "Unsupported platform"
 #endif // defined(TGE_PLATFORM_WINDOWS)
 }
 
