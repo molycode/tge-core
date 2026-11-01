@@ -31,8 +31,20 @@ std::optional<std::expected<uint32_t, std::error_code>> Resolve(CAddressLookup& 
 }
 } // namespace
 
+class CAddressLookupTest : public testing::Test
+{
+protected:
+
+	void SetUp() override
+	{
+#if defined(__SANITIZE_THREAD__)
+		GTEST_SKIP() << "glibc starts getaddrinfo_a's thread outside TSan's hooks, and TSan crashes in it";
+#endif // __SANITIZE_THREAD__
+	}
+};
+
 //////////////////////////////////////////////////////////////////////////
-TEST(AddressLookup, ResolvesLocalhost)
+TEST_F(CAddressLookupTest, ResolvesLocalhost)
 {
 	CAddressLookup lookup{};
 
@@ -45,7 +57,7 @@ TEST(AddressLookup, ResolvesLocalhost)
 }
 
 //////////////////////////////////////////////////////////////////////////
-TEST(AddressLookup, ReportsANameThatDoesNotResolve)
+TEST_F(CAddressLookupTest, ReportsANameThatDoesNotResolve)
 {
 	CAddressLookup lookup{};
 
@@ -59,7 +71,7 @@ TEST(AddressLookup, ReportsANameThatDoesNotResolve)
 }
 
 //////////////////////////////////////////////////////////////////////////
-TEST(AddressLookup, StartsAgainAfterTerminatingAPendingLookup)
+TEST_F(CAddressLookupTest, StartsAgainAfterTerminatingAPendingLookup)
 {
 	CAddressLookup lookup{};
 
