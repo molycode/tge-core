@@ -157,7 +157,8 @@ gLog.Warning(Tge::Logging::ETarget::All,   "Everywhere (default)");
 
 `ETarget` is a bitflag: `Terminal`, `File`, `Console` (application listener), `All`, `None`.
 
-The log system writes to `logs/tge_YYYY-MM-DD_HH-MM-SS.log` when initialized.
+The log system writes to `logs/tge_YYYY-MM-DD_HH-MM-SS.log` when initialized. On Windows, `Initialize` switches the
+console's output to UTF-8 with ANSI colours, and `Terminate` gives the console back as it found it.
 
 #### Log levels — `<tge/logging/log_level.hpp>`
 
