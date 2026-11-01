@@ -42,6 +42,7 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
 | `TgeNet` | IPv4 sockets, host lookups and root certificates for Linux and Windows; outside `TgeCore`, linked by name |
+| `TgeProcess` | Child processes for Linux and Windows: start them, see them end; outside `TgeCore`, linked by name |
 
 ### Build Options
 
@@ -666,6 +667,42 @@ the `ROOT` store's certificates usable for server authentication.
 
 ---
 
+### Process — `Tge::Process::`
+
+Child processes for Linux and Windows, which a program starts and lets run: none is ever stopped. Errors are
+`std::error_code`, and nothing is logged inside. `TgeCore` does not carry it; link `Tge::Process` by name. Only Linux
+and Windows build it.
+
+#### Children — `<tge/process/child_process.hpp>`, `<tge/process/output_file.hpp>`
+
+```cpp
+Tge::Process::COutputFile log;
+log.Open(logsDir / "game.log");                  // created or emptied; an error is the caller's to report
+
+Tge::Process::CChildProcess child;               // one child per object
+child.Start({ .program = "C:/Games/Kingpin/kingpin.exe", .arguments = { "+connect", "203.0.113.7:27910" },
+    .workingDir = "C:/Games/Kingpin", .pOutput = &log });
+log.Close();                                     // the child keeps its own handle
+
+// Polled: empty while it runs; an SExitStatus once it ended; an error when it was lost.
+std::optional<std::expected<Tge::Process::SExitStatus, std::error_code>> const exit{ child.TryGetExit() };
+
+child.Terminate();                               // releases the handle; a child still running keeps running
+```
+
+The program is a full path, a path relative to the working directory, or a bare name searched in `PATH`. The child's
+stdout and stderr go to the output file, or to the null device without one; its stdin is the null device, and it
+inherits nothing else the caller has open and the caller's environment. Linux starts it with `posix_spawn` in a
+session of its own, with every signal at its default and none blocked; `SExitStatus::signal` names a signal that
+ended it. Windows starts it with `CreateProcessW` and a hidden console of its own: a bare name is completed with
+`PATHEXT`'s `.COM` and `.EXE` but never looked up in the current folder, a batch file is refused
+(`executable_format_error`, as cmd.exe would parse the arguments again), and an argument is quoted only when it must
+be, since some programs (Quake-engine games among them) split their command line on whitespace and keep quotes. A
+program that needs elevation fails with its error. `IsRunnable(path)` says whether a file can be started at all: the
+user's execute permission on Linux, `.exe` or `.com` on Windows.
+
+---
+
 ## Namespace Summary
 
 | Namespace | Contents |
@@ -677,3 +714,4 @@ the `ROOT` store's certificates usable for server authentication.
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
 | `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder`, `ReadWholeFile`, `WriteFileAtomically`, `IsBusy`, `CDirectoryWatch` |
 | `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |
+| `Tge::Process::` | `CChildProcess`, `COutputFile`, `SProcessSpec`, `SExitStatus`, `IsRunnable` |

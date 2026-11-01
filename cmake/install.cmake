@@ -79,6 +79,16 @@ if(TARGET TgeNet)
 	)
 endif()
 
+if(TARGET TgeProcess)
+	TgeSetExportNames(TgeProcess)
+
+	install(TARGETS TgeProcess
+		EXPORT TgeCoreTargets
+		ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	)
+endif()
+
 install(DIRECTORY public/tge
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 	FILES_MATCHING PATTERN "*.hpp"

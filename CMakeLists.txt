@@ -259,6 +259,29 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
 endif()
 
 # ============================================================================
+# TgeProcess (STATIC - child processes: start them and see them end)
+# ============================================================================
+# Linux and Windows only, as TgeNet.
+if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
+	file(GLOB TgeProcess_FILES CONFIGURE_DEPENDS
+		private/process/*.cpp
+		private/process/*.hpp
+		public/tge/process/*.hpp
+	)
+
+	add_library(TgeProcess STATIC ${TgeProcess_FILES})
+	add_library(Tge::Process ALIAS TgeProcess)
+
+	target_link_libraries(TgeProcess
+		PUBLIC Tge::Base
+	)
+
+	target_include_directories(TgeProcess
+		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
+	)
+endif()
+
+# ============================================================================
 # TgeCommand (STATIC - console command registration and dispatch)
 # ============================================================================
 file(GLOB TgeCommand_FILES CONFIGURE_DEPENDS
@@ -530,7 +553,8 @@ target_link_libraries(TgeCore INTERFACE
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
 # TgeEvents and TgeEventsPublic likewise: QueueEmit's backlog is drained by a frame phase, so a consumer that
 # runs no frame loop would acquire a queue nothing empties. Both are named explicitly by whoever wants them.
-# TgeNet too: a consumer that never opens a socket should not link Winsock.
+# TgeNet too: a consumer that never opens a socket should not link Winsock. TgeNet and TgeProcess are built on Linux
+# and Windows only, which the umbrella cannot assume.
 
 # ============================================================================
 # TgeTesting (INTERFACE - the harness every module's tests sit on)

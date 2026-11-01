@@ -8,3 +8,7 @@ add_subdirectory(io)
 if(TARGET TgeNet)
 	add_subdirectory(net)
 endif()
+
+if(TARGET TgeProcess)
+	add_subdirectory(process)
+endif()
