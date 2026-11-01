@@ -13,6 +13,7 @@ add_executable(TgeCoreProcessTests
 	main.cpp
 	test_child_process.cpp
 	test_command_line.cpp
+	test_get_program_path.cpp
 	test_is_runnable.cpp
 	test_startable_extension.cpp
 	test_support.cpp
@@ -30,7 +31,9 @@ target_include_directories(TgeCoreProcessTests
 )
 
 target_compile_definitions(TgeCoreProcessTests
-	PRIVATE TGE_PROCESS_CHILD="$<TARGET_FILE:TgeCoreProcessChild>"
+	PRIVATE
+		TGE_PROCESS_CHILD="$<TARGET_FILE:TgeCoreProcessChild>"
+		TGE_PROCESS_TESTS="$<TARGET_FILE:TgeCoreProcessTests>"
 )
 
 # Nothing else names the child, so building the tests has to build it.

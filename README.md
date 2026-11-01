@@ -699,7 +699,8 @@ ended it. Windows starts it with `CreateProcessW` and a hidden console of its ow
 (`executable_format_error`, as cmd.exe would parse the arguments again), and an argument is quoted only when it must
 be, since some programs (Quake-engine games among them) split their command line on whitespace and keep quotes. A
 program that needs elevation fails with its error. `IsRunnable(path)` says whether a file can be started at all: the
-user's execute permission on Linux, `.exe` or `.com` on Windows.
+user's execute permission on Linux, `.exe` or `.com` on Windows. `GetProgramPath()` is the running program's own file,
+however it was started.
 
 ---
 
@@ -714,4 +715,4 @@ user's execute permission on Linux, `.exe` or `.com` on Windows.
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
 | `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder`, `ReadWholeFile`, `WriteFileAtomically`, `IsBusy`, `CDirectoryWatch` |
 | `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |
-| `Tge::Process::` | `CChildProcess`, `COutputFile`, `SProcessSpec`, `SExitStatus`, `IsRunnable` |
+| `Tge::Process::` | `CChildProcess`, `COutputFile`, `SProcessSpec`, `SExitStatus`, `IsRunnable`, `GetProgramPath` |

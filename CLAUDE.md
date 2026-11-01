@@ -14,7 +14,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob) and an event loop for waiting (CEventLoop)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory); user folders, whole-file reads and atomic writes, folder watches (GetUserFolder, ReadWholeFile, WriteFileAtomically, IsBusy, CDirectoryWatch)
 - `Tge::Net::` - IPv4 sockets, host lookups and root certificates for Linux and Windows (CSocketLibrary, CUdpSocket, CStreamSocket, CStreamListener, CAddressLookup, ReadSystemRootCertificates)
-- `Tge::Process::` - Child processes for Linux and Windows, started and seen to end, never stopped (CChildProcess, COutputFile, SProcessSpec, SExitStatus, IsRunnable)
+- `Tge::Process::` - Child processes for Linux and Windows, started and seen to end, never stopped (CChildProcess, COutputFile, SProcessSpec, SExitStatus, IsRunnable, GetProgramPath)
 - `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
 - `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
 - `Tge::Geometry::` - Mesh vocabulary (SVertex, SSkinVertex, SMorphDelta, EPrimitiveTopology)
