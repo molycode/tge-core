@@ -47,16 +47,24 @@ std::error_code IssueRead(SNativeDirectoryWatch& watch)
 }
 
 //////////////////////////////////////////////////////////////////////////
+// A folder's own last write says only that something in it changed, which comes as an entry of its own; inotify sends
+// no such entry, so it is left out to report the same changes on both.
 void CollectPaths(SNativeDirectoryWatch const& watch, SDirectoryChanges& changes)
 {
 	std::byte const* pEntry{ reinterpret_cast<std::byte const*>(watch.buffer.data()) };
 	bool isMore{ true };
+	std::error_code error{};
 
 	while (isMore)
 	{
 		FILE_NOTIFY_INFORMATION const* const pInfo{ reinterpret_cast<FILE_NOTIFY_INFORMATION const*>(pEntry) };
+		std::filesystem::path path{ std::wstring_view{ pInfo->FileName, pInfo->FileNameLength / sizeof(WCHAR) } };
 
-		changes.paths.emplace_back(std::wstring_view{ pInfo->FileName, pInfo->FileNameLength / sizeof(WCHAR) });
+		if (pInfo->Action != FILE_ACTION_MODIFIED || !std::filesystem::is_directory(watch.root / path, error))
+		{
+			changes.paths.emplace_back(std::move(path));
+		}
+
 		isMore = pInfo->NextEntryOffset != 0;
 		pEntry += pInfo->NextEntryOffset;
 	}
@@ -253,6 +261,7 @@ std::expected<void, std::error_code> CDirectoryWatch::Initialize(std::filesystem
 	std::error_code error{};
 
 	pWatch->scope = scope;
+	pWatch->root = folder;
 
 #if defined(TGE_PLATFORM_WINDOWS)
 	BY_HANDLE_FILE_INFORMATION information{};
@@ -283,7 +292,6 @@ std::expected<void, std::error_code> CDirectoryWatch::Initialize(std::filesystem
 		Release(*pWatch);
 	}
 #elif defined(TGE_PLATFORM_LINUX)
-	pWatch->root = folder;
 	pWatch->descriptor = ::inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
 	pWatch->rootWatch = (pWatch->descriptor >= 0) ? ::inotify_add_watch(pWatch->descriptor, folder.c_str(), WatchedEvents) : -1;
 

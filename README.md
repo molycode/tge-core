@@ -607,7 +607,8 @@ loop.Watch(watch.GetWaitable(), [&]()
 first reads wait in the system, so `Initialize` may run before the loop does, on a thread that outlives the watch
 (Windows cancels a thread's pending reads when it exits). Linux watches each folder of a tree with inotify, follows
 symlinked folders and stops at a loop; Windows uses `ReadDirectoryChangesW` and takes one of the 62 event slots of the
-loop, and does not notice a renamed root.
+loop, and does not notice a renamed root. A folder is not reported for its own last write, which Windows sends
+whenever something inside it changes and inotify never does; that something is reported itself.
 
 ---
 

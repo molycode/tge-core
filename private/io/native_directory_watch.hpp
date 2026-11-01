@@ -24,13 +24,13 @@ namespace Tge::IO
 struct SNativeDirectoryWatch final
 {
 	EWatchScope scope{ EWatchScope::Folder };
+	std::filesystem::path root{};
 #if defined(TGE_PLATFORM_WINDOWS)
 	HANDLE folder{ INVALID_HANDLE_VALUE };
 	OVERLAPPED overlapped{};
 	std::vector<DWORD> buffer{};
 	bool isReadPending{ false };
 #elif defined(TGE_PLATFORM_LINUX)
-	std::filesystem::path root{};
 	int descriptor{ -1 };
 	int rootWatch{ -1 };
 	std::map<int, std::filesystem::path> folders{};
