@@ -13,7 +13,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob) and an event loop for waiting (CEventLoop)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory); user folders, whole-file reads and atomic writes, folder watches (GetUserFolder, ReadWholeFile, WriteFileAtomically, IsBusy, CDirectoryWatch)
-- `Tge::Net::` - IPv4 sockets, host lookups and root certificates for Linux and Windows (CSocketLibrary, CUdpSocket, CStreamSocket, CStreamListener, CAddressLookup, ReadSystemRootCertificates)
+- `Tge::Net::` - IPv4 sockets, host lookups, root certificates and the system's own check of a server's chain for Linux and Windows (CSocketLibrary, CUdpSocket, CStreamSocket, CStreamListener, CAddressLookup, ReadSystemRootCertificates, VerifyServerChain: Windows' chain engine, which fetches a root the lazily filled ROOT store lacks; `not_supported` on Linux, whose bundles are complete)
 - `Tge::Process::` - Child processes for Linux and Windows, started and seen to end, never stopped (CChildProcess, COutputFile, SProcessSpec, SExitStatus, IsRunnable, GetProgramPath)
 - `Tge::Command::` - Console command registration and dispatch (ICommandRegistry, ICommandGroup, gRegistry)
 - `Tge::Events::` - Typed publish/subscribe dispatch (ISystem, gEvents)
@@ -42,7 +42,7 @@ All public headers use `<tge/...>` prefix:
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, rpmalloc | Job system, thread pool and event loop |
 | TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths, user folders and folder watches |
-| TgeNet | STATIC | TgeBase (ws2_32 and crypt32 on Windows) | IPv4 sockets, host lookups, root certificates; Linux and Windows only, outside TgeCore, linked by name |
+| TgeNet | STATIC | TgeBase (ws2_32 and crypt32 on Windows) | IPv4 sockets, host lookups, root certificates, server chain checks; Linux and Windows only, outside TgeCore, linked by name |
 | TgeProcess | STATIC | TgeBase | Child processes: start them and see them end; Linux and Windows only, outside TgeCore, linked by name |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |

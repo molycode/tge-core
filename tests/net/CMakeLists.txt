@@ -8,6 +8,7 @@ add_executable(TgeCoreNetTests
 	test_stream_socket.cpp
 	test_support.cpp
 	test_udp_socket.cpp
+	test_verify_server_chain.cpp
 	test_wait_for_readable.cpp
 )
 
