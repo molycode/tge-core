@@ -89,7 +89,7 @@ nowhere to go, and queues work that nothing will run.
 
 ### Base Utilities
 
-#### Assertions — `<tge/init/assert.hpp>`
+#### Assertions — `<tge/assert.hpp>`
 
 ```cpp
 TGE_ASSERT(condition, "message")   // Checked in debug builds only
