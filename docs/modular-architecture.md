@@ -56,8 +56,8 @@ expressed as targets *within* it. Lifting it into Core would let a consumer pin 
 be unable to build its shaders, which is the thing pinning exists to prevent. **A module's genericness is a
 reason to structure it, not a reason to move it out.**
 
-**Where the separation is real it is a COMPONENT, not a repository.** Scene, Animation and a dedicated server
-need the Renderer's interface and must never pull Vulkan; the demo needs a renderer that draws. That is
+**Where the separation is real it is a COMPONENT, not a repository.** A bridge such as `SceneRender` needs the
+Renderer's interface and must never pull Vulkan; the demo needs a renderer that draws. That is
 `find_package(TgeRenderer)` against `find_package(TgeRenderer COMPONENTS Vulkan)` — one repository, two export
 sets, the consumer stating which half it wants. tge-core already does this for its test harness
 (`COMPONENTS Testing`).
@@ -73,17 +73,44 @@ would link against a header describing another — a runtime failure, not a link
 runtime backend selection in a *single* binary (a Windows build offering both D3D12 and Vulkan): one process,
 two backends, and they must share one interface.
 
-### What a repository may depend on
+### What a repository may depend on — the layering, agreed 2026-11-08
 
-**Standalone is the aim, not an absolute.** A module that resolves against Core alone is the better outcome
-and two already do — Window and the Asset Loader. Where it is not achievable, a dependency on
-another module in the pool is legitimate rather than a defect to design away.
+```
+     apps: tge-demo, tge-server, each module's dev app
+          ▲                          ▲
+     tge-integration: bridges        │   apps also use modules directly
+          ▲                          │
+     modules: scene, animation, renderer, window, asset loader, ...
+          ▲
+     tge-core
+```
 
-**What crosses must be another module's public surface.** A module may name a sibling's public library and
-nothing else; reaching an implementation is what the rule forbids, because that is the edge a consumer cannot
-see, cannot version against, and cannot substitute. Core stays the one universal dependency — everything
-takes it — and every other edge is a stated contract between two systems. **A consumer pulling Scene accepts
-Scene's dependency set**, the same way it accepts any library's.
+The drawn version is [tge-architecture.drawio](tge-architecture.drawio).
+
+**Modules depend on Core alone.** Core holds the vocabulary they share — geometry, material, light, exposure,
+entity, and model data once it moves — plus small contracts where one module must ask another for something.
+A module exposes an API and announces what happened to it. It never names another module, and never the layer
+above it.
+
+**What connects two modules is a bridge, and bridges live in `tge-integration`.** Something always has to turn
+"an entity with a mesh" into "a renderer instance", and that code names both sides by nature. It goes in a
+bridge — `SceneRender`, `AnimationRender`, later `AnimationScene` and `WindowRender` — one per connection that
+more than one app needs. A bridge names exactly the modules it connects and builds only when the app provides
+them. It vendors no module, so any app, a module's own dev app included, can take it without a submodule
+cycle. It holds no app policy. Glue that only one app needs stays in that app.
+
+**Apps compose.** The run context, the schedule, UI, input and the choice of bridges belong to the app, and an
+app also uses modules directly.
+
+**This supersedes "standalone is the aim, not an absolute".** Until 2026-11-08 a dependency on another module's
+public library was accepted, and Scene's edge to the Renderer was defended as Scene describing what it is.
+Measuring it showed otherwise. The edge was an adapter living in the wrong repository, and the Renderer had
+become the Scene's database: lights, material edits, environment and exposure existed only inside it, so a
+Scene without a Renderer could not raycast, dropped that state on Load and refused to Save. The edge also kept
+the Renderer's dev app from vendoring Scene, because the two repositories would have been circular.
+
+**What a bridge or an app crosses must be a module's public surface.** Reaching an implementation is what the
+rule forbids, because that is the edge a consumer cannot see, cannot version against, and cannot substitute.
 
 The pool satisfies this today, measured rather than intended: **no module links another module's private
 target.** Every cross-module edge resolves to a `*Public` library, and only composition roots — the demo, the
@@ -95,25 +122,22 @@ repository states only what it can verify from **its own** tree — its own link
 across siblings lives here, in the one repository every consumer already takes. Re-measure it from the
 `target_link_libraries` calls; do not adjust it from memory.
 
-Measured 2026-08-10:
+Measured 2026-11-08, unchanged since 2026-08-10. Under the layering above, every sibling edge in the table is now
+a defect, and the last column says how each one goes away:
 
-| repository | public (interface) edges | private (implementation) edges |
-|---|---|---|
-| `tge-window` | none | none |
-| `tge-asset-loader` | none | none |
-| `tge-renderer` | **none** | `Tge::WindowPublic`, `Tge::AssetLoaderPublic` |
-| `tge-scene` | **none** | `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
-| `tge-animation` | none | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` |
+| repository | public (interface) edges | private (implementation) edges | goes away by |
+|---|---|---|---|
+| `tge-window` | none | none | — |
+| `tge-asset-loader` | none | none | — |
+| `tge-renderer` | **none** | `Tge::WindowPublic`, `Tge::AssetLoaderPublic` | a `WindowRender` bridge; model data into Core, with model loading and mip decoding as Core contracts |
+| `tge-scene` | **none** | `Tge::RendererPublic`, `Tge::AssetLoaderPublic` | the `SceneRender` bridge, in progress; model data into Core |
+| `tge-animation` | none | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` | `AnimationRender` with `SceneRender`; an `AnimationScene` bridge; model data into Core |
 
 **Every module's interface now reaches Core and nothing else**, and what remains is entirely implementation.
 The renderer's last interface edge was one `#include` naming a single type behind a `shared_ptr`, already
 forward-declared in the same header — it needed no vocabulary move into Core to remove, and the belief that
 `CreateMeshes` embedded an `SModelData` *by value*, which this table used to give as the reason for the edge,
 was simply wrong.
-
-That the composing modules declare more than the leaf ones is the shape of the pool, not a violation of it.
-Scene's job is to drive a renderer, so an edge to the renderer's public interface is Scene describing what it
-is, and a consumer that wants a scene system wants that edge.
 
 **The edges must also be acyclic, and one of them was not.** Scene named `Tge::AnimationPublic` too, because
 it called the animation module directly when a model spawned or was removed — while Animation names
@@ -123,10 +147,10 @@ Animation subscribes, which deletes the edge rather than working around it: a mo
 happened to it does not need to know who is listening. A cycle between two modules is a signal that one of
 them is reaching where it should be publishing.
 
-**This does not make relocating a shared type pointless, only optional.** A type two modules embed by value
-still cannot version independently of either — the reason Geometry and Material sit in Core — so moving one
-remains the right call when a contract turns out to be vocabulary rather than collaboration. It is no longer
-a precondition for a repository to stand up.
+**A type two modules embed by value belongs in Core.** It cannot version independently of either module, which
+is why Geometry and Material sit in Core and why model data will follow: it is the Asset Loader's output and
+the Renderer's and Scene's input. The cost is that anything in Core versions with Core, so every repository
+relays a change to it.
 
 That end state is what makes the requirements below non-negotiable rather than tidy, because a repository
 that must stand on its own has to carry everything it needs to be built, run and trusted:
