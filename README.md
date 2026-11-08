@@ -93,6 +93,7 @@ nowhere to go, and queues work that nothing will run.
 
 ```cpp
 TGE_ASSERT(condition, "message")   // Checked in debug builds only
+TGE_VERIFY(condition, "message")   // Checked in debug builds; the condition still runs in release
 TGE_FATAL("message")               // Always triggers — logs and aborts
 TGE_UNREACHABLE("message")         // Marks unreachable code paths
 ```

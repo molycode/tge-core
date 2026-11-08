@@ -19,6 +19,7 @@ add_executable(TgeCoreUnitTests
 	test_command_registry.cpp
 	test_module_graph.cpp
 	test_mpsc_queue.cpp
+	test_verify.cpp
 )
 
 # The listener test drives the log system itself, so a build without one has nothing for it to assert on.

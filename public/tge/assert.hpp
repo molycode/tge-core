@@ -63,3 +63,10 @@ namespace Tge
 #else
 	#define TGE_ASSERT(condition, msg) ((void)0)
 #endif // TGE_DEBUG_ENABLED
+
+// Verify macro - checked like TGE_ASSERT, but the condition still runs in release builds, for a call that must happen either way
+#ifdef TGE_DEBUG_ENABLED
+	#define TGE_VERIFY(condition, msg) TGE_ASSERT(condition, msg)
+#else
+	#define TGE_VERIFY(condition, msg) ((void)(condition))
+#endif // TGE_DEBUG_ENABLED
