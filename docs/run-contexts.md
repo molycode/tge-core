@@ -82,9 +82,11 @@ Restated against the real modules, the `Required`/`Optional` subgraph is acyclic
 | Core, Events, AssetLoader | — | — | — |
 | Window | Events | — | — |
 | Renderer | Window, **AssetLoader** | — | — |
-| Scene | Core, AssetLoader | **Renderer** | — |
-| Animation | Core, Events, AssetLoader | **Renderer** | — |
-| Debug | AssetLoader, Renderer, Events, **Window** | — | — |
+| Scene | Core, Events, AssetLoader | — | — |
+| Animation | Core, Events, AssetLoader | — | — |
+| SceneRender | Core, Events, Scene, Renderer | — | — |
+| AnimationRender | Core, Events, Animation, SceneRender, Renderer | — | — |
+| Debug | AssetLoader, Renderer, Events, Scene, SceneRender, **Window** | — | — |
 | *Network (planned)* | *Core, Events* | — | — |
 
 Network is listed because it is the first module that will be natively presentation-agnostic, which makes it

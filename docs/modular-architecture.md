@@ -122,16 +122,19 @@ repository states only what it can verify from **its own** tree — its own link
 across siblings lives here, in the one repository every consumer already takes. Re-measure it from the
 `target_link_libraries` calls; do not adjust it from memory.
 
-Measured 2026-11-08, unchanged since 2026-08-10. Under the layering above, every sibling edge in the table is now
-a defect, and the last column says how each one goes away:
+Measured 2026-11-09, after the `SceneRender` and `AnimationRender` bridges took the Scene's and the Animation's
+Renderer edges. Under the layering above, every sibling edge in the table is a defect, and the last column says
+how each one goes away:
 
 | repository | public (interface) edges | private (implementation) edges | goes away by |
 |---|---|---|---|
 | `tge-window` | none | none | — |
 | `tge-asset-loader` | none | none | — |
 | `tge-renderer` | **none** | `Tge::WindowPublic`, `Tge::AssetLoaderPublic` | a `WindowRender` bridge; model data into Core, with model loading and mip decoding as Core contracts |
-| `tge-scene` | **none** | `Tge::RendererPublic`, `Tge::AssetLoaderPublic` | the `SceneRender` bridge, in progress; model data into Core |
-| `tge-animation` | none | `Tge::ScenePublic`, `Tge::RendererPublic`, `Tge::AssetLoaderPublic` | `AnimationRender` with `SceneRender`; an `AnimationScene` bridge; model data into Core |
+| `tge-scene` | **none** | `Tge::AssetLoaderPublic` | model data into Core |
+| `tge-animation` | none | `Tge::ScenePublic`, `Tge::AssetLoaderPublic` | an `AnimationScene` bridge; model data into Core |
+
+`tge-integration` is not in the table: its bridges name the modules they connect, which is what a bridge is.
 
 **Every module's interface now reaches Core and nothing else**, and what remains is entirely implementation.
 The renderer's last interface edge was one `#include` naming a single type behind a `shared_ptr`, already
