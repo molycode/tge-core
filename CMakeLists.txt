@@ -527,6 +527,22 @@ target_link_libraries(TgeExposure
 )
 
 # ============================================================================
+# TgeSurface (INTERFACE - header-only native-window vocabulary)
+# ============================================================================
+file(GLOB TgeSurface_HEADERS CONFIGURE_DEPENDS
+	public/tge/surface/*.hpp
+)
+
+add_library(TgeSurface INTERFACE)
+add_library(Tge::Surface ALIAS TgeSurface)
+
+target_sources(TgeSurface PRIVATE ${TgeSurface_HEADERS})
+
+target_link_libraries(TgeSurface
+	INTERFACE Tge::Base
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -548,6 +564,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Entity
 	Tge::Light
 	Tge::Exposure
+	Tge::Surface
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.

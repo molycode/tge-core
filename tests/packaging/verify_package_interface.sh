@@ -235,6 +235,7 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 include/tge/entity/entity.hpp \
                 include/tge/light/light.hpp \
                 include/tge/exposure/exposure_curve.hpp \
+                include/tge/surface/native_window.hpp \
                 include/tge/testing/expected_log.hpp \
                 include/tge/testing/expected_log_errors.hpp \
                 include/glm/glm.hpp

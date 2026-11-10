@@ -35,6 +35,7 @@ set(tgeCoreTargets
 	TgeEntity
 	TgeLight
 	TgeExposure
+	TgeSurface
 	TgeCore
 )
 
@@ -59,6 +60,7 @@ install(TARGETS
 		TgeEntity
 		TgeLight
 		TgeExposure
+		TgeSurface
 		TgeCore
 		rpmalloc
 	EXPORT TgeCoreTargets
