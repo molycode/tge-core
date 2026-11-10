@@ -6,6 +6,7 @@ TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/private/module/module_id.cp
 
 # Events ships inside this package, so it cannot version independently of it.
 TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/private/events/module_id.cpp ${PROJECT_VERSION})
+TgeVerifyDeclaredVersion(${CMAKE_CURRENT_SOURCE_DIR}/private/assets/module_id.cpp ${PROJECT_VERSION})
 
 # Recorded in the package config so a consumer can see which contract the installed binaries speak.
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/public/tge/module/module.hpp moduleContractSource)
@@ -30,6 +31,7 @@ set(tgeCoreTargets
 	TgeLifecycle
 	TgeEventsPublic
 	TgeEvents
+	TgeAssetsPublic
 	TgeGeometry
 	TgeMaterial
 	TgeEntity
@@ -56,6 +58,7 @@ install(TARGETS
 		TgeLifecycle
 		TgeEventsPublic
 		TgeEvents
+		TgeAssetsPublic
 		TgeGeometry
 		TgeMaterial
 		TgeEntity

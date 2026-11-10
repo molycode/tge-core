@@ -447,6 +447,27 @@ target_link_libraries(TgeEvents
 )
 
 # ============================================================================
+# TgeAssetsPublic (STATIC - the asset-provider contract, its settings and the provider's identity)
+# ============================================================================
+file(GLOB TgeAssets_HEADERS CONFIGURE_DEPENDS
+	public/tge/assets/*.hpp
+)
+
+# No implementation here: the module that provides the contract reports gModuleId as its own identity.
+add_library(TgeAssetsPublic STATIC
+	${TgeAssets_HEADERS}
+	private/assets/globals.cpp
+	private/assets/module_id.cpp
+)
+add_library(Tge::AssetsPublic ALIAS TgeAssetsPublic)
+
+target_link_libraries(TgeAssetsPublic
+	PUBLIC
+		Tge::Module
+		Tge::Model
+)
+
+# ============================================================================
 # TgeGeometry (INTERFACE - header-only geometry vocabulary)
 # ============================================================================
 file(GLOB TgeGeometry_HEADERS CONFIGURE_DEPENDS

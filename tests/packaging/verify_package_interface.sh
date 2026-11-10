@@ -214,6 +214,7 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 lib/libTgeLifecycle.a \
                 lib/libTgeEventsPublic.a \
                 lib/libTgeEvents.a \
+                lib/libTgeAssetsPublic.a \
                 lib/librpmalloc.a \
                 include/tge/config.hpp \
                 include/tge/assert.hpp \
@@ -238,6 +239,10 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 include/tge/surface/native_window.hpp \
                 include/tge/model/model_data.hpp \
                 include/tge/model/animation_data.hpp \
+                include/tge/assets/asset_provider.hpp \
+                include/tge/assets/asset_guid.hpp \
+                include/tge/assets/settings.hpp \
+                include/tge/assets/module_id.hpp \
                 include/tge/testing/expected_log.hpp \
                 include/tge/testing/expected_log_errors.hpp \
                 include/glm/glm.hpp

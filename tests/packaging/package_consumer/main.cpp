@@ -1,3 +1,5 @@
+#include <tge/assets/asset_provider.hpp>
+#include <tge/assets/module_id.hpp>
 #include <tge/config.hpp>
 #include <tge/events/module.hpp>
 #include <tge/events/system.hpp>
@@ -181,6 +183,26 @@ bool VerifyGeneratedConfigShipped()
 	return shipped;
 }
 
+// The contract's identity lives in libTgeAssetsPublic.a and nothing in this context provides it, so the global is null.
+bool VerifyAssetsContractShipped()
+{
+	bool const shipped{ Assets::gModuleId != nullptr && Assets::gModuleId->GetName() == std::string_view{ "Assets" }
+	                    && Satisfies(Assets::gModuleId->GetVersion(), SVersion{ 1, 0, 0 }) };
+	bool const unprovided{ Assets::gAssetProvider == nullptr };
+
+	if (shipped && unprovided)
+	{
+		gLog.Info("Core package ships the Assets contract, unprovided in this context");
+	}
+	else
+	{
+		gLog.Error("Core package's Assets contract: identity {}, provider {}", shipped ? "ok" : "wrong",
+		           unprovided ? "null" : "published without a provider module");
+	}
+
+	return shipped && unprovided;
+}
+
 bool VerifyWorkerCountFollowsTheContext()
 {
 	size_t const numWorkers{ Threading::GetNumThreads() };
@@ -211,10 +233,11 @@ int main()
 		bool const mathVerified{ VerifyMathRoundTrip() };
 		bool const configVerified{ VerifyGeneratedConfigShipped() };
 		bool const workersVerified{ VerifyWorkerCountFollowsTheContext() };
+		bool const assetsVerified{ VerifyAssetsContractShipped() };
 
 		// Ahead of Terminate, which takes the log system down with it and would leave the gate's marker
 		// coming out of the pre-init fallback path.
-		if (identityVerified && eventsVerified && mathVerified && configVerified && workersVerified)
+		if (identityVerified && eventsVerified && mathVerified && configVerified && workersVerified && assetsVerified)
 		{
 			gLog.Info("Consumer linked the packaged Core implementation from packages alone");
 

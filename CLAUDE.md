@@ -24,6 +24,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Exposure::` - Exposure-curve vocabulary (CExposureCurve)
 - `Tge::Surface::` - Native-window vocabulary (SNativeWindow, EWindowSystem)
 - `Tge::Model::` - Model vocabulary: meshes, materials, textures, nodes, skins and animation clips (SModelData, SMeshData, STextureData, SAnimation)
+- `Tge::Assets::` - The asset-provider contract, its content roots and the provider's identity (IAssetProvider, gAssetProvider, gSettings, gModuleId, SAssetGuid)
 - `Tge::Profiling::` - Profiling markers and the backend hook wiring (CScopedPlotMs, RegisterHooks)
 
 ### Include Paths
@@ -53,6 +54,7 @@ All public headers use `<tge/...>` prefix:
 | TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |
 | TgeEventsPublic | STATIC | TgeModule | The event interface, `gEvents` and the module's identity |
 | TgeEvents | STATIC | TgeEventsPublic | The dispatcher and the module that drains its queue |
+| TgeAssetsPublic | STATIC | TgeModule, TgeModel | The asset-provider contract, `gAssetProvider`, `gSettings` and the identity its provider reports |
 | TgeGeometry | INTERFACE | TgeMath | Mesh vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeMaterial | INTERFACE | TgeMath | Material vocabulary shared by producers and consumers |
 | TgeEntity | INTERFACE | TgeBase | Entity-handle vocabulary shared by a scene and whatever animates it |
@@ -61,7 +63,7 @@ All public headers use `<tge/...>` prefix:
 | TgeSurface | INTERFACE | TgeBase | Native-window vocabulary shared by a window library and whatever presents to its windows |
 | TgeModel | INTERFACE | TgeMath, TgeGeometry, TgeLight, TgeMaterial | Model vocabulary an asset loader produces and a renderer, scene and animation system consume |
 | TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`, `CExpectedLog`); behind `TGE_CORE_TESTING`, own export set |
-| TgeCore | INTERFACE | all above | Convenience all-in-one |
+| TgeCore | INTERFACE | the vocabulary and infrastructure above | Convenience all-in-one; not Lifecycle, the Events or Assets halves, Net, Process or Testing |
 
 `TgeGeometry`, `TgeMaterial`, `TgeEntity`, `TgeLight`, `TgeExposure`, `TgeSurface` and `TgeModel` are engine-domain vocabulary rather than general
 infrastructure. They live here because their producers and consumers embed these types **by value**, so they
@@ -82,6 +84,11 @@ rather than in a repository of its own because it depends on nothing but the mod
 every module depends on it — a subsystem with that shape is core, not a peer. It stays out of the umbrella
 because `QueueEmit`'s backlog is drained by a frame phase: a consumer that runs no frame loop must ask for
 an event system rather than inherit one whose queue nothing empties.
+
+`TgeAssetsPublic` is the same split without an implementation here: the module that loads assets (tge-asset-loader)
+implements `IAssetProvider`, publishes `gAssetProvider` and reports `Assets::gModuleId` as its own identity, so a
+consumer declares that id Required and orders after the provider without naming it. It stays out of the umbrella
+because linking it states that the app composes a provider, and the edge table is measured from link lines.
 
 The package also ships `cmake/external.cmake`: `tge_suppress_external_warnings(target)` and
 `tge_suppress_external_warnings_in_directory(dir)` give a consumer's vendored dependencies `-w`, whether it vendors
