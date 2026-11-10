@@ -23,6 +23,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Light::` - Punctual-light vocabulary (SLight)
 - `Tge::Exposure::` - Exposure-curve vocabulary (CExposureCurve)
 - `Tge::Surface::` - Native-window vocabulary (SNativeWindow, EWindowSystem)
+- `Tge::Model::` - Model vocabulary: meshes, materials, textures, nodes, skins and animation clips (SModelData, SMeshData, STextureData, SAnimation)
 - `Tge::Profiling::` - Profiling markers and the backend hook wiring (CScopedPlotMs, RegisterHooks)
 
 ### Include Paths
@@ -58,10 +59,11 @@ All public headers use `<tge/...>` prefix:
 | TgeLight | INTERFACE | TgeMath | Punctual-light vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeExposure | INTERFACE | TgeMath | Exposure-curve vocabulary shared by a renderer and whatever serializes it |
 | TgeSurface | INTERFACE | TgeBase | Native-window vocabulary shared by a window library and whatever presents to its windows |
+| TgeModel | INTERFACE | TgeMath, TgeGeometry, TgeLight, TgeMaterial | Model vocabulary an asset loader produces and a renderer, scene and animation system consume |
 | TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`, `CExpectedLog`); behind `TGE_CORE_TESTING`, own export set |
 | TgeCore | INTERFACE | all above | Convenience all-in-one |
 
-`TgeGeometry`, `TgeMaterial`, `TgeEntity`, `TgeLight`, `TgeExposure` and `TgeSurface` are engine-domain vocabulary rather than general
+`TgeGeometry`, `TgeMaterial`, `TgeEntity`, `TgeLight`, `TgeExposure`, `TgeSurface` and `TgeModel` are engine-domain vocabulary rather than general
 infrastructure. They live here because their producers and consumers embed these types **by value**, so they
 can never version independently of each other — the property that defines core. Consumers who want only infrastructure should
 link the specific libs (`TgeBase`, `TgeLogging`, …) rather than the `TgeCore` umbrella.

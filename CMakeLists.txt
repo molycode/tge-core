@@ -543,6 +543,26 @@ target_link_libraries(TgeSurface
 )
 
 # ============================================================================
+# TgeModel (INTERFACE - header-only model, mesh, texture and animation-clip vocabulary)
+# ============================================================================
+file(GLOB TgeModel_HEADERS CONFIGURE_DEPENDS
+	public/tge/model/*.hpp
+)
+
+add_library(TgeModel INTERFACE)
+add_library(Tge::Model ALIAS TgeModel)
+
+target_sources(TgeModel PRIVATE ${TgeModel_HEADERS})
+
+target_link_libraries(TgeModel
+	INTERFACE
+		Tge::Math
+		Tge::Geometry
+		Tge::Light
+		Tge::Material
+)
+
+# ============================================================================
 # TgeCore (INTERFACE - convenience all-in-one target)
 # ============================================================================
 add_library(TgeCore INTERFACE)
@@ -565,6 +585,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Light
 	Tge::Exposure
 	Tge::Surface
+	Tge::Model
 )
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
