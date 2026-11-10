@@ -94,7 +94,7 @@ above it.
 
 **What connects two modules is a bridge, and bridges live in `tge-integration`.** Something always has to turn
 "an entity with a mesh" into "a renderer instance", and that code names both sides by nature. It goes in a
-bridge — `SceneRender`, `AnimationRender`, later `AnimationScene` and `WindowRender` — one per connection that
+bridge — `SceneRender`, `AnimationRender`, `WindowRender`, later `AnimationScene` — one per connection that
 more than one app needs. A bridge names exactly the modules it connects and builds only when the app provides
 them. It vendors no module, so any app, a module's own dev app included, can take it without a submodule
 cycle. It holds no app policy. Glue that only one app needs stays in that app.
@@ -122,15 +122,15 @@ repository states only what it can verify from **its own** tree — its own link
 across siblings lives here, in the one repository every consumer already takes. Re-measure it from the
 `target_link_libraries` calls; do not adjust it from memory.
 
-Measured 2026-11-09, after the `SceneRender` and `AnimationRender` bridges took the Scene's and the Animation's
-Renderer edges. Under the layering above, every sibling edge in the table is a defect, and the last column says
+Measured 2026-11-10, after the `SceneRender` and `AnimationRender` bridges took the Scene's and the Animation's
+Renderer edges and `WindowRender` took the Renderer's Window edge. Under the layering above, every sibling edge in the table is a defect, and the last column says
 how each one goes away:
 
 | repository | public (interface) edges | private (implementation) edges | goes away by |
 |---|---|---|---|
 | `tge-window` | none | none | — |
 | `tge-asset-loader` | none | none | — |
-| `tge-renderer` | **none** | `Tge::WindowPublic`, `Tge::AssetLoaderPublic` | a `WindowRender` bridge; model data into Core, with model loading and mip decoding as Core contracts |
+| `tge-renderer` | **none** | `Tge::AssetLoaderPublic` | model data into Core, with model loading and mip decoding as Core contracts |
 | `tge-scene` | **none** | `Tge::AssetLoaderPublic` | model data into Core |
 | `tge-animation` | none | `Tge::ScenePublic`, `Tge::AssetLoaderPublic` | an `AnimationScene` bridge; model data into Core |
 
@@ -429,8 +429,8 @@ Animation → all three), so nothing downstream can be packaged before it. That 
 public library went next, and why Window — with Debug out of the pool — is the one that follows. The Renderer
 in turn gates Scene and Animation, and it is the interface half that gates them: Scene and Animation link
 `Tge::RendererPublic` and never the backend. That half is packaged now, and it needed no
-`find_dependency(TgeWindow)` — the public headers reach no window; only the Vulkan backend links
-`Tge::WindowPublic`.
+`find_dependency(TgeWindow)` — the public headers reach no window, and since L1 (2026-11-10) neither does the
+Vulkan backend: it builds its surface from `Surface::SNativeWindow`, which `WindowRender` attaches.
 
 *Cost is shaped by each implementation's third-party links.* Animation links only `Tge::` targets and was the
 true repeat of the Events pattern; Scene proved to have one vendored library after all — its serializer's

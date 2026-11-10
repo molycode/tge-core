@@ -81,11 +81,12 @@ Restated against the real modules, the `Required`/`Optional` subgraph is acyclic
 |---|---|---|---|
 | Core, Events, AssetLoader | — | — | — |
 | Window | Events | — | — |
-| Renderer | Window, **AssetLoader** | — | — |
+| Renderer | Events, **AssetLoader** | — | — |
 | Scene | Core, Events, AssetLoader | — | — |
 | Animation | Core, Events, AssetLoader | — | — |
 | SceneRender | Core, Events, Scene, Renderer | — | — |
 | AnimationRender | Core, Events, Animation, SceneRender, Renderer | — | — |
+| WindowRender | Core, Events, Window, Renderer | — | — |
 | Debug | AssetLoader, Renderer, Events, Scene, SceneRender, **Window** | — | — |
 | *Network (planned)* | *Core, Events* | — | — |
 
