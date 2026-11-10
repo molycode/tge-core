@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tge/math/types.hpp>
+#include <tge/math/constants.hpp>
 #include <cstdint>
 
 namespace Tge::Material
