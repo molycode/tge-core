@@ -168,9 +168,10 @@ its vocabulary namespaces are what make the rule achievable. `Tge::Geometry`, `T
 naming each other — and `SSkinVertex` is the working proof, letting the Renderer skin meshes with no
 dependency on the Animation module.
 
-**Expect the remaining edge work to propose moving types here.** The nearest candidate is tge-asset-loader's
-`model_data.hpp` (`STextureData`, `SMaterialData`, `SMeshData`, `SNodeData`, …), which is the whole of the
-Renderer's only interface-level sibling edge and possibly the Scene's too.
+**Expect the remaining edge work to propose moving types here.** ~~The nearest candidate is tge-asset-loader's
+`model_data.hpp`.~~ **Done 2026-11-10 (L2):** it passed the test below, since the loader, the Renderer, the Scene and
+Animation all embed it by value, and it is `Tge::Model` now, with `static_assert`s pinning the layout the cooked
+format hashes.
 
 Each such move must be weighed against what this repository's own `CLAUDE.md` already states: **a type hosted
 here versions with Core, and every module rebuilds against every change to it.** The test for admitting a type

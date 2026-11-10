@@ -122,17 +122,17 @@ repository states only what it can verify from **its own** tree — its own link
 across siblings lives here, in the one repository every consumer already takes. Re-measure it from the
 `target_link_libraries` calls; do not adjust it from memory.
 
-Measured 2026-11-10, after the `SceneRender` and `AnimationRender` bridges took the Scene's and the Animation's
-Renderer edges and `WindowRender` took the Renderer's Window edge. Under the layering above, every sibling edge in the table is a defect, and the last column says
-how each one goes away:
+Measured 2026-11-11, after L2 moved model data into Core (`Tge::Model`), put model loading behind Core's `Assets`
+contract and had the renderer read streamed mips itself, which took every `Tge::AssetLoaderPublic` edge. Under the
+layering above, every sibling edge in the table is a defect, and the last column says how each one goes away:
 
 | repository | public (interface) edges | private (implementation) edges | goes away by |
 |---|---|---|---|
 | `tge-window` | none | none | — |
 | `tge-asset-loader` | none | none | — |
-| `tge-renderer` | **none** | `Tge::AssetLoaderPublic` | model data into Core, with model loading and mip decoding as Core contracts |
-| `tge-scene` | **none** | `Tge::AssetLoaderPublic` | model data into Core |
-| `tge-animation` | none | `Tge::ScenePublic`, `Tge::AssetLoaderPublic` | an `AnimationScene` bridge; model data into Core |
+| `tge-renderer` | none | none | — |
+| `tge-scene` | none | none | — |
+| `tge-animation` | none | `Tge::ScenePublic` | an `AnimationScene` bridge |
 
 `tge-integration` is not in the table: its bridges name the modules they connect, which is what a bridge is.
 
@@ -151,8 +151,8 @@ happened to it does not need to know who is listening. A cycle between two modul
 them is reaching where it should be publishing.
 
 **A type two modules embed by value belongs in Core.** It cannot version independently of either module, which
-is why Geometry and Material sit in Core and why model data will follow: it is the Asset Loader's output and
-the Renderer's and Scene's input. The cost is that anything in Core versions with Core, so every repository
+is why Geometry and Material sit in Core and why model data followed them (`Tge::Model`): it is the Asset Loader's
+output and the Renderer's, Scene's and Animation's input. The cost is that anything in Core versions with Core, so every repository
 relays a change to it.
 
 That end state is what makes the requirements below non-negotiable rather than tidy, because a repository
@@ -166,7 +166,8 @@ that must stand on its own has to carry everything it needs to be built, run and
   declared here so one target serves every guard. In the destination each module's set is its own to vendor
   or resolve, and nothing sits above it to provide them. **Two repositories needing the same library is normal, and not duplication to
   design away.** The Asset Loader and the Renderer both use libktx and both must declare it: the loader
-  transcodes with it, while the renderer opens KTX files itself for the environment and cubemap path. Taking
+  transcodes with it, while the renderer opens KTX files itself for the environment and cubemap path and for
+  streamed mip levels. Taking
   it transitively from the Asset Loader would be an undeclared dependency of the kind this arc keeps
   uncovering — the loader links `KTX::ktx` PRIVATE, so its public contract promises nothing about supplying
   it, and its `find_dependency(Ktx)` is emitted only when *it* vendored the library. Both declare it,
@@ -209,9 +210,9 @@ struct whose size depends on `TGE_DEBUG_ENABLED` links without complaint against
 game and then reads every member at the wrong offset — silent corruption, no diagnostic. Tge's existing rule
 (*never `#ifdef` a function signature*; declare unconditionally, gate only the body) is exactly the right
 rule and mostly holds: `renderer.hpp` uses unconditional signatures with no-op defaults, and `SMeshInfo`
-carries its debug `string_view`s in every configuration. The exception is
-`asset_loader/public/asset_loader/model_data.hpp`, where `SMaterialData::materialName` and `SMeshData::name`
-are `#ifdef`'d members — two sites, both layout-changing. **Extend the rule from signatures to layout, and
+carries its debug `string_view`s in every configuration. The one exception, `SMaterialData::materialName` and
+`SMeshData::name` once `#ifdef`'d in the loader's `model_data.hpp`, is gone: both are unconditional, and the header
+is Core's `tge/model/model_data.hpp` now. **Extend the rule from signatures to layout, and
 make it a checked property rather than a convention.** It also argues for keeping the flag count low: every
 ABI-affecting flag multiplies the release matrix.
 
@@ -503,9 +504,8 @@ authored by each composition root. `gSettings` moving to the game is what remain
   signatures — see the production workflow above. Tge has begun to make it: the module contract is versioned
   and enforced at load, and the package boundary now carries the layout-affecting build flags as target usage
   requirements so a consumer cannot compile a public header down a different branch than the binary. What each
-  module's public surface promises beyond that is still per-module and largely implicit — the one named
-  layout violation is `asset_loader/public/asset_loader/model_data.hpp`, whose `#ifdef`'d members change a
-  public struct's size, and it becomes live the moment asset_loader is packaged.
+  module's public surface promises beyond that is still per-module and largely implicit. The one named layout
+  violation, the loader's `#ifdef`'d model-data members, is gone.
 - **Linker dead-code elimination** already forces explicit module registration; per-module libraries make that
   constraint more visible, not less. It is also the mechanism that makes a consumer-authored run context
   decide what gets linked, so the same constraint that looks like an annoyance today is what delivers "link

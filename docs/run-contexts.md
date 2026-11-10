@@ -79,23 +79,23 @@ Restated against the real modules, the `Required`/`Optional` subgraph is acyclic
 
 | Module | Required | Optional | Notify |
 |---|---|---|---|
-| Core, Events, AssetLoader | — | — | — |
+| Core, Events, Assets (the asset loader) | — | — | — |
 | Window | Events | — | — |
-| Renderer | Events, **AssetLoader** | — | — |
-| Scene | Core, Events, AssetLoader | — | — |
-| Animation | Core, Events, AssetLoader | — | — |
+| Renderer | Events | — | — |
+| Scene | Core, Events, Assets | — | — |
+| Animation | Core, Events | — | — |
 | SceneRender | Core, Events, Scene, Renderer | — | — |
 | AnimationRender | Core, Events, Animation, SceneRender, Renderer | — | — |
 | WindowRender | Core, Events, Window, Renderer | — | — |
-| Debug | AssetLoader, Renderer, Events, Scene, SceneRender, **Window** | — | — |
+| Debug | Assets, Renderer, Events, Scene, SceneRender, **Window** | — | — |
 | *Network (planned)* | *Core, Events* | — | — |
 
 Network is listed because it is the first module that will be natively presentation-agnostic, which makes it
 the mechanism's best validation: if the design is right, adding it should require touching no existing module.
 
-`Renderer → AssetLoader` is new but not invented: the renderer calls `gAssetLoader` in six places during
-teardown, and that constraint is currently enforced only by hand-ordering the registration list and a comment
-warning not to disturb it. Declaring it lets the sort enforce what the comment asks for.
+`Assets` is Core's identity for whatever provides models, which the asset loader reports as its own, so a
+dependent orders after the provider without naming it. The Renderer once required the loader too, for the
+`gAssetLoader` calls it made during teardown; since L2 it calls none, so Events is all it requires.
 
 ## Contexts
 
@@ -141,8 +141,8 @@ The two contexts that ship:
 
 A context is selected by the composition root **passing it directly** to
 `gRuntime->Initialize(GetRunContext())`; there is no `--context` flag and no `gSettings.runContext`. **The
-module list is unordered** — the runtime sorts it — so a context author cannot silently restate the
-AssetLoader-before-Renderer constraint wrongly.
+module list is unordered** — the runtime sorts it — so a context author cannot silently restate an ordering
+constraint wrongly.
 
 ## Runtime rules
 
