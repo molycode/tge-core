@@ -94,10 +94,11 @@ above it.
 
 **What connects two modules is a bridge, and bridges live in `tge-integration`.** Something always has to turn
 "an entity with a mesh" into "a renderer instance", and that code names both sides by nature. It goes in a
-bridge — `SceneRender`, `AnimationRender`, `WindowRender`, later `AnimationScene` — one per connection that
-more than one app needs. A bridge names exactly the modules it connects and builds only when the app provides
-them. It vendors no module, so any app, a module's own dev app included, can take it without a submodule
-cycle. It holds no app policy. Glue that only one app needs stays in that app.
+bridge — `AnimationScene`, `SceneRender`, `AnimationRender`, `WindowRender` — one per connection that more than
+one app needs. A bridge names exactly the modules it connects, and an app lists the bridges it builds
+(`TGE_INTEGRATION_BRIDGES`); each is a package component of its own, so a host without a renderer takes
+AnimationScene and nothing that names one. It vendors no module, so any app, a module's own dev app included, can
+take it without a submodule cycle. It holds no app policy. Glue that only one app needs stays in that app.
 
 **Apps compose.** The run context, the schedule, UI, input and the choice of bridges belong to the app, and an
 app also uses modules directly.
@@ -123,8 +124,10 @@ across siblings lives here, in the one repository every consumer already takes. 
 `target_link_libraries` calls; do not adjust it from memory.
 
 Measured 2026-11-11, after L2 moved model data into Core (`Tge::Model`), put model loading behind Core's `Assets`
-contract and had the renderer read streamed mips itself, which took every `Tge::AssetLoaderPublic` edge. Under the
-layering above, every sibling edge in the table is a defect, and the last column says how each one goes away:
+contract and had the renderer read streamed mips itself, which took every `Tge::AssetLoaderPublic` edge, and L3 had
+the `AnimationScene` bridge register the scene's models with Animation and write its poses back, with skin palettes
+built by `AnimationRender`, which took Animation's Scene edge. **No module names another**; the table stays so a
+returning edge has somewhere to be recorded, with how it goes away:
 
 | repository | public (interface) edges | private (implementation) edges | goes away by |
 |---|---|---|---|
@@ -132,7 +135,7 @@ layering above, every sibling edge in the table is a defect, and the last column
 | `tge-asset-loader` | none | none | — |
 | `tge-renderer` | none | none | — |
 | `tge-scene` | none | none | — |
-| `tge-animation` | none | `Tge::ScenePublic` | an `AnimationScene` bridge |
+| `tge-animation` | none | none | — |
 
 `tge-integration` is not in the table: its bridges name the modules they connect, which is what a bridge is.
 

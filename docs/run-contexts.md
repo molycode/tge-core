@@ -83,9 +83,10 @@ Restated against the real modules, the `Required`/`Optional` subgraph is acyclic
 | Window | Events | — | — |
 | Renderer | Events | — | — |
 | Scene | Core, Events, Assets | — | — |
-| Animation | Core, Events | — | — |
+| Animation | Core | — | — |
+| AnimationScene | Core, Events, Animation, Scene | — | — |
 | SceneRender | Core, Events, Scene, Renderer | — | — |
-| AnimationRender | Core, Events, Animation, SceneRender, Renderer | — | — |
+| AnimationRender | Core, Events, Animation, Scene, SceneRender, Renderer | — | — |
 | WindowRender | Core, Events, Window, Renderer | — | — |
 | Debug | Assets, Renderer, Events, Scene, SceneRender, **Window** | — | — |
 | *Network (planned)* | *Core, Events* | — | — |
@@ -134,10 +135,11 @@ The two contexts that ship:
 
 - **Default** (the demo) — every module; the schedule exactly as before the mechanism. Behaviour-identical,
   verified by diffing the boot log against a pre-change baseline.
-- **Server** (`moly/tge-server`) — Core, Events, AssetLoader, Scene, Animation (later Network). No Window, no
+- **Server** (`moly/tge-server`) — Core, Events, AssetLoader, Scene, Animation, AnimationScene (later Network). No Window, no
   Renderer, no Debug. Its own repository declaring this context, not a branch inside the demo; the demo's old
   `InitServer`/`MainLoopServer` scaffolding was deleted. Its schedule collapses to
-  `FrameStart[Core Events] → Simulate[Animation Scene]` — no renderer means nothing to pace and nothing to render.
+  `FrameStart[Core Events] → Simulate[Animation AnimationScene Scene]` — no renderer means nothing to pace and
+  nothing to render.
 
 A context is selected by the composition root **passing it directly** to
 `gRuntime->Initialize(GetRunContext())`; there is no `--context` flag and no `gSettings.runContext`. **The
