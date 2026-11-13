@@ -76,11 +76,11 @@ two backends, and they must share one interface.
 ### What a repository may depend on — the layering, agreed 2026-11-08
 
 ```
-     apps: tge-demo, tge-server, each module's dev app
+     apps: tge-demo, tge-server, tge-abm, each module's dev app
           ▲                          ▲
      tge-integration: bridges        │   apps also use modules directly
           ▲                          │
-     modules: scene, animation, renderer, window, asset loader, ...
+     modules: scene, animation, renderer, window, asset loader, ui, ...
           ▲
      tge-core
 ```
@@ -88,20 +88,22 @@ two backends, and they must share one interface.
 The drawn version is [tge-architecture.drawio](tge-architecture.drawio).
 
 **Modules depend on Core alone.** Core holds the vocabulary they share — geometry, material, light, exposure,
-entity, and model data once it moves — plus small contracts where one module must ask another for something.
+entity, model data and UI draw data — plus small contracts where one module must ask another for something.
 A module exposes an API and announces what happened to it. It never names another module, and never the layer
 above it.
 
 **What connects two modules is a bridge, and bridges live in `tge-integration`.** Something always has to turn
 "an entity with a mesh" into "a renderer instance", and that code names both sides by nature. It goes in a
-bridge — `AnimationScene`, `SceneRender`, `AnimationRender`, `WindowRender` — one per connection that more than
+bridge — `AnimationScene`, `SceneRender`, `AnimationRender`, `WindowRender`, `UiRender` — one per connection that more than
 one app needs. A bridge names exactly the modules it connects, and an app lists the bridges it builds
 (`TGE_INTEGRATION_BRIDGES`); each is a package component of its own, so a host without a renderer takes
 AnimationScene and nothing that names one. It vendors no module, so any app, a module's own dev app included, can
 take it without a submodule cycle. It holds no app policy. Glue that only one app needs stays in that app.
 
-**Apps compose.** The run context, the schedule, UI, input and the choice of bridges belong to the app, and an
-app also uses modules directly.
+**Apps compose.** The run context, the schedule, input, the choice of bridges and UI *policy* -- which screens,
+what feeds them input, what a button does -- belong to the app, and an app also uses modules directly. The UI
+*mechanism* is a module, `tge-ui`: screens, layout, hit testing and draw data, which it announces rather than acts
+on, so a click reaches the app as an event and the app decides what it means.
 
 **This supersedes "standalone is the aim, not an absolute".** Until 2026-11-08 a dependency on another module's
 public library was accepted, and Scene's edge to the Renderer was defended as Scene describing what it is.
@@ -136,6 +138,7 @@ returning edge has somewhere to be recorded, with how it goes away:
 | `tge-renderer` | none | none | — |
 | `tge-scene` | none | none | — |
 | `tge-animation` | none | none | — |
+| `tge-ui` | none | none | — |
 
 `tge-integration` is not in the table: its bridges name the modules they connect, which is what a bridge is.
 
