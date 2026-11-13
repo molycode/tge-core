@@ -38,6 +38,7 @@ set(tgeCoreTargets
 	TgeLight
 	TgeExposure
 	TgeSurface
+	TgeUiDraw
 	TgeModel
 	TgeCore
 )
@@ -65,6 +66,7 @@ install(TARGETS
 		TgeLight
 		TgeExposure
 		TgeSurface
+		TgeUiDraw
 		TgeModel
 		TgeCore
 		rpmalloc

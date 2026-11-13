@@ -1,8 +1,10 @@
 #pragma once
 
 #include <tge/assets/asset_guid.hpp>
+#include <tge/assets/image.hpp>
 #include <tge/model/model_data.hpp>
 #include <tge/non_copyable.hpp>
+#include <expected>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -22,6 +24,9 @@ public:
 
 	// Empty when the GUID names no known asset.
 	virtual std::string ResolveAssetPath(SAssetGuid const& guid) const = 0;
+
+	// Decoded on the calling thread and not cached: an image is read once by whoever uploads it.
+	virtual std::expected<SImage, EImageError> LoadImage(std::string_view filePath) = 0;
 
 protected:
 

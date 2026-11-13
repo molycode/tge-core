@@ -564,6 +564,22 @@ target_link_libraries(TgeSurface
 )
 
 # ============================================================================
+# TgeUiDraw (INTERFACE - header-only UI draw-list vocabulary)
+# ============================================================================
+file(GLOB TgeUiDraw_HEADERS CONFIGURE_DEPENDS
+	public/tge/ui_draw/*.hpp
+)
+
+add_library(TgeUiDraw INTERFACE)
+add_library(Tge::UiDraw ALIAS TgeUiDraw)
+
+target_sources(TgeUiDraw PRIVATE ${TgeUiDraw_HEADERS})
+
+target_link_libraries(TgeUiDraw
+	INTERFACE Tge::Math
+)
+
+# ============================================================================
 # TgeModel (INTERFACE - header-only model, mesh, texture and animation-clip vocabulary)
 # ============================================================================
 file(GLOB TgeModel_HEADERS CONFIGURE_DEPENDS
@@ -606,6 +622,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Light
 	Tge::Exposure
 	Tge::Surface
+	Tge::UiDraw
 	Tge::Model
 )
 

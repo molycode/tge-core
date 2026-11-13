@@ -237,10 +237,12 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 include/tge/light/light.hpp \
                 include/tge/exposure/exposure_curve.hpp \
                 include/tge/surface/native_window.hpp \
+                include/tge/ui_draw/draw_data.hpp \
                 include/tge/model/model_data.hpp \
                 include/tge/model/animation_data.hpp \
                 include/tge/assets/asset_provider.hpp \
                 include/tge/assets/asset_guid.hpp \
+                include/tge/assets/image.hpp \
                 include/tge/assets/settings.hpp \
                 include/tge/assets/module_id.hpp \
                 include/tge/testing/expected_log.hpp \
