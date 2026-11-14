@@ -78,16 +78,6 @@ install(TARGETS
 )
 
 # Built on Linux and Windows only.
-if(TARGET TgeNet)
-	TgeSetExportNames(TgeNet)
-
-	install(TARGETS TgeNet
-		EXPORT TgeCoreTargets
-		ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-	)
-endif()
-
 if(TARGET TgeProcess)
 	TgeSetExportNames(TgeProcess)
 

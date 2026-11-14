@@ -235,33 +235,9 @@ target_include_directories(TgeIO
 )
 
 # ============================================================================
-# TgeNet (STATIC - IPv4 sockets, host lookup and the system's root certificates)
-# ============================================================================
-# Linux and Windows only: anywhere else its sources stop at #error, which would fail every build of all.
-if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
-	file(GLOB TgeNet_FILES CONFIGURE_DEPENDS
-		private/net/*.cpp
-		private/net/*.hpp
-		public/tge/net/*.hpp
-	)
-
-	add_library(TgeNet STATIC ${TgeNet_FILES})
-	add_library(Tge::Net ALIAS TgeNet)
-
-	target_link_libraries(TgeNet
-		PUBLIC Tge::Base
-		PRIVATE $<$<PLATFORM_ID:Windows>:ws2_32> $<$<PLATFORM_ID:Windows>:crypt32>
-	)
-
-	target_include_directories(TgeNet
-		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
-	)
-endif()
-
-# ============================================================================
 # TgeProcess (STATIC - child processes: start them and see them end)
 # ============================================================================
-# Linux and Windows only, as TgeNet.
+# Linux and Windows only: anywhere else its sources stop at #error, which would fail every build of all.
 if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
 	file(GLOB TgeProcess_FILES CONFIGURE_DEPENDS
 		private/process/*.cpp
@@ -629,8 +605,7 @@ target_link_libraries(TgeCore INTERFACE
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
 # TgeEvents and TgeEventsPublic likewise: QueueEmit's backlog is drained by a frame phase, so a consumer that
 # runs no frame loop would acquire a queue nothing empties. Both are named explicitly by whoever wants them.
-# TgeNet too: a consumer that never opens a socket should not link Winsock. TgeNet and TgeProcess are built on Linux
-# and Windows only, which the umbrella cannot assume.
+# TgeProcess too: it is built on Linux and Windows only, which the umbrella cannot assume.
 
 # ============================================================================
 # TgeTesting (INTERFACE - the harness every module's tests sit on)

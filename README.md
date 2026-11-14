@@ -41,7 +41,6 @@ Use individual targets instead of `TgeCore` if you only need specific modules:
 | `TgeIO` | Files, paths, user folders and folder watches |
 | `TgeInit` | Initialization/termination orchestration |
 | `TgeCore` | Convenience target linking all of the above |
-| `TgeNet` | IPv4 sockets, host lookups and root certificates for Linux and Windows; outside `TgeCore`, linked by name |
 | `TgeProcess` | Child processes for Linux and Windows: start them, see them end; outside `TgeCore`, linked by name |
 
 ### Build Options
@@ -615,60 +614,6 @@ whenever something inside it changes and inotify never does; that something is r
 
 ---
 
-### Net — `Tge::Net::`
-
-Non-blocking IPv4 sockets for Linux and Windows. Errors are `std::error_code`, compared with `std::errc`
-(`operation_would_block`, `connection_refused`, …), and nothing is logged inside: the caller knows the context.
-`TgeCore` does not carry it, so a consumer that never opens a socket links no Winsock; link `Tge::Net` by name.
-Only Linux and Windows build it.
-
-#### Sockets — `<tge/net/udp_socket.hpp>`, `<tge/net/stream_socket.hpp>`, `<tge/net/stream_listener.hpp>`
-
-```cpp
-Tge::Net::CSocketLibrary library;       // owned by main: WSAStartup on Windows, nothing on Linux
-library.Initialize();
-
-Tge::Net::CUdpSocket socket;
-socket.Initialize({ 0, 0 });            // creates and binds: any address, any port
-socket.DisableConnectionResetReports(); // ICMP "port unreachable" stays out of an unconnected socket, as on Linux
-socket.Send({ 0x7F000001, 27910 }, datagram);
-
-// With a Tge::Threading::CEventLoop: Receive until it reports errc::operation_would_block.
-loop.Watch(socket.GetWaitable(), onReadable);
-```
-
-Windows is made to behave as Linux does: sockets are never inherited by child processes, a connected UDP socket
-reports a refusal as `connection_refused`, an oversized datagram arrives truncated, and a stream's failed connect
-surfaces from `Receive` (or `PollConnected`) as its error. `CStreamListener`, `SetBlocking` and
-`WaitForReadable(socket, timeout)` serve simple blocking servers such as test fixtures.
-
-#### Host names — `<tge/net/address_lookup.hpp>`
-
-```cpp
-Tge::Net::CAddressLookup lookup;                   // one lookup at a time, started again once answered
-lookup.Start("master.example.org");                // returns at once; an error here means it never started
-
-// Polled, on a timer: nothing is called back, so no system thread runs the caller's code.
-std::optional<std::expected<uint32_t, std::error_code>> const answer{ lookup.Poll() };   // empty while resolving
-
-lookup.Terminate();                                // never waits: a lookup still running is left to the system
-```
-
-An answer is the host's first IPv4 address, in host order, or the resolver's error (`gai_strerror` text on Linux).
-It runs on glibc's `getaddrinfo_a` or Windows' `GetAddrInfoExW`. A lookup the system cannot cancel keeps writing into
-its state, so `Terminate` leaks that state on purpose; a LeakSanitizer run suppresses
-`leak:Tge::Net::CAddressLookup::Start`.
-
-#### Root certificates — `<tge/net/root_certificates.hpp>`
-
-`ReadSystemRootCertificates()` returns the system's trusted roots as DER, for a TLS library to verify servers with.
-On Linux they come from `SSL_CERT_FILE` / `SSL_CERT_DIR` when either is set (`errc::invalid_argument` if they hold
-none), else from the first distribution bundle or folder found (`errc::no_such_file_or_directory` if none); PEM
-blocks are decoded, and a file without one is taken as one DER certificate if it starts as one. On Windows they are
-the `ROOT` store's certificates usable for server authentication.
-
----
-
 ### Process — `Tge::Process::`
 
 Child processes for Linux and Windows, which a program starts and lets run: none is ever stopped. Errors are
@@ -716,5 +661,4 @@ however it was started.
 | `Tge::Math::` | Types, constants, functions, `CTransform`, `CAABB`, intersection tests |
 | `Tge::Threading::` | `CJobGroup`, `IJob`, `CMpscQueue`, `EJobPriority` |
 | `Tge::IO::` | `CFile`, `CPath`, `CDirectory`, `CBinaryReader`, `CBinaryWriter`, `GetUserFolder`, `ReadWholeFile`, `WriteFileAtomically`, `IsBusy`, `CDirectoryWatch` |
-| `Tge::Net::` | `CSocketLibrary`, `CUdpSocket`, `CStreamSocket`, `CStreamListener`, `SIpv4Endpoint`, `ParseIpv4`, `WaitForReadable`, `CAddressLookup`, `ReadSystemRootCertificates` |
 | `Tge::Process::` | `CChildProcess`, `COutputFile`, `SProcessSpec`, `SExitStatus`, `IsRunnable`, `GetProgramPath` |

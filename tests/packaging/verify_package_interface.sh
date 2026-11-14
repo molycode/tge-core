@@ -206,7 +206,6 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 lib/libTgeMath.a \
                 lib/libTgeThreading.a \
                 lib/libTgeIO.a \
-                lib/libTgeNet.a \
                 lib/libTgeProcess.a \
                 lib/libTgeCommand.a \
                 lib/libTgeInit.a \
@@ -223,7 +222,6 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 include/tge/math/types.hpp \
                 include/tge/threading/job_group.hpp \
                 include/tge/io/file.hpp \
-                include/tge/net/udp_socket.hpp \
                 include/tge/process/child_process.hpp \
                 include/tge/command/registry.hpp \
                 include/tge/init/init.hpp \
@@ -266,7 +264,7 @@ step "3. Every one of the module's suites runs against the out-of-tree build"
 # Each by name. A module added EXCLUDE_FROM_ALL has its test binaries excluded too, and a suite that
 # configures, builds nothing and reports nothing is indistinguishable from a passing gate -- so the loop
 # names what it expects to find rather than running whatever happens to be there.
-for suite in TgeCoreUnitTests TgeCoreThreadingTests TgeCoreNetTests TgeCoreIOTests TgeCoreProcessTests
+for suite in TgeCoreUnitTests TgeCoreThreadingTests TgeCoreIOTests TgeCoreProcessTests
 do
 	binary="${MODULE_BUILD}/tests/${suite}"
 
