@@ -55,12 +55,21 @@ struct SAnimationChannel final
 	Material::EMaterialFactor materialFactor{ Material::EMaterialFactor::BaseColor };
 };
 
-// One named animation clip: its samplers + channels and total duration in seconds.
+// A named point in a clip's time, which playback reports each time it passes it.
+struct SAnimationMarker final
+{
+	std::string name;
+	float       time{ 0.0f };
+};
+
+// One named animation clip: its samplers + channels, total duration in seconds, and its markers, sorted by time,
+// each in [0, duration).
 struct SAnimation final
 {
 	std::string                    name;
 	std::vector<SAnimationSampler> samplers;
 	std::vector<SAnimationChannel> channels;
 	float                          duration{ 0.0f };
+	std::vector<SAnimationMarker>  markers;
 };
 } // namespace Tge::Model
