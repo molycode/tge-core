@@ -140,6 +140,7 @@ returning edge has somewhere to be recorded, with how it goes away:
 | `tge-animation` | none | none | — |
 | `tge-ui` | none | none | — |
 | `tge-net` | none | none | — |
+| `tge-cues` | none | none | — |
 
 `tge-integration` is not in the table: its bridges name the modules they connect, which is what a bridge is.
 
