@@ -63,12 +63,11 @@ bool CFile::ReadAllText(std::string_view path, std::string& outText)
 
 	outText.resize(size);
 
-	if (!file.read(outText.data(), static_cast<std::streamsize>(size)))
-	{
-		return false;
-	}
+	// tellg counts bytes, but text mode on Windows reads each CRLF as one character, so the read stops short.
+	file.read(outText.data(), static_cast<std::streamsize>(size));
+	outText.resize(static_cast<size_t>(file.gcount()));
 
-	return true;
+	return !file.bad();
 }
 
 //////////////////////////////////////////////////////////////////////////

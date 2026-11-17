@@ -3,6 +3,7 @@
 add_executable(TgeCoreIOTests
 	main.cpp
 	test_directory_watch.cpp
+	test_file.cpp
 	test_is_busy.cpp
 	test_read_whole_file.cpp
 	test_support.cpp
