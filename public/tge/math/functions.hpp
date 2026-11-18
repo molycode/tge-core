@@ -3,6 +3,7 @@
 #include "types.hpp"
 #include "constants.hpp"
 #include <algorithm>
+#include <cmath>
 
 namespace Tge::Math
 {
@@ -55,7 +56,86 @@ inline constexpr T Abs(T value)
 	return std::abs(value);
 }
 
+template<typename T>
+inline T Sqrt(T value)
+{
+	return std::sqrt(value);
+}
+
+template<typename T>
+inline T Pow(T base, T exponent)
+{
+	return std::pow(base, exponent);
+}
+
+template<typename T>
+inline T Log10(T value)
+{
+	return std::log10(value);
+}
+
+template<typename T>
+inline T Floor(T value)
+{
+	return std::floor(value);
+}
+
+template<typename T>
+inline T Ceil(T value)
+{
+	return std::ceil(value);
+}
+
+template<typename T>
+inline T Round(T value)
+{
+	return std::round(value);
+}
+
+template<typename T>
+inline T Trunc(T value)
+{
+	return std::trunc(value);
+}
+
+// Truncated: the result takes the sign of `value`, unlike GLSL's floored mod.
+template<typename T>
+inline T Fmod(T value, T divisor)
+{
+	return std::fmod(value, divisor);
+}
+
+// Trigonometry, in radians
+template<typename T>
+inline T Sin(T radians)
+{
+	return std::sin(radians);
+}
+
+template<typename T>
+inline T Cos(T radians)
+{
+	return std::cos(radians);
+}
+
+template<typename T>
+inline T Acos(T value)
+{
+	return std::acos(value);
+}
+
+template<typename T>
+inline T Atan2(T y, T x)
+{
+	return std::atan2(y, x);
+}
+
 // Vector-specific functions (using GLM)
+inline float Distance(Vec2 const& a, Vec2 const& b)
+{
+	return glm::distance(a, b);
+}
+
 inline float Distance(Vec3 const& a, Vec3 const& b)
 {
 	return glm::distance(a, b);
@@ -76,9 +156,24 @@ inline Quat Normalize(Quat const& q)
 	return glm::normalize(q);
 }
 
+inline float Dot(Vec2 const& a, Vec2 const& b)
+{
+	return glm::dot(a, b);
+}
+
 inline float Dot(Vec3 const& a, Vec3 const& b)
 {
 	return glm::dot(a, b);
+}
+
+inline float Dot(Quat const& a, Quat const& b)
+{
+	return glm::dot(a, b);
+}
+
+inline float Length(Vec2 const& v)
+{
+	return glm::length(v);
 }
 
 inline float Length(Vec3 const& v)
