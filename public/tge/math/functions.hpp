@@ -69,6 +69,12 @@ inline T Pow(T base, T exponent)
 }
 
 template<typename T>
+inline T Exp(T value)
+{
+	return std::exp(value);
+}
+
+template<typename T>
 inline T Log10(T value)
 {
 	return std::log10(value);
@@ -96,6 +102,12 @@ template<typename T>
 inline T Trunc(T value)
 {
 	return std::trunc(value);
+}
+
+template<typename T>
+inline bool IsFinite(T value)
+{
+	return std::isfinite(value);
 }
 
 // Truncated: the result takes the sign of `value`, unlike GLSL's floored mod.
