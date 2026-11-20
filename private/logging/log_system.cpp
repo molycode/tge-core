@@ -1,5 +1,6 @@
 #include <tge/logging/log_system.hpp>
 #include <tge/logging/log.hpp>
+#include <tge/logging/loggers.hpp>
 #include <tge/color.hpp>
 #include <tge/assert.hpp>
 #include <tge/platform.hpp>
@@ -405,46 +406,69 @@ void RestoreConsole()
 //////////////////////////////////////////////////////////////////////////
 void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, std::string_view configDir, ETimestampMode timestampMode)
 {
-	std::lock_guard lock(GetMutex());
+	std::string fileProblem;
+
+	{
+		std::lock_guard lock(GetMutex());
 
 #if defined(TGE_PLATFORM_WINDOWS)
-	PrepareConsole();
+		PrepareConsole();
 #endif // defined(TGE_PLATFORM_WINDOWS)
 
-	m_timestampMode = timestampMode;
+		m_timestampMode = timestampMode;
 
-	// Prime start time now so timestamps are relative to app startup, not first log message
-	GetStartTime();
+		// Prime start time now so timestamps are relative to app startup, not first log message
+		GetStartTime();
 
-	if (!configDir.empty())
-	{
-		std::string configPath{ std::string(configDir) + "/logging.cfg" };
-		LoadConfig(configPath);
-	}
+		if (!configDir.empty())
+		{
+			std::string configPath{ std::string(configDir) + "/logging.cfg" };
+			LoadConfig(configPath);
+		}
 
-	if (!logsDir.empty())
-	{
-		std::filesystem::create_directories(logsDir);
+		if (!logsDir.empty())
+		{
+			std::error_code folderError;
+			std::filesystem::create_directories(logsDir, folderError);
 
-		auto now = std::chrono::system_clock::now();
-		auto time_t = std::chrono::system_clock::to_time_t(now);
-		std::tm tm;
+			if (folderError.value() == 0)
+			{
+				auto now = std::chrono::system_clock::now();
+				auto time_t = std::chrono::system_clock::to_time_t(now);
+				std::tm tm;
 #if defined(TGE_PLATFORM_WINDOWS)
-		localtime_s(&tm, &time_t);
+				localtime_s(&tm, &time_t);
 #elif defined(TGE_PLATFORM_LINUX)
-		localtime_r(&time_t, &tm);
+				localtime_r(&time_t, &tm);
 #else
 #	error "localtime_r/localtime_s: unhandled platform — add an implementation here"
 #endif // defined(TGE_PLATFORM_WINDOWS)
 
-		std::string const format = std::string(logsDir) + "/" + std::string(prefix) + "_%Y-%m-%d_%H-%M-%S.log";
-		char filename[256];
-		std::strftime(filename, sizeof(filename), format.c_str(), &tm);
+				char stamp[32]{};
+				std::strftime(stamp, sizeof(stamp), "%Y-%m-%d_%H-%M-%S", &tm);
 
-		GetLogFile().open(filename, std::ios::out | std::ios::app);
+				std::filesystem::path const file{ std::filesystem::path{ logsDir } / std::format("{}_{}.log", prefix, stamp) };
+				GetLogFile().open(file, std::ios::out | std::ios::app);
+
+				if (!GetLogFile().is_open())
+				{
+					fileProblem = std::format("Cannot open the log file '{}'", file.string());
+				}
+			}
+			else
+			{
+				fileProblem = std::format("Cannot create the logs folder '{}': {}", logsDir, folderError.message());
+			}
+		}
+
+		m_initialized = true;
 	}
 
-	m_initialized = true;
+	// Outside the lock, which logging takes.
+	if (!fileProblem.empty())
+	{
+		Tge::gLog.Warning("{}; logging to the console only", fileProblem);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
