@@ -50,6 +50,22 @@ protected:
 	std::vector<std::string> m_delivered;
 };
 
+// A program's channels are built once, before the log system first starts, and outlive any restart of it.
+// Negative control: Terminate forgetting the channels it knows, and nothing the channel logs afterwards arrives.
+TEST_F(CLogListenerTest, AChannelStillDeliversAfterARestart)
+{
+	CLog log{ "test_restart" };
+
+	GetLogSystem().Terminate();
+	GetLogSystem().Initialize("test", "", "", ETimestampMode::Elapsed);
+
+	Listen(EHistory::Skip);
+	log.Info("after the restart");
+	GetLogSystem().DispatchListeners();
+
+	EXPECT_EQ(CountDelivered("after the restart"), 1u);
+}
+
 // A message logged before the listener exists is queued for dispatch AND kept in the history the listener
 // asks to be flushed. It must still arrive exactly once.
 TEST_F(CLogListenerTest, HistoryFlushDeliversAQueuedMessageOnce)

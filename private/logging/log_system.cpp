@@ -460,8 +460,6 @@ void CLogSystem::Terminate()
 		GetLogFile().close();
 	}
 
-	GetLoggers().clear();
-
 #if defined(TGE_PLATFORM_WINDOWS)
 	RestoreConsole();
 #endif // defined(TGE_PLATFORM_WINDOWS)
