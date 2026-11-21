@@ -63,7 +63,7 @@ All public headers use `<tge/...>` prefix:
 | TgeExposure | INTERFACE | TgeMath | Exposure-curve vocabulary shared by a renderer and whatever serializes it |
 | TgeSurface | INTERFACE | TgeBase | Native-window vocabulary shared by a window library and whatever presents to its windows |
 | TgeUiDraw | INTERFACE | TgeMath | UI draw-list vocabulary a UI produces and a renderer draws |
-| TgeModel | INTERFACE | TgeMath, TgeGeometry, TgeLight, TgeMaterial | Model vocabulary an asset loader produces and a renderer, scene and animation system consume |
+| TgeModel | INTERFACE | TgeMath, TgeGeometry, TgeLight, TgeProbe, TgeMaterial | Model vocabulary an asset loader produces and a renderer, scene and animation system consume |
 | TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`, `CExpectedLog`); behind `TGE_CORE_TESTING`, own export set |
 | TgeCore | INTERFACE | the vocabulary and infrastructure above | Convenience all-in-one; not Lifecycle, the Events or Assets halves, Process or Testing |
 

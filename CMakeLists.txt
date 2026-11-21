@@ -588,6 +588,7 @@ target_link_libraries(TgeModel
 		Tge::Math
 		Tge::Geometry
 		Tge::Light
+		Tge::Probe
 		Tge::Material
 )
 
