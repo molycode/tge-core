@@ -508,6 +508,22 @@ target_link_libraries(TgeLight
 )
 
 # ============================================================================
+# TgeProbe (INTERFACE - header-only probe adjustment vocabulary)
+# ============================================================================
+file(GLOB TgeProbe_HEADERS CONFIGURE_DEPENDS
+	public/tge/probe/*.hpp
+)
+
+add_library(TgeProbe INTERFACE)
+add_library(Tge::Probe ALIAS TgeProbe)
+
+target_sources(TgeProbe PRIVATE ${TgeProbe_HEADERS})
+
+target_link_libraries(TgeProbe
+	INTERFACE Tge::Math
+)
+
+# ============================================================================
 # TgeExposure (INTERFACE - header-only exposure vocabulary)
 # ============================================================================
 file(GLOB TgeExposure_HEADERS CONFIGURE_DEPENDS
@@ -596,6 +612,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Material
 	Tge::Entity
 	Tge::Light
+	Tge::Probe
 	Tge::Exposure
 	Tge::Surface
 	Tge::UiDraw

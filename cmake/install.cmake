@@ -36,6 +36,7 @@ set(tgeCoreTargets
 	TgeMaterial
 	TgeEntity
 	TgeLight
+	TgeProbe
 	TgeExposure
 	TgeSurface
 	TgeUiDraw
@@ -64,6 +65,7 @@ install(TARGETS
 		TgeMaterial
 		TgeEntity
 		TgeLight
+		TgeProbe
 		TgeExposure
 		TgeSurface
 		TgeUiDraw
