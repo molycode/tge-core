@@ -11,6 +11,7 @@
 #include <tge/geometry/primitive_topology.hpp>
 #include <tge/light/light.hpp>
 #include <tge/probe/adjustment_volume.hpp>
+#include <tge/particles/emitter.hpp>
 #include <vector>
 #include <string>
 #include <cstddef>
@@ -207,6 +208,7 @@ struct SNodeData final
 	std::vector<uint32_t> childIndices;
 	uint32_t lightIndex{ InvalidIndex };  // Index into SModelData::lights
 	uint32_t probeAdjustmentVolumeIndex{ InvalidIndex };  // Index into SModelData::probeAdjustmentVolumes
+	uint32_t particleEmitterIndex{ InvalidIndex };  // Index into SModelData::particleEmitters
 	// Source glTF node index (into the glTF `nodes` array). Retained so animation channels
 	// (classic target_node and KHR_animation_pointer `/nodes/{i}/...`) resolve to the spawned
 	// entity. ProcessNode otherwise remaps nodes to dense local indices, losing this.
@@ -236,6 +238,7 @@ struct SModelData final
 	std::vector<SNodeData> nodes;
 	std::vector<Light::SLight> lights;
 	std::vector<Probe::SAdjustmentVolume> probeAdjustmentVolumes;
+	std::vector<Particles::SEmitter> particleEmitters;
 	std::vector<SAnimation> animations;
 	std::vector<SSkinData> skins;
 	std::vector<uint32_t> rootNodeIndices; // the default scene's roots

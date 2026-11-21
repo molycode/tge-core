@@ -605,6 +605,7 @@ target_link_libraries(TgeModel
 		Tge::Geometry
 		Tge::Light
 		Tge::Probe
+		Tge::Particles
 		Tge::Material
 )
 
