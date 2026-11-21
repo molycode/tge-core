@@ -21,6 +21,7 @@ All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::Entity::` - Entity-handle vocabulary (SEntity)
 - `Tge::Light::` - Punctual-light vocabulary (SLight)
 - `Tge::Probe::` - Probe-adjustment vocabulary (SAdjustmentVolume)
+- `Tge::Particles::` - Particle-emitter vocabulary (SEmitter)
 - `Tge::Exposure::` - Exposure-curve vocabulary (CExposureCurve)
 - `Tge::Surface::` - Native-window vocabulary (SNativeWindow, EWindowSystem)
 - `Tge::UiDraw::` - UI draw-list vocabulary (SUiVertex, SUiDrawCommand, SUiDrawList, SUiDrawData, UiTextureHandle)
@@ -60,6 +61,7 @@ All public headers use `<tge/...>` prefix:
 | TgeEntity | INTERFACE | TgeBase | Entity-handle vocabulary shared by a scene and whatever animates it |
 | TgeLight | INTERFACE | TgeMath | Punctual-light vocabulary shared by producers (loaders) and consumers (renderers) |
 | TgeProbe | INTERFACE | TgeMath | Probe-adjustment vocabulary shared by producers (loaders, scenes) and consumers (renderers) |
+| TgeParticles | INTERFACE | TgeBase | Particle-emitter vocabulary shared by producers (loaders, scenes) and consumers (renderers) |
 | TgeExposure | INTERFACE | TgeMath | Exposure-curve vocabulary shared by a renderer and whatever serializes it |
 | TgeSurface | INTERFACE | TgeBase | Native-window vocabulary shared by a window library and whatever presents to its windows |
 | TgeUiDraw | INTERFACE | TgeMath | UI draw-list vocabulary a UI produces and a renderer draws |
@@ -67,7 +69,7 @@ All public headers use `<tge/...>` prefix:
 | TgeTesting | INTERFACE | TgeBase, TgeLogging, GTest::gtest | Test harness (`CExpectedLogErrors`, `CExpectedLog`); behind `TGE_CORE_TESTING`, own export set |
 | TgeCore | INTERFACE | the vocabulary and infrastructure above | Convenience all-in-one; not Lifecycle, the Events or Assets halves, Process or Testing |
 
-`TgeGeometry`, `TgeMaterial`, `TgeEntity`, `TgeLight`, `TgeProbe`, `TgeExposure`, `TgeSurface`, `TgeUiDraw` and `TgeModel` are engine-domain vocabulary rather than general
+`TgeGeometry`, `TgeMaterial`, `TgeEntity`, `TgeLight`, `TgeProbe`, `TgeParticles`, `TgeExposure`, `TgeSurface`, `TgeUiDraw` and `TgeModel` are engine-domain vocabulary rather than general
 infrastructure. They live here because their producers and consumers embed these types **by value**, so they
 can never version independently of each other — the property that defines core. Consumers who want only infrastructure should
 link the specific libs (`TgeBase`, `TgeLogging`, …) rather than the `TgeCore` umbrella.

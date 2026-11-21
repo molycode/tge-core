@@ -524,6 +524,22 @@ target_link_libraries(TgeProbe
 )
 
 # ============================================================================
+# TgeParticles (INTERFACE - header-only particle emitter vocabulary)
+# ============================================================================
+file(GLOB TgeParticles_HEADERS CONFIGURE_DEPENDS
+	public/tge/particles/*.hpp
+)
+
+add_library(TgeParticles INTERFACE)
+add_library(Tge::Particles ALIAS TgeParticles)
+
+target_sources(TgeParticles PRIVATE ${TgeParticles_HEADERS})
+
+target_link_libraries(TgeParticles
+	INTERFACE Tge::Base
+)
+
+# ============================================================================
 # TgeExposure (INTERFACE - header-only exposure vocabulary)
 # ============================================================================
 file(GLOB TgeExposure_HEADERS CONFIGURE_DEPENDS
@@ -614,6 +630,7 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Entity
 	Tge::Light
 	Tge::Probe
+	Tge::Particles
 	Tge::Exposure
 	Tge::Surface
 	Tge::UiDraw

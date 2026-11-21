@@ -234,6 +234,7 @@ for artifact in lib/cmake/TgeCore/TgeCoreConfig.cmake \
                 include/tge/entity/entity.hpp \
                 include/tge/light/light.hpp \
                 include/tge/probe/adjustment_volume.hpp \
+                include/tge/particles/emitter.hpp \
                 include/tge/exposure/exposure_curve.hpp \
                 include/tge/surface/native_window.hpp \
                 include/tge/ui_draw/draw_data.hpp \
