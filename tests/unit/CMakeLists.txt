@@ -13,6 +13,7 @@ add_executable(TgeCoreUnitTests
 	main.cpp
 	test_event_system.cpp
 	test_exposure_curve.cpp
+	test_intersection.cpp
 	test_normal_matrix.cpp
 	test_transform_decompose.cpp
 	test_command_args.cpp

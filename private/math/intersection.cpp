@@ -99,7 +99,7 @@ bool Intersects(CAABB const& a, CAABB const& b)
 //////////////////////////////////////////////////////////////////////////
 bool Intersects(SSphere const& a, SSphere const& b)
 {
-	float const distanceSquared = Distance(a.center, b.center);
+	float const distanceSquared = LengthSquared(a.center - b.center);
 	float const radiusSum = a.radius + b.radius;
 	return distanceSquared <= radiusSum * radiusSum;
 }
@@ -108,7 +108,7 @@ bool Intersects(SSphere const& a, SSphere const& b)
 bool Intersects(CAABB const& aabb, SSphere const& sphere)
 {
 	Vec3 const closestPoint = Math::Clamp(sphere.center, aabb.min, aabb.max);
-	float const distanceSquared = Distance(sphere.center, closestPoint);
+	float const distanceSquared = LengthSquared(sphere.center - closestPoint);
 	return distanceSquared <= sphere.radius * sphere.radius;
 }
 
