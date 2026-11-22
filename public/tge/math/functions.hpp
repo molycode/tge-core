@@ -81,6 +81,12 @@ inline T Log10(T value)
 }
 
 template<typename T>
+inline T Log2(T value)
+{
+	return std::log2(value);
+}
+
+template<typename T>
 inline T Floor(T value)
 {
 	return std::floor(value);
