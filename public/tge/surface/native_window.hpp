@@ -10,9 +10,10 @@ namespace Tge::Surface
 enum class EWindowSystem : uint32_t
 {
 	None,
-	Xlib,     // Display*, Window
-	Wayland,  // wl_display*, wl_surface*
-	Win32     // HINSTANCE, HWND
+	Xlib,       // Display*, Window
+	Wayland,    // wl_display*, wl_surface*
+	Win32,      // HINSTANCE, HWND
+	HtmlCanvas  // nothing, char const* CSS selector of the page's canvas
 };
 
 // A window as the platform names it, so a presenter builds its surface without knowing the window library.
