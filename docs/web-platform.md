@@ -4,8 +4,8 @@ How the module pool runs in a browser (Emscripten, WebAssembly, WebGPU), and whe
 extends [modular-architecture.md](modular-architecture.md): nothing here changes the layering, it says where a
 third platform goes inside it.
 
-Status: **design agreed 2026-11-23, nothing shipped.** The groundwork and a spike are under way; the questions the
-spike answers are listed at the end and get folded in here when it reports.
+Status: **design agreed and the platform layer shipped 2026-11-23** (Core and Window build for the web); a spike
+answered the backend's questions, listed at the end. The WebGPU backend itself is not started.
 
 ## Two axes, never one
 
@@ -93,11 +93,17 @@ reads move to an asynchronous content service in Core that fetches on demand and
 read by the asset loader, the renderer and the UI alike. Texture formats follow the device: block-compressed on the
 desktop, transcoded or per-device variants where the adapter lacks them.
 
-## Open until the spike answers
+## What the spike answered (2026-11-23)
 
-- The binding model without bindless (material bind groups, their limits, the draw path without multi-draw).
-- The shader toolchain: SPIR-V to WGSL through Tint, what it rejects in today's shaders, the uniformity rules.
-- The device's asynchronous acquisition: callbacks against the browser's promise integration.
-- How the threadless and threaded variants measure against each other.
-- Dawn for the native build: a pinned source build against prebuilt binaries.
-- What the window backend's GLFW emulation does with pointer lock, fullscreen and pixel density.
+- **The device arrives by callbacks**, processed once a frame, so neither the browser's promise integration nor
+  Asyncify is needed; a backend queues what it is given until the device exists.
+- **Both thread variants run**: threadless on any page, threaded on a cross-origin isolated one (elsewhere it stops at
+  start, unable to share its memory).
+- **The binding model without bindless fits**: four groups (frame, material, lights, shadows), one binding per material
+  texture slot and one sampler, per-draw data in the frame group. A material shader then needs more sampled textures
+  than the spec's default and requests the adapter's limit; four groups is the most Dawn offers.
+- **The shaders translate offline**: GLSL to SPIR-V to WGSL through Tint, with bit-pattern NaN tests (WGSL has none),
+  derivative uniformity switched off, the samplers Tint splits from combined ones placed from a binding table, and
+  barrier loops bounded by values WGSL can prove uniform. Ray-traced and layered-rendering shaders have no web form.
+- **Dawn natively** uses the prebuilt package of the revision the browser port pins, so one `webgpu.h` serves both.
+- **Open still**: pointer lock, fullscreen and pixel density through the GLFW emulation want a person at a browser.
