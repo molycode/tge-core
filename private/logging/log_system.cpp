@@ -4,6 +4,7 @@
 #include <tge/color.hpp>
 #include <tge/assert.hpp>
 #include <tge/platform.hpp>
+#include "logging/local_time.hpp"
 
 #ifdef TGE_LOGGING_ENABLED
 #include <algorithm>
@@ -263,14 +264,7 @@ void FormatWallClockTimestamp(std::chrono::system_clock::time_point timestamp, c
 	auto const timeT = std::chrono::system_clock::to_time_t(timestamp);
 	auto const ms    = std::chrono::duration_cast<std::chrono::milliseconds>(
 	                       timestamp.time_since_epoch()) % 1000;
-	std::tm tm{};
-#if defined(TGE_PLATFORM_WINDOWS)
-	localtime_s(&tm, &timeT);
-#elif defined(TGE_PLATFORM_LINUX)
-	localtime_r(&timeT, &tm);
-#else
-#	error "localtime_r/localtime_s: unhandled platform — add an implementation here"
-#endif // defined(TGE_PLATFORM_WINDOWS)
+	std::tm const tm{ ToLocalTime(timeT) };
 	char timePart[16];
 	std::strftime(timePart, sizeof(timePart), "%H:%M:%S", &tm);
 	std::snprintf(buffer, bufferSize, "%s.%03lld", timePart, static_cast<long long>(ms.count()));
@@ -435,14 +429,7 @@ void CLogSystem::Initialize(std::string_view prefix, std::string_view logsDir, s
 			{
 				auto now = std::chrono::system_clock::now();
 				auto time_t = std::chrono::system_clock::to_time_t(now);
-				std::tm tm;
-#if defined(TGE_PLATFORM_WINDOWS)
-				localtime_s(&tm, &time_t);
-#elif defined(TGE_PLATFORM_LINUX)
-				localtime_r(&time_t, &tm);
-#else
-#	error "localtime_r/localtime_s: unhandled platform — add an implementation here"
-#endif // defined(TGE_PLATFORM_WINDOWS)
+				std::tm const tm{ ToLocalTime(time_t) };
 
 				char stamp[32]{};
 				std::strftime(stamp, sizeof(stamp), "%Y-%m-%d_%H-%M-%S", &tm);

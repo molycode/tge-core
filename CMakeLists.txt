@@ -135,6 +135,14 @@ if(TGE_ENABLE_LOGGING)
 	target_compile_definitions(TgeLogging PUBLIC TGE_LOGGING_ENABLED)
 endif()
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	target_sources(TgeLogging PRIVATE private/logging/windows/local_time.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	target_sources(TgeLogging PRIVATE private/logging/posix/local_time.cpp)
+else()
+	message(FATAL_ERROR "TgeLogging: no local time for ${CMAKE_SYSTEM_NAME}")
+endif()
+
 # Copy logging config to build output
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/private/logging/logging.cfg.in
