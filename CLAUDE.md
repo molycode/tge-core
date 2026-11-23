@@ -5,6 +5,9 @@
 
 ## Architecture
 
+Design documents in `docs/`: `modular-architecture.md` (the pool's charter), `run-contexts.md`, `web-platform.md`
+(the web as a platform: what lives in Core and what in each module).
+
 ### Namespace Structure
 All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::` - Base utilities (SNoCopyNoMove, SColor, FatalError, gLog)

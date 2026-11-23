@@ -5,7 +5,7 @@ independently versioned modules, where nothing is mandatory except Core.** A con
 needs and updates each module on its own clock, instead of taking a whole-engine release to pick up one fix.
 
 This document is the north star and the sequencing. The concrete work in flight is in
-[run-contexts.md](run-contexts.md).
+[run-contexts.md](run-contexts.md); how the pool runs in a browser is [web-platform.md](web-platform.md).
 
 ## The destination: there is no engine
 
