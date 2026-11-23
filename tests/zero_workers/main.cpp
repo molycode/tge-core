@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <tge/init/init.hpp>
+#include <tge/logging/log_system.hpp>
 
 namespace
 {
@@ -10,12 +11,15 @@ public:
 
 	void SetUp() override
 	{
+		// Empty logs/config directories keep the suite from writing a file or reading the shipped channel levels.
+		Tge::Logging::GetLogSystem().Initialize("test", "", "", Tge::Logging::ETimestampMode::Elapsed);
 		Tge::Initialize(0u);
 	}
 
 	void TearDown() override
 	{
 		Tge::Terminate();
+		Tge::Logging::GetLogSystem().Terminate();
 	}
 };
 } // namespace

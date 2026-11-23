@@ -1,6 +1,5 @@
 #include <tge/threading/parallel_for.hpp>
 #include <tge/threading/job_system.hpp>
-#include <tge/logging/loggers.hpp>
 #include <algorithm>
 
 namespace Tge::Threading
@@ -18,10 +17,6 @@ uint32_t ComputeParallelChunkCount(uint32_t numItems, uint32_t grainSize)
 
 		// One chunk per worker: an extra chunk costs ~0.85 us to submit, more than the rebalancing it buys.
 		numChunks = std::min(static_cast<uint32_t>(numThreads), chunkLimit);
-	}
-	else
-	{
-		gLog.Warning("ParallelFor ran serially: the job system has no worker threads");
 	}
 
 	return numChunks;
