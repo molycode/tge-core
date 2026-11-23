@@ -25,12 +25,12 @@ engine; a module that needs the browser carries that code itself, the way it car
 
 | Concern | Lives in | Shape |
 |---|---|---|
-| Platform identity | Core's `platform.hpp`, a `cmake/toolchains/web/` file in each repository that builds for the web | `TGE_PLATFORM_WEB`; every platform branch named, `#else #error` |
+| Platform identity | Core's `platform.hpp`, a `cmake/toolchains/web/` file in each repository that builds for the web | `TGE_PLATFORM_WEB`; each platform's implementation in a file of its own, picked by the build |
 | Files, user folders, persistence, logging, thread names | Core, per-platform branches in `private/` | POSIX branches reused where the browser's file system behaves alike; own branches for the executable folder, user folders on a persistent mount, and the flush that makes a write durable |
 | Heap | Core Memory | the C runtime's allocator; rpmalloc never builds for the web |
 | Jobs and threads | Core Threading | two build variants, below |
 | Frame loop | Core Lifecycle | one host that runs a loop on the desktop and hands the frame to the browser on the web, below |
-| Window, input, canvas | Window's GLFW backend, with a web branch | the canvas as a native-window kind in Core's surface vocabulary; gesture-gated requests (pointer lock, fullscreen) fulfilled inside the next input event |
+| Window, input, canvas | Window's GLFW backend, with a web implementation | the canvas as a native-window kind in Core's surface vocabulary; gesture-gated requests (pointer lock, fullscreen) fulfilled inside the next input event; on touch devices, touches as pointer events in Window's own input vocabulary once a title targets them, what a touch means left to the app |
 | GPU | the Renderer, a WebGPU backend as a component beside the Vulkan one | one `IRenderer`; the backend-neutral logic shared; capabilities queried at run time |
 | Shaders | the Renderer's shader compiler | one source, translated offline per backend |
 | Audio | the audio module's own backend | the browser's audio API; threadless, its decoding jobs pumped by hand |
@@ -42,6 +42,10 @@ engine; a module that needs the browser carries that code itself, the way it car
 
 ## Rules
 
+- **Platform specifics are separated physically, not by `#ifdef`.** Each platform's implementation is a file of its
+  own beside the shared code (`poller_linux.cpp`, `poller_windows.cpp`, `poller_web.cpp`), and the build compiles the
+  one for the target; headers and shared code carry no platform `#if`. A unit that gains the web is first split into
+  per-platform files, then gets its web file. A build option that swaps an implementation is handled the same way.
 - **Public headers never change shape per platform.** What the web adds to an interface is vocabulary every platform
   compiles (a canvas window kind, a canvas selector setting that other platforms ignore), never an `#ifdef`'d member.
 - **A contract the web needs asynchronous is asynchronous everywhere.** Device creation, GPU readback, pipeline
