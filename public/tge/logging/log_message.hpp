@@ -20,6 +20,7 @@ struct SLogMessage final
 {
 	std::chrono::system_clock::time_point timestamp;
 	uint64_t elapsedMs = 0;  // Milliseconds since application start
+	uint64_t sequence = 0;   // The order messages were logged in, across every channel; timestamps can tie
 	ELogLevel level;
 	ETarget target;
 	std::string_view channelName;

@@ -52,6 +52,14 @@ std::mutex& GetMutex()
 }
 
 //////////////////////////////////////////////////////////////////////////
+// Counted under GetMutex(), where every message is made.
+uint64_t TakeSequence()
+{
+	static uint64_t nextSequence{ 0u };
+	return nextSequence++;
+}
+
+//////////////////////////////////////////////////////////////////////////
 std::chrono::system_clock::time_point& GetStartTime()
 {
 	static std::chrono::system_clock::time_point startTime = std::chrono::system_clock::now();
@@ -522,10 +530,7 @@ void CLogSystem::RegisterListener(void* key, LogMessageCallback callback, EMessa
 				pLog->AppendHistoryTo(historyToFlush);
 			}
 
-			// Stable and on the full-resolution stamp: a millisecond holds many lines, and reshuffling
-			// those would scramble the very boot log this flush exists to replay.
-			std::stable_sort(historyToFlush.begin(), historyToFlush.end(),
-				[](auto const& a, auto const& b) { return a->timestamp < b->timestamp; });
+			std::ranges::sort(historyToFlush, {}, [](std::shared_ptr<SLogMessage> const& message) { return message->sequence; });
 
 			listenerSnapshot = { key, callback, format };
 		}
@@ -680,6 +685,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 				auto msg = std::make_shared<SLogMessage>(SLogMessage{
 					now,
 					static_cast<uint64_t>(elapsed.count()),
+					TakeSequence(),
 					level,
 					effective,
 					std::string_view{m_name},
@@ -709,6 +715,7 @@ void CLog::Write(ELogLevel level, ETarget target, std::string message) const
 				SLogMessage msg{
 					now,
 					static_cast<uint64_t>(elapsed.count()),
+					TakeSequence(),
 					level,
 					effective,
 					std::string_view{m_name},
