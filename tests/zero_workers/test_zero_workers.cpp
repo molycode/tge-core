@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
+#include <tge/init/init.hpp>
 #include <tge/threading/job_group.hpp>
 #include <tge/threading/job_system.hpp>
-#include "threading/job_scheduler.hpp"
 
 #include <algorithm>
 #include <thread>
@@ -29,17 +29,30 @@ TEST(ZeroWorkers, WaitRunsEveryJobOnTheWaitingThread)
 }
 
 //////////////////////////////////////////////////////////////////////////
-TEST(ZeroWorkers, APoolWithoutWorkersIsHandedNoJobs)
+// Negative control: Update leaving the queue alone, and the group never completes.
+TEST(ZeroWorkers, APolledGroupCompletesAcrossUpdatesOnTheMainThread)
 {
 	CJobGroup group;
+	std::vector<std::thread::id> runners;
 
-	for (int i = 0; i < 64; i++)
+	for (int i = 0; i < 8; i++)
 	{
-		group.SubmitJob([]() {});
+		group.SubmitJob([&runners]() { runners.push_back(std::this_thread::get_id()); });
 	}
 
+	ASSERT_FALSE(group.IsComplete()) << "a job ran before anything drained the queue";
+
+	for (int frame = 0; (frame < 64) && !group.IsComplete(); frame++)
+	{
+		Tge::Update();
+	}
+
+	bool const isComplete{ group.IsComplete() };
+	auto const numOnMainThread{ std::ranges::count(runners, std::this_thread::get_id()) };
+
+	// A failing run must not leave jobs queued that write to `runners` after it is gone.
 	group.Wait();
 
-	// Whatever the pool is handed, no thread ever runs or frees, so its queue is the only place the leak shows.
-	EXPECT_EQ(gJobScheduler->GetPendingJobCount(), 0u);
+	EXPECT_TRUE(isComplete);
+	EXPECT_EQ(numOnMainThread, 8);
 }

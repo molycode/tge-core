@@ -30,7 +30,7 @@ struct SRunContext final
 	std::string_view logsDir{ "logs" };
 	std::string_view configDir{ "configs" };
 
-	// Core's job workers. 0 suits an app that queues no jobs: a group's Wait() then runs its own jobs.
+	// Core's job workers. With 0 every job runs on the main thread: a group's Wait() runs its own, Tge::Update() the rest.
 	size_t numWorkerThreads{ Threading::AutoThreadCount };
 };
 } // namespace Tge

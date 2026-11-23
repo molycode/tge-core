@@ -15,10 +15,6 @@ if(TGE_ENABLE_LOGGING AND TARGET Tge::Testing)
 	target_link_libraries(TgeCoreZeroWorkerTests PRIVATE Tge::Testing)
 endif()
 
-target_include_directories(TgeCoreZeroWorkerTests
-	PRIVATE ${PROJECT_SOURCE_DIR}/private
-)
-
 add_test(NAME TgeCoreZeroWorkerTests COMMAND TgeCoreZeroWorkerTests)
 
 set_target_properties(TgeCoreZeroWorkerTests PROPERTIES

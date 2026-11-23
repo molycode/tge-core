@@ -58,7 +58,40 @@ void CThreadPool::Terminate()
 		}
 	}
 
+	// Workers drain the queue before they exit; without any, the caller does, so no queued work is dropped.
+	if (m_threads.empty())
+	{
+		RunQueued(std::chrono::steady_clock::time_point::max());
+	}
+
 	m_threads.clear();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void CThreadPool::RunQueued(std::chrono::steady_clock::time_point const deadline)
+{
+	std::function<void()> work{ TakeWork() };
+
+	while (work)
+	{
+		work();
+		work = (std::chrono::steady_clock::now() < deadline) ? TakeWork() : std::function<void()>{};
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+std::function<void()> CThreadPool::TakeWork()
+{
+	std::function<void()> work{};
+	std::lock_guard<std::mutex> lock(m_queueMutex);
+
+	if (!m_workQueue.empty())
+	{
+		work = std::move(const_cast<SWorkItem&>(m_workQueue.top()).work);
+		m_workQueue.pop();
+	}
+
+	return work;
 }
 
 //////////////////////////////////////////////////////////////////////////

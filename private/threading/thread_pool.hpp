@@ -8,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <functional>
 
@@ -22,6 +23,9 @@ public:
 
 	void Execute(std::function<void()> work, EJobPriority priority = EJobPriority::Normal);
 	void Terminate();
+
+	// Runs queued work on the calling thread until the queue is empty or the deadline has passed, at least one item.
+	void RunQueued(std::chrono::steady_clock::time_point deadline);
 
 	size_t GetNumThreads() const { return m_numThreads; }
 
@@ -42,6 +46,7 @@ private:
 	};
 
 	void WorkerThread(size_t threadIndex);
+	std::function<void()> TakeWork();
 
 	size_t m_numThreads;
 	std::vector<std::thread> m_threads;

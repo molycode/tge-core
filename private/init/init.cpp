@@ -12,6 +12,7 @@ void Terminate();
 namespace Threading::Internal
 {
 bool Initialize(size_t numThreads);
+void RunMainThreadWork();
 void Terminate();
 } // namespace Threading::Internal
 
@@ -51,6 +52,7 @@ void Terminate()
 //////////////////////////////////////////////////////////////////////////
 void Update()
 {
+	Threading::Internal::RunMainThreadWork();
 	Logging::GetLogSystem().DispatchListeners();
 }
 } // namespace Tge

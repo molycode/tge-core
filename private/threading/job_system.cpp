@@ -2,6 +2,7 @@
 #include "thread_pool.hpp"
 #include "job_scheduler.hpp"
 #include <tge/logging/loggers.hpp>
+#include <chrono>
 #include <thread>
 
 namespace Tge
@@ -59,6 +60,17 @@ bool Initialize(size_t numThreads)
 	gLog.Info("Initialized ({} workers)", numThreads);
 
 	return true;
+}
+
+// A frame's share of the work no worker can take; at least one item still runs per frame, so work always advances.
+constexpr std::chrono::milliseconds MainThreadWorkBudget{ 4 };
+
+void RunMainThreadWork()
+{
+	if ((gThreadPool != nullptr) && (gThreadPool->GetNumThreads() == 0u))
+	{
+		gThreadPool->RunQueued(std::chrono::steady_clock::now() + MainThreadWorkBudget);
+	}
 }
 
 // The pool goes first: until its workers are joined, they can still be inside the scheduler's job wrapper.
