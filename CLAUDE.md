@@ -12,7 +12,7 @@ Design documents in `docs/`: `modular-architecture.md` (the pool's charter), `ru
 All types live under `Tge::` with feature-based sub-namespaces:
 - `Tge::` - Base utilities (SNoCopyNoMove, SColor, FatalError, gLog)
 - `Tge::Logging::` - Log system (CLog, CLogSystem, ELogLevel)
-- `Tge::Memory::` - Allocators, tracking (CDefaultAllocator, CLinearAllocator, etc.)
+- `Tge::Memory::` - Allocators, tracking (CLinearAllocator, CPoolAllocator, etc.)
 - `Tge::Math::` - GLM wrappers, transforms, intersections (Vec3, Mat4, STransform, SAABB, SFrustum)
 - `Tge::Threading::` - Job system (CJobGroup, CThreadPool, IJob) and an event loop for waiting (CEventLoop)
 - `Tge::IO::` - File, path, directory, binary streams (CFile, CPath, CDirectory); user folders, whole-file reads and atomic writes, folder watches (GetUserFolder, ReadWholeFile, WriteFileAtomically, IsBusy, CDirectoryWatch)

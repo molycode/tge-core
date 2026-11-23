@@ -1,5 +1,4 @@
 #include <tge/logging/loggers.hpp>
-#include <tge/memory/default_allocator.hpp>
 #include <tge/memory/linear_allocator.hpp>
 
 #include <rpmalloc/rpmalloc.h>

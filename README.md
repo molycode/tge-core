@@ -241,7 +241,6 @@ class IAllocator
 
 | Header | Class | Description |
 |--------|-------|-------------|
-| `<tge/memory/default_allocator.hpp>` | `CDefaultAllocator` | General-purpose (rpmalloc). Global instance: `g_defaultAllocator` |
 | `<tge/memory/linear_allocator.hpp>` | `CLinearAllocator` | Bump allocator, no individual frees. Global instance: `g_frameAllocator` (reset each `Tge::Update()`) |
 | `<tge/memory/stack_allocator.hpp>` | `CStackAllocator` | LIFO — deallocations must reverse allocation order |
 | `<tge/memory/pool_allocator.hpp>` | `CPoolAllocator` | Fixed-size blocks, fast alloc/free |
