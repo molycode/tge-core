@@ -48,7 +48,7 @@ All public headers use `<tge/...>` prefix:
 | TgeLogging | STATIC | TgeBase | Logging system |
 | TgeMemory | STATIC | TgeBase, rpmalloc, TgeLogging | Memory allocators and tracking |
 | TgeMath | STATIC | TgeBase, GLM | Math library |
-| TgeThreading | STATIC | TgeBase, rpmalloc | Job system, thread pool and event loop |
+| TgeThreading | STATIC | TgeBase, TgeMemory | Job system, thread pool and event loop |
 | TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths, user folders and folder watches |
 | TgeProcess | STATIC | TgeBase | Child processes: start them and see them end; Linux and Windows only, outside TgeCore, linked by name |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |

@@ -35,4 +35,16 @@ void Terminate()
 
 	gLog.Info("Terminated");
 }
+
+//////////////////////////////////////////////////////////////////////////
+void InitializeThread()
+{
+	rpmalloc_thread_initialize();
+}
+
+//////////////////////////////////////////////////////////////////////////
+void FinalizeThread()
+{
+	rpmalloc_thread_finalize();
+}
 } // namespace Tge::Memory::Internal

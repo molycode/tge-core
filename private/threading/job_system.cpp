@@ -2,10 +2,17 @@
 #include "thread_pool.hpp"
 #include "job_scheduler.hpp"
 #include <tge/logging/loggers.hpp>
-#include <rpmalloc/rpmalloc.h>
 #include <thread>
 
-namespace Tge::Threading
+namespace Tge
+{
+namespace Memory::Internal
+{
+void InitializeThread();
+void FinalizeThread();
+} // namespace Memory::Internal
+
+namespace Threading
 {
 //////////////////////////////////////////////////////////////////////////
 size_t GetNumThreads()
@@ -23,13 +30,13 @@ size_t GetNumThreads()
 //////////////////////////////////////////////////////////////////////////
 void InitializeThread()
 {
-	rpmalloc_thread_initialize();
+	Memory::Internal::InitializeThread();
 }
 
 //////////////////////////////////////////////////////////////////////////
 void FinalizeThread()
 {
-	rpmalloc_thread_finalize();
+	Memory::Internal::FinalizeThread();
 }
 
 namespace Internal
@@ -72,4 +79,5 @@ void Terminate()
 	}
 }
 } // namespace Internal
-} // namespace Tge::Threading
+} // namespace Threading
+} // namespace Tge
