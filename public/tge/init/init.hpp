@@ -13,6 +13,6 @@ bool Initialize(size_t numThreads = Threading::AutoThreadCount);
 // Terminate them in reverse order.
 void Terminate();
 
-// Per-frame update (resets frame allocator)
+// Once per frame: delivers queued log lines to their listeners.
 void Update();
 } // namespace Tge

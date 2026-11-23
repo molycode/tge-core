@@ -1,6 +1,5 @@
 #include <tge/init/init.hpp>
 #include <tge/logging/log_system.hpp>
-#include <tge/memory/linear_allocator.hpp>
 
 namespace Tge
 {
@@ -53,6 +52,5 @@ void Terminate()
 void Update()
 {
 	Logging::GetLogSystem().DispatchListeners();
-	Memory::gFrameAllocator.Reset();
 }
 } // namespace Tge

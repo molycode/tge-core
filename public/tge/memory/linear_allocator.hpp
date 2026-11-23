@@ -26,6 +26,4 @@ private:
 	size_t m_capacity = 0;
 	size_t m_offset = 0;
 };
-
-extern CLinearAllocator gFrameAllocator;
 } // namespace Tge::Memory

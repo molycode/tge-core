@@ -109,7 +109,7 @@ int main()
 {
     Tge::Initialize();  // Memory -> Threading
     // ... application code ...
-    Tge::Update();      // Per-frame (resets frame allocator)
+    Tge::Update();      // Per-frame (dispatches log listeners)
     Tge::Terminate();   // Threading -> Memory
 }
 ```

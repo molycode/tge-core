@@ -7,8 +7,6 @@
 namespace Tge::Memory
 {
 
-CLinearAllocator gFrameAllocator(16 * 1024 * 1024);
-
 CLinearAllocator::CLinearAllocator(size_t capacity)
 	: m_capacity(capacity)
 {

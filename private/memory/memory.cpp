@@ -1,5 +1,4 @@
 #include <tge/logging/loggers.hpp>
-#include <tge/memory/linear_allocator.hpp>
 
 #include <rpmalloc/rpmalloc.h>
 
@@ -20,7 +19,7 @@ bool Initialize()
 	// Initialize rpmalloc for main thread
 	rpmalloc_thread_initialize();
 
-	gLog.Info("Initialized (rpmalloc + frame allocator 16 MiB)");
+	gLog.Info("Initialized (rpmalloc)");
 
 	return true;
 }

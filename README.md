@@ -63,7 +63,7 @@ int main()
 {
     Tge::Initialize();      // Initializes memory → threading → IO
 
-    // Per-frame update (resets the frame allocator, dispatches log listener callbacks)
+    // Per-frame update (dispatches log listener callbacks)
     while (running)
     {
         Tge::Update();
@@ -241,7 +241,7 @@ class IAllocator
 
 | Header | Class | Description |
 |--------|-------|-------------|
-| `<tge/memory/linear_allocator.hpp>` | `CLinearAllocator` | Bump allocator, no individual frees. Global instance: `g_frameAllocator` (reset each `Tge::Update()`) |
+| `<tge/memory/linear_allocator.hpp>` | `CLinearAllocator` | Bump allocator, no individual frees, released together by `Reset()` |
 | `<tge/memory/stack_allocator.hpp>` | `CStackAllocator` | LIFO — deallocations must reverse allocation order |
 | `<tge/memory/pool_allocator.hpp>` | `CPoolAllocator` | Fixed-size blocks, fast alloc/free |
 | `<tge/memory/free_list_allocator.hpp>` | `CFreeListAllocator` | Variable-size, first-fit strategy |
@@ -255,8 +255,10 @@ All concrete allocators inherit from `CTrackedAllocator` (`<tge/memory/tracked_a
 #include <tge/memory/linear_allocator.hpp>
 #include <vector>
 
+Tge::Memory::CLinearAllocator frameAllocator(1024 * 1024);
+
 using FrameAlloc = Tge::Memory::CStdAllocator<int>;
-std::vector<int, FrameAlloc> perFrameData(FrameAlloc(&Tge::Memory::g_frameAllocator));
+std::vector<int, FrameAlloc> perFrameData(FrameAlloc(&frameAllocator));
 ```
 
 #### Memory tracking — `<tge/memory/tracking.hpp>`
