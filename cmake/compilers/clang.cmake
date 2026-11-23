@@ -10,7 +10,6 @@ add_compile_options(
 # C++-only flags (add new C++ flags to this list)
 add_compile_options(
 	$<$<COMPILE_LANGUAGE:CXX>:-fno-exceptions>    # Disable exceptions
-	$<$<COMPILE_LANGUAGE:CXX>:-stdlib=libstdc++>  # Use libstdc++ (GCC standard library)
 )
 
 message(STATUS "Clang ${CMAKE_CXX_COMPILER_VERSION} compiler flags configured")
