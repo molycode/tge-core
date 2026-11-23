@@ -37,7 +37,7 @@ endif() # PROJECT_IS_TOP_LEVEL
 # Options
 option(TGE_ENABLE_LOGGING "Enable logging system" ON)
 option(TGE_ENABLE_MEMORY_TRACKING "Enable memory tracking system" ON)
-option(TGE_ENABLE_GLOBAL_ALLOCATOR "Route global new and delete through rpmalloc" ON)
+option(TGE_ENABLE_GLOBAL_ALLOCATOR "rpmalloc is the heap (global new and delete); OFF leaves rpmalloc out of the build" ON)
 
 option(TGE_CORE_INSTALL "Generate install and export rules for tge-core" ${PROJECT_IS_TOP_LEVEL})
 option(TGE_CORE_TESTING "Provide Tge::Testing, the harness every module's tests sit on" OFF)
@@ -83,8 +83,10 @@ if(PROJECT_IS_TOP_LEVEL)
 endif() # PROJECT_IS_TOP_LEVEL
 
 # External dependencies
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpmalloc.cmake)
-tge_suppress_external_warnings(rpmalloc)
+if(TGE_ENABLE_GLOBAL_ALLOCATOR)
+	include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/rpmalloc.cmake)
+	tge_suppress_external_warnings(rpmalloc)
+endif()
 
 # ============================================================================
 # TgeBase (INTERFACE - header-only base utilities)
@@ -154,7 +156,7 @@ add_library(Tge::Memory ALIAS TgeMemory)
 
 target_link_libraries(TgeMemory
 	PUBLIC Tge::Base
-	PRIVATE rpmalloc Tge::Logging
+	PRIVATE Tge::Logging
 )
 
 target_include_directories(TgeMemory
@@ -165,8 +167,9 @@ if(TGE_ENABLE_MEMORY_TRACKING)
 	target_compile_definitions(TgeMemory PUBLIC TGE_MEMORY_TRACKING_ENABLED)
 endif()
 
-# Off for valgrind, heaptrack and massif: they follow malloc, and rpmalloc takes its pages from mmap.
+# Off for sanitizers, valgrind, heaptrack and massif: they follow malloc, and rpmalloc takes its pages from mmap.
 if(TGE_ENABLE_GLOBAL_ALLOCATOR)
+	target_link_libraries(TgeMemory PRIVATE rpmalloc)
 	target_compile_definitions(TgeMemory PUBLIC TGE_GLOBAL_ALLOCATOR_ENABLED)
 endif()
 

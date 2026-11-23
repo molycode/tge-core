@@ -73,13 +73,20 @@ install(TARGETS
 		TgeUiDraw
 		TgeModel
 		TgeCore
-		rpmalloc
 	EXPORT TgeCoreTargets
 	ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
 	INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+# Built only as the global allocator.
+if(TARGET rpmalloc)
+	install(TARGETS rpmalloc
+		EXPORT TgeCoreTargets
+		ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	)
+endif()
 
 # Built on Linux and Windows only.
 if(TARGET TgeProcess)

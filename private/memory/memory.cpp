@@ -1,37 +1,42 @@
 #include <tge/logging/loggers.hpp>
 
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
 #include <rpmalloc/rpmalloc.h>
+#endif // TGE_GLOBAL_ALLOCATOR_ENABLED
 
 namespace Tge::Memory::Internal
 {
 //////////////////////////////////////////////////////////////////////////
 bool Initialize()
 {
-	// Initialize rpmalloc
-	int const result = rpmalloc_initialize(nullptr);
+	bool success{ true };
 
-	if (result != 0)
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
+	success = rpmalloc_initialize(nullptr) == 0;
+
+	if (success)
+	{
+		rpmalloc_thread_initialize();
+		gLog.Info("Initialized (rpmalloc)");
+	}
+	else
 	{
 		gLog.Error("Failed to initialize rpmalloc");
-		return false;
 	}
+#else
+	gLog.Info("Initialized (C runtime heap)");
+#endif // TGE_GLOBAL_ALLOCATOR_ENABLED
 
-	// Initialize rpmalloc for main thread
-	rpmalloc_thread_initialize();
-
-	gLog.Info("Initialized (rpmalloc)");
-
-	return true;
+	return success;
 }
 
 //////////////////////////////////////////////////////////////////////////
 void Terminate()
 {
-	// Finalize rpmalloc for main thread
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
 	rpmalloc_thread_finalize();
-
-	// Finalize rpmalloc globally
 	rpmalloc_finalize();
+#endif // TGE_GLOBAL_ALLOCATOR_ENABLED
 
 	gLog.Info("Terminated");
 }
@@ -39,12 +44,16 @@ void Terminate()
 //////////////////////////////////////////////////////////////////////////
 void InitializeThread()
 {
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
 	rpmalloc_thread_initialize();
+#endif // TGE_GLOBAL_ALLOCATOR_ENABLED
 }
 
 //////////////////////////////////////////////////////////////////////////
 void FinalizeThread()
 {
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
 	rpmalloc_thread_finalize();
+#endif // TGE_GLOBAL_ALLOCATOR_ENABLED
 }
 } // namespace Tge::Memory::Internal

@@ -46,7 +46,7 @@ All public headers use `<tge/...>` prefix:
 |--------|------|-------------|-------------|
 | TgeBase | INTERFACE | none | Header-only base utilities |
 | TgeLogging | STATIC | TgeBase | Logging system |
-| TgeMemory | STATIC | TgeBase, rpmalloc, TgeLogging | Memory allocators and tracking |
+| TgeMemory | STATIC | TgeBase, TgeLogging, rpmalloc (with the global allocator) | Memory allocators and tracking |
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, TgeMemory | Job system, thread pool and event loop |
 | TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths, user folders and folder watches |
@@ -118,6 +118,7 @@ int main()
 - `TGE_DEBUG_ENABLED` - Debug assertions and logging (auto-enabled in Debug builds)
 - `TGE_LOGGING_ENABLED` - Logging system (CMake option, default ON)
 - `TGE_MEMORY_TRACKING_ENABLED` - Memory tracking (CMake option, default ON)
+- `TGE_GLOBAL_ALLOCATOR_ENABLED` - rpmalloc is the heap (CMake option `TGE_ENABLE_GLOBAL_ALLOCATOR`, default ON; OFF leaves rpmalloc out of the build, `TgeCoreHeapBackend` checks which)
 
 ### Dependencies
 - **GLM** (git submodule) - Math library

@@ -13,7 +13,7 @@ A standalone C++23 foundation library providing logging, assertions, memory mana
 Both are included as git submodules and require no separate installation:
 
 - **[GLM](https://github.com/g-truc/glm)** — math types and operations
-- **[rpmalloc](https://github.com/mjansson/rpmalloc)** — high-performance memory allocator (replaces global `new`/`delete`)
+- **[rpmalloc](https://github.com/mjansson/rpmalloc)** — high-performance memory allocator (replaces global `new`/`delete`; `TGE_ENABLE_GLOBAL_ALLOCATOR=OFF` builds without it)
 
 ## Adding to Your Project
 
@@ -218,7 +218,7 @@ Tge::gLog.Info("Application version {}", version);
 
 ### Memory — `Tge::Memory::`
 
-tge-core replaces the global `operator new`/`delete` with rpmalloc. When `TGE_MEMORY_TRACKING_ENABLED` is defined, every allocation is tagged with a category for tracking.
+tge-core replaces the global `operator new`/`delete` with rpmalloc. `TGE_ENABLE_GLOBAL_ALLOCATOR=OFF` leaves rpmalloc out of the build and keeps the C runtime's heap, which is what sanitizers, valgrind and the web need. When `TGE_MEMORY_TRACKING_ENABLED` is defined, every allocation is tagged with a category for tracking.
 
 #### Allocator interface — `<tge/memory/allocator.hpp>`
 

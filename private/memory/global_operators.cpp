@@ -1,11 +1,11 @@
+#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
+
 #include <tge/memory/tracking.hpp>
 #include <tge/memory/category_context.hpp>
 #include <tge/memory/allocation_hooks.hpp>
 #include <rpmalloc/rpmalloc.h>
 #include <new>
 #include <cstdint>
-
-#ifdef TGE_GLOBAL_ALLOCATOR_ENABLED
 
 #ifdef TGE_MEMORY_TRACKING_ENABLED
 
