@@ -1,9 +1,10 @@
 #include <tge/threading/job_system.hpp>
 #include "thread_pool.hpp"
 #include "job_scheduler.hpp"
+#include "thread_support.hpp"
 #include <tge/logging/loggers.hpp>
+#include <algorithm>
 #include <chrono>
-#include <thread>
 
 namespace Tge
 {
@@ -44,20 +45,18 @@ namespace Internal
 {
 bool Initialize(size_t numThreads)
 {
-	if (numThreads == AutoThreadCount)
-	{
-		numThreads = std::thread::hardware_concurrency();
+	size_t const numRequested{ (numThreads == AutoThreadCount) ? GetAutoWorkerThreads() : numThreads };
+	size_t const numWorkers{ std::min(numRequested, GetMaxWorkerThreads()) };
 
-		if (numThreads == 0)
-		{
-			numThreads = 4;
-		}
+	if (numWorkers < numRequested)
+	{
+		gLog.Warning("{} workers asked for, but this build runs no threads; every job runs on the main thread", numRequested);
 	}
 
-	gThreadPool = new CThreadPool(numThreads);
+	gThreadPool = new CThreadPool(numWorkers);
 	gJobScheduler = new CJobScheduler();
 
-	gLog.Info("Initialized ({} workers)", numThreads);
+	gLog.Info("Initialized ({} workers)", numWorkers);
 
 	return true;
 }

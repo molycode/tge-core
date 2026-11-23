@@ -224,6 +224,8 @@ target_include_directories(TgeThreading
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
+target_sources(TgeThreading PRIVATE private/threading/thread_support/threads.cpp)
+
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_sources(TgeThreading PRIVATE private/threading/windows/thread_name.cpp)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
