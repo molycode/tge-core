@@ -224,6 +224,14 @@ target_include_directories(TgeThreading
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	target_sources(TgeThreading PRIVATE private/threading/windows/thread_name.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	target_sources(TgeThreading PRIVATE private/threading/linux/thread_name.cpp)
+else()
+	message(FATAL_ERROR "TgeThreading: no thread naming for ${CMAKE_SYSTEM_NAME}")
+endif()
+
 # ============================================================================
 # TgeIO (STATIC - files, paths, user folders and folder watches)
 # ============================================================================
