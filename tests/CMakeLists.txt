@@ -3,6 +3,7 @@
 
 add_subdirectory(unit)
 add_subdirectory(threading)
+add_subdirectory(zero_workers)
 add_subdirectory(io)
 
 if(TARGET TgeProcess)

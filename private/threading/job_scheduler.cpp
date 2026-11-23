@@ -10,7 +10,7 @@ CJobScheduler* gJobScheduler = nullptr;
 void CJobScheduler::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 {
 	// Dropping the job here would leave CJobGroup's activeJobs counter raised, hanging its Wait() forever.
-	TGE_ASSERT(gThreadPool != nullptr, "Job submitted before the thread pool was initialized");
+	TGE_ASSERT(gThreadPool != nullptr && gThreadPool->GetNumThreads() > 0u, "Job submitted to a pool that is missing or has no workers: nothing would run or free it");
 
 	if (job && gThreadPool)
 	{

@@ -1,5 +1,7 @@
 #include <tge/threading/job_group.hpp>
+#include <tge/threading/job_system.hpp>
 #include "job_scheduler.hpp"
+#include <tge/assert.hpp>
 #include <chrono>
 
 namespace Tge::Threading
@@ -62,6 +64,8 @@ bool CJobGroup::SState::RunOnePending()
 //////////////////////////////////////////////////////////////////////////
 void CJobGroup::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 {
+	TGE_ASSERT(gJobScheduler != nullptr, "Job submitted before the job system was initialized");
+
 	if (job && gJobScheduler)
 	{
 		m_state->activeJobs.fetch_add(1, std::memory_order_relaxed);
@@ -71,10 +75,14 @@ void CJobGroup::SubmitJob(std::unique_ptr<IJob> job, EJobPriority priority)
 			m_state->pending.push_back(std::move(job));
 		}
 
-		// Runner drains one of this group's jobs; the captured state ref keeps it alive past the handle.
-		std::shared_ptr<SState> state = m_state;
-		auto runner = [state]() { state->RunOnePending(); };
-		gJobScheduler->SubmitJob(std::unique_ptr<IJob>(new CLambdaJob<decltype(runner)>(std::move(runner))), priority);
+		// Without workers nothing would ever run the runner; the group's own Wait() runs its jobs instead.
+		if (GetNumThreads() > 0u)
+		{
+			// Runner drains one of this group's jobs; the captured state ref keeps it alive past the handle.
+			std::shared_ptr<SState> state = m_state;
+			auto runner = [state]() { state->RunOnePending(); };
+			gJobScheduler->SubmitJob(std::unique_ptr<IJob>(new CLambdaJob<decltype(runner)>(std::move(runner))), priority);
+		}
 	}
 }
 
