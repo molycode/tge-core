@@ -49,7 +49,7 @@ All public headers use `<tge/...>` prefix:
 | TgeMemory | STATIC | TgeBase, TgeLogging, rpmalloc (with the global allocator) | Memory allocators and tracking |
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, TgeMemory | Job system, thread pool and event loop |
-| TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths, user folders and folder watches |
+| TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths, user folders and folder watches; Linux and Windows only so far |
 | TgeProcess | STATIC | TgeBase | Child processes: start them and see them end; Linux and Windows only, outside TgeCore, linked by name |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
 | TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |
@@ -131,6 +131,18 @@ Requires CMake 3.28+ (`cmake --version` to verify).
 cmake --preset linux-gcc_16-debug
 cmake --build --preset linux-gcc_16-debug
 ```
+
+### The web
+`docs/web-platform.md` is the design. `web-{debug,release}` build the threadless variant (the default) and
+`web-threads-{debug,release}` the threaded one (`TGE_WEB_THREADS`), through `cmake/toolchains/web/emscripten.cmake`,
+which chain-loads emsdk's toolchain from `TGE_EMSDK_PATH` (or `EMSDK`); a user preset sets the path.
+- **Platform code is a file per platform**, picked in CMake (`posix/`, `windows/`, `linux/`, `web/` beside the shared
+  file), never `#ifdef`s in shared code; likewise the thread variants (`thread_support/threads.cpp`, `none.cpp`).
+- **Not built for the web yet**: TgeIO, TgeProcess and the event loop (nothing there uses them); rpmalloc never
+  (`TGE_ENABLE_GLOBAL_ALLOCATOR` defaults off there and refuses on).
+- **The suites run under Node** (`node <suite>.js`, or ctest through Emscripten's emulator), against a googletest
+  built with the same toolchain and thread setting. Threadless: Unit 91 (the six tests that start threads have files
+  of their own) and ZeroWorker 3; threaded: Unit 97, Threading 15 (no event loop tests), ZeroWorker 3.
 
 ### Tests and benchmarks
 Core vendors neither googletest nor Google Benchmark, so both are off by default and whoever supplies a

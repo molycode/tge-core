@@ -12,6 +12,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 	message(STATUS "[TGE] Platform: iOS")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
 	message(STATUS "[TGE] Platform: Android")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	message(STATUS "[TGE] Platform: Web")
 else()
 	message(WARNING "[TGE] Platform '${CMAKE_SYSTEM_NAME}' has no build settings configured. "
 		"Platform-specific settings will not be applied. "

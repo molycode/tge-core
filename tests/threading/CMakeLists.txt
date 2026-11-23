@@ -3,10 +3,14 @@
 
 add_executable(TgeCoreThreadingTests
 	main.cpp
-	test_event_loop.cpp
 	test_job_group.cpp
 	test_parallel_for.cpp
 )
+
+# The web builds no event loop: nothing there waits on sockets.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	target_sources(TgeCoreThreadingTests PRIVATE test_event_loop.cpp)
+endif()
 
 target_link_libraries(TgeCoreThreadingTests
 	PRIVATE

@@ -93,6 +93,60 @@
 				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/windows/msvc.cmake",
 				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
 			}
+		},
+		{
+			"name": "web-debug",
+			"inherits": "base",
+			"displayName": "web_debug",
+			"description": "Debug build of the web through Emscripten (uses TGE_EMSDK_PATH or EMSDK)",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/web-Debug",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/web/emscripten.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
+		},
+		{
+			"name": "web-release",
+			"inherits": "base",
+			"displayName": "web_release",
+			"description": "Release build of the web through Emscripten (uses TGE_EMSDK_PATH or EMSDK)",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/web-Release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/web/emscripten.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+			}
+		},
+		{
+			"name": "web-threads-debug",
+			"inherits": "base",
+			"displayName": "web_threads_debug",
+			"description": "Debug build of the threaded web through Emscripten (uses TGE_EMSDK_PATH or EMSDK)",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/web-threads-Debug",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Debug",
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/web/emscripten.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"TGE_WEB_THREADS": "ON"
+			}
+		},
+		{
+			"name": "web-threads-release",
+			"inherits": "base",
+			"displayName": "web_threads_release",
+			"description": "Release build of the threaded web through Emscripten (uses TGE_EMSDK_PATH or EMSDK)",
+			"generator": "Ninja",
+			"binaryDir": "${sourceDir}/build/web-threads-Release",
+			"cacheVariables": {
+				"CMAKE_BUILD_TYPE": "Release",
+				"CMAKE_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchains/web/emscripten.cmake",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"TGE_WEB_THREADS": "ON"
+			}
 		}
 	],
 	"buildPresets": [
@@ -125,6 +179,22 @@
 			"name": "windows-msvc-release",
 			"configurePreset": "windows-msvc-release",
 			"condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+		},
+		{
+			"name": "web-debug",
+			"configurePreset": "web-debug"
+		},
+		{
+			"name": "web-release",
+			"configurePreset": "web-release"
+		},
+		{
+			"name": "web-threads-debug",
+			"configurePreset": "web-threads-debug"
+		},
+		{
+			"name": "web-threads-release",
+			"configurePreset": "web-threads-release"
 		}
 	]
 }

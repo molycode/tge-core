@@ -1,17 +1,33 @@
 # Core's own proof. Nothing here may name a module: core sits below every one of them, so a test that needs
 # a renderer, a scene or a window belongs to whoever composes those.
 
+# Node runs a web test, and only exits once the runtime does: a threaded one's idle workers would keep it alive.
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	add_link_options(-sEXIT_RUNTIME=1)
+
+	if(TGE_WEB_THREADS)
+		add_link_options(-sPTHREAD_POOL_SIZE=navigator.hardwareConcurrency)
+	endif()
+endif()
+
 add_subdirectory(unit)
-add_subdirectory(threading)
 add_subdirectory(zero_workers)
-add_subdirectory(io)
+
+# A build without threads has no workers for these to measure.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR TGE_WEB_THREADS)
+	add_subdirectory(threading)
+endif()
+
+if(TARGET TgeIO)
+	add_subdirectory(io)
+endif()
 
 if(TARGET TgeProcess)
 	add_subdirectory(process)
 endif()
 
 # The global allocator option decides whether rpmalloc reaches the link; read that off a binary that links the heap.
-if(CMAKE_NM)
+if(CMAKE_NM AND TARGET TgeCoreThreadingTests AND NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	add_test(NAME TgeCoreHeapBackend
 		COMMAND ${CMAKE_COMMAND}
 			-DNM=${CMAKE_NM}

@@ -20,6 +20,8 @@
 #	else
 #		error "Unsupported Apple platform. Add detection to <tge/platform.hpp>."
 #	endif
+#elif defined(__EMSCRIPTEN__)
+#	define TGE_PLATFORM_WEB
 #elif defined(__linux__)
 #	define TGE_PLATFORM_LINUX
 #else

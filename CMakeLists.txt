@@ -37,7 +37,18 @@ endif() # PROJECT_IS_TOP_LEVEL
 # Options
 option(TGE_ENABLE_LOGGING "Enable logging system" ON)
 option(TGE_ENABLE_MEMORY_TRACKING "Enable memory tracking system" ON)
-option(TGE_ENABLE_GLOBAL_ALLOCATOR "rpmalloc is the heap (global new and delete); OFF leaves rpmalloc out of the build" ON)
+# rpmalloc maps 256 MiB spans, which a wasm32 heap cannot host; the web keeps Emscripten's allocator.
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	set(tgeGlobalAllocatorDefault OFF)
+else()
+	set(tgeGlobalAllocatorDefault ON)
+endif()
+
+option(TGE_ENABLE_GLOBAL_ALLOCATOR "rpmalloc is the heap (global new and delete); OFF leaves rpmalloc out of the build" ${tgeGlobalAllocatorDefault})
+
+if(TGE_ENABLE_GLOBAL_ALLOCATOR AND CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	message(FATAL_ERROR "TGE_ENABLE_GLOBAL_ALLOCATOR cannot be on for the web: rpmalloc's 256 MiB spans do not fit a wasm32 heap")
+endif()
 
 option(TGE_CORE_INSTALL "Generate install and export rules for tge-core" ${PROJECT_IS_TOP_LEVEL})
 option(TGE_CORE_TESTING "Provide Tge::Testing, the harness every module's tests sit on" OFF)
@@ -137,7 +148,7 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_sources(TgeLogging PRIVATE private/logging/windows/console.cpp private/logging/windows/local_time.cpp)
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+elseif(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Emscripten)$")
 	target_sources(TgeLogging PRIVATE private/logging/posix/console.cpp private/logging/posix/local_time.cpp)
 else()
 	message(FATAL_ERROR "TgeLogging: no console or local time for ${CMAKE_SYSTEM_NAME}")
@@ -212,6 +223,15 @@ file(GLOB TgeThreading_FILES CONFIGURE_DEPENDS
 	public/tge/threading/*.hpp
 )
 
+# The event loop waits on sockets for the net module, which reaches the web through the browser instead.
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	list(REMOVE_ITEM TgeThreading_FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/private/threading/event_loop.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/private/threading/poller.cpp
+		${CMAKE_CURRENT_SOURCE_DIR}/private/threading/poller.hpp
+	)
+endif()
+
 add_library(TgeThreading STATIC ${TgeThreading_FILES})
 add_library(Tge::Threading ALIAS TgeThreading)
 
@@ -224,12 +244,18 @@ target_include_directories(TgeThreading
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
 
-target_sources(TgeThreading PRIVATE private/threading/thread_support/threads.cpp)
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten" AND NOT TGE_WEB_THREADS)
+	target_sources(TgeThreading PRIVATE private/threading/thread_support/none.cpp)
+else()
+	target_sources(TgeThreading PRIVATE private/threading/thread_support/threads.cpp)
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_sources(TgeThreading PRIVATE private/threading/windows/thread_name.cpp)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	target_sources(TgeThreading PRIVATE private/threading/linux/thread_name.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	target_sources(TgeThreading PRIVATE private/threading/web/thread_name.cpp)
 else()
 	message(FATAL_ERROR "TgeThreading: no thread naming for ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -237,23 +263,26 @@ endif()
 # ============================================================================
 # TgeIO (STATIC - files, paths, user folders and folder watches)
 # ============================================================================
-file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
-	private/io/*.cpp
-	private/io/*.hpp
-	public/tge/io/*.hpp
-)
+# Linux and Windows only for now: the web gains its file system when something built for it reads files.
+if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
+	file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
+		private/io/*.cpp
+		private/io/*.hpp
+		public/tge/io/*.hpp
+	)
 
-add_library(TgeIO STATIC ${TgeIO_FILES})
-add_library(Tge::IO ALIAS TgeIO)
+	add_library(TgeIO STATIC ${TgeIO_FILES})
+	add_library(Tge::IO ALIAS TgeIO)
 
-target_link_libraries(TgeIO
-	PUBLIC Tge::Base
-	PRIVATE $<$<PLATFORM_ID:Windows>:shell32> $<$<PLATFORM_ID:Windows>:ole32>
-)
+	target_link_libraries(TgeIO
+		PUBLIC Tge::Base
+		PRIVATE $<$<PLATFORM_ID:Windows>:shell32> $<$<PLATFORM_ID:Windows>:ole32>
+	)
 
-target_include_directories(TgeIO
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
-)
+	target_include_directories(TgeIO
+		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
+	)
+endif()
 
 # ============================================================================
 # TgeProcess (STATIC - child processes: start them and see them end)
@@ -642,7 +671,6 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::Memory
 	Tge::Math
 	Tge::Threading
-	Tge::IO
 	Tge::Init
 	Tge::Command
 	Tge::Profiling
@@ -658,6 +686,10 @@ target_link_libraries(TgeCore INTERFACE
 	Tge::UiDraw
 	Tge::Model
 )
+
+if(TARGET TgeIO)
+	target_link_libraries(TgeCore INTERFACE Tge::IO)
+endif()
 
 # TgeLifecycle is deliberately absent: it drives modules, and only a composition root does that.
 # TgeEvents and TgeEventsPublic likewise: QueueEmit's backlog is drained by a frame phase, so a consumer that

@@ -23,7 +23,6 @@ set(tgeCoreTargets
 	TgeMemory
 	TgeMath
 	TgeThreading
-	TgeIO
 	TgeInit
 	TgeCommand
 	TgeProfiling
@@ -53,7 +52,6 @@ install(TARGETS
 		TgeMemory
 		TgeMath
 		TgeThreading
-		TgeIO
 		TgeInit
 		TgeCommand
 		TgeProfiling
@@ -79,6 +77,17 @@ install(TARGETS
 	RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
 	INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
+
+# Not built for the web yet.
+if(TARGET TgeIO)
+	TgeSetExportNames(TgeIO)
+
+	install(TARGETS TgeIO
+		EXPORT TgeCoreTargets
+		ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+	)
+endif()
 
 # Built only as the global allocator.
 if(TARGET rpmalloc)
