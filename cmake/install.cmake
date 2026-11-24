@@ -78,7 +78,7 @@ install(TARGETS
 	INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-# Not built for the web yet.
+# Built on Linux, Windows and the web only.
 if(TARGET TgeIO)
 	TgeSetExportNames(TgeIO)
 

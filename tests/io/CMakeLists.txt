@@ -2,19 +2,28 @@
 
 add_executable(TgeCoreIOTests
 	main.cpp
-	test_directory_watch.cpp
-	test_file.cpp
-	test_is_busy.cpp
 	test_read_whole_file.cpp
 	test_support.cpp
-	test_user_folder.cpp
-	test_write_file_atomically.cpp
 )
+
+# The web's TgeIO is the whole-file read alone.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	target_sources(TgeCoreIOTests
+		PRIVATE
+			test_directory_watch.cpp
+			test_file.cpp
+			test_is_busy.cpp
+			test_user_folder.cpp
+			test_write_file_atomically.cpp
+	)
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	target_sources(TgeCoreIOTests PRIVATE windows/test_read_whole_file.cpp)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	target_sources(TgeCoreIOTests PRIVATE linux/test_read_whole_file.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	target_sources(TgeCoreIOTests PRIVATE web/test_read_whole_file.cpp)
 else()
 	message(FATAL_ERROR "TgeCoreIOTests: no special file to read for ${CMAKE_SYSTEM_NAME}")
 endif()

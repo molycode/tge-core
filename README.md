@@ -560,7 +560,8 @@ uint32_t val = reader.Read<uint32_t>();
 ```
 
 What follows is newer: errors are `std::error_code`, compared with `std::errc`, paths are
-`std::filesystem::path`, nothing throws or logs, and it runs on Linux and Windows.
+`std::filesystem::path`, nothing throws or logs, and it runs on Linux and Windows. Of all of `Tge::IO` the web
+has `ReadWholeFile`, which reads the file system in the browser's memory.
 
 #### User folders — `<tge/io/get_user_folder.hpp>`
 

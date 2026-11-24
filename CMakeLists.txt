@@ -263,13 +263,17 @@ endif()
 # ============================================================================
 # TgeIO (STATIC - files, paths, user folders and folder watches)
 # ============================================================================
-# Linux and Windows only for now: the web gains its file system when something built for it reads files.
-if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
-	file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
-		private/io/*.cpp
-		private/io/*.hpp
-		public/tge/io/*.hpp
-	)
+if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
+	# The web has the whole-file read alone: nothing built for it uses the rest.
+	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+		set(TgeIO_FILES public/tge/io/read_whole_file.hpp)
+	else()
+		file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
+			private/io/*.cpp
+			private/io/*.hpp
+			public/tge/io/*.hpp
+		)
+	endif()
 
 	add_library(TgeIO STATIC ${TgeIO_FILES})
 	add_library(Tge::IO ALIAS TgeIO)
@@ -285,7 +289,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		target_sources(TgeIO PRIVATE private/io/windows/read_whole_file.cpp)
-	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	elseif(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Emscripten)$")
 		target_sources(TgeIO PRIVATE private/io/posix/read_whole_file.cpp)
 	else()
 		message(FATAL_ERROR "TgeIO: no whole-file read for ${CMAKE_SYSTEM_NAME}")

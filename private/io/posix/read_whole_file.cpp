@@ -33,7 +33,7 @@ std::expected<std::string, std::error_code> ReadOpenFile(int file, size_t maxSiz
 	{
 		result = std::unexpected{ std::make_error_code(std::errc::invalid_argument) };
 	}
-	else if (static_cast<size_t>(status.st_size) > maxSize)
+	else if (static_cast<unsigned long long>(status.st_size) > maxSize)
 	{
 		result = std::unexpected{ std::make_error_code(std::errc::file_too_large) };
 	}
