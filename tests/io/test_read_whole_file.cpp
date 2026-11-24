@@ -1,45 +1,14 @@
+#include "read_whole_file_test.hpp"
 #include "test_support.hpp"
 #include <gtest/gtest.h>
 #include <tge/io/read_whole_file.hpp>
-#include <tge/platform.hpp>
 #include <expected>
-#include <filesystem>
 #include <string>
 #include <string_view>
 #include <system_error>
 
-#if defined(TGE_PLATFORM_LINUX)
-#include <sys/stat.h>
-#endif // defined(TGE_PLATFORM_LINUX)
-
 using namespace Tge::IO;
 using namespace Tge::IO::Tests;
-
-namespace
-{
-//////////////////////////////////////////////////////////////////////////
-class CReadWholeFileTest : public testing::Test
-{
-protected:
-
-	// testing::Test
-	void SetUp() override
-	{
-		m_folder = MakeTemporaryFolder("tge-io-read");
-		ASSERT_FALSE(m_folder.empty());
-	}
-
-	void TearDown() override
-	{
-		std::error_code error{};
-
-		std::filesystem::remove_all(m_folder, error);
-	}
-	// ~testing::Test
-
-	std::filesystem::path m_folder{};
-};
-} // namespace
 
 //////////////////////////////////////////////////////////////////////////
 TEST_F(CReadWholeFileTest, ReadsEveryByte)
@@ -102,29 +71,3 @@ TEST_F(CReadWholeFileTest, LargerThanTheCapIsRefusedBeforeReading)
 	ASSERT_FALSE(read.has_value());
 	EXPECT_EQ(read.error(), std::errc::file_too_large);
 }
-
-#if defined(TGE_PLATFORM_WINDOWS)
-//////////////////////////////////////////////////////////////////////////
-TEST_F(CReadWholeFileTest, DeviceIsRefused)
-{
-	std::expected<std::string, std::error_code> const read{ ReadWholeFile("NUL", 1024) };
-
-	ASSERT_FALSE(read.has_value());
-	EXPECT_EQ(read.error(), std::errc::invalid_argument);
-}
-#elif defined(TGE_PLATFORM_LINUX)
-//////////////////////////////////////////////////////////////////////////
-TEST_F(CReadWholeFileTest, FifoIsRefusedWithoutWaitingForAWriter)
-{
-	std::filesystem::path const fifo{ m_folder / "fifo" };
-
-	ASSERT_EQ(::mkfifo(fifo.c_str(), 0600), 0);
-
-	std::expected<std::string, std::error_code> const read{ ReadWholeFile(fifo, 1024) };
-
-	ASSERT_FALSE(read.has_value());
-	EXPECT_EQ(read.error(), std::errc::invalid_argument);
-}
-#else
-#error "Unsupported platform"
-#endif // defined(TGE_PLATFORM_WINDOWS)

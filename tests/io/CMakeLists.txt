@@ -11,10 +11,22 @@ add_executable(TgeCoreIOTests
 	test_write_file_atomically.cpp
 )
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+	target_sources(TgeCoreIOTests PRIVATE windows/test_read_whole_file.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	target_sources(TgeCoreIOTests PRIVATE linux/test_read_whole_file.cpp)
+else()
+	message(FATAL_ERROR "TgeCoreIOTests: no special file to read for ${CMAKE_SYSTEM_NAME}")
+endif()
+
 target_link_libraries(TgeCoreIOTests
 	PRIVATE
 		GTest::gtest
 		Tge::Core
+)
+
+target_include_directories(TgeCoreIOTests
+	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_test(NAME TgeCoreIOTests COMMAND TgeCoreIOTests)

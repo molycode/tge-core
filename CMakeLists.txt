@@ -282,6 +282,14 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
 	target_include_directories(TgeIO
 		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 	)
+
+	if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+		target_sources(TgeIO PRIVATE private/io/windows/read_whole_file.cpp)
+	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		target_sources(TgeIO PRIVATE private/io/posix/read_whole_file.cpp)
+	else()
+		message(FATAL_ERROR "TgeIO: no whole-file read for ${CMAKE_SYSTEM_NAME}")
+	endif()
 endif()
 
 # ============================================================================
