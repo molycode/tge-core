@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <tge/threading/job_group.hpp>
+#include <array>
 #include <atomic>
+#include <thread>
 
 using namespace Tge::Threading;
 
@@ -121,4 +123,28 @@ TEST(JobGroupCancellation, NestedGroupRunsWhenParentLive)
 TEST(JobGroupCancellation, NoCurrentJobOutsideAnyJob)
 {
 	EXPECT_FALSE(IsCurrentJobCancelled());
+}
+
+//////////////////////////////////////////////////////////////////////////
+// A poller waits for nothing, so seeing the group complete is all that puts its reads after the jobs' writes.
+// Negative control: a relaxed load in IsComplete, which the thread sanitizer reports.
+TEST(JobGroupCompletion, APollerSeesWhatTheJobsWrote)
+{
+	CJobGroup group;
+	std::array<int, 64> written{};
+
+	for (int i = 0; i < 64; i++)
+	{
+		group.SubmitJob([&written, i]() { written[static_cast<size_t>(i)] = i + 1; });
+	}
+
+	while (!group.IsComplete())
+	{
+		std::this_thread::yield();
+	}
+
+	for (int i = 0; i < 64; i++)
+	{
+		EXPECT_EQ(written[static_cast<size_t>(i)], i + 1);
+	}
 }

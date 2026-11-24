@@ -103,7 +103,8 @@ void CJobGroup::Wait()
 //////////////////////////////////////////////////////////////////////////
 bool CJobGroup::IsComplete() const
 {
-	return m_state->activeJobs.load(std::memory_order_relaxed) == 0;
+	// Acquire, as in Wait(): a poller reads what the jobs wrote on the strength of this alone.
+	return m_state->activeJobs.load(std::memory_order_acquire) == 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
