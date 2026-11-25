@@ -131,4 +131,6 @@ desktop, transcoded or per-device variants where the adapter lacks them.
   derivative uniformity switched off, the samplers Tint splits from combined ones placed from a binding table, and
   barrier loops bounded by values WGSL can prove uniform. Ray-traced and layered-rendering shaders have no web form.
 - **Dawn natively** uses the prebuilt package of the revision the browser port pins, so one `webgpu.h` serves both.
-- **Open still**: pointer lock, fullscreen and pixel density through the GLFW emulation want a person at a browser.
+- **Pointer lock and pixel density hold with a person at the browser**: a game played in Firefox on a scaled desktop
+  (2026-11-25) captured and released the mouse and put the cursor where the pointer was.
+- **Open still**: fullscreen through the GLFW emulation wants a person at a browser.
