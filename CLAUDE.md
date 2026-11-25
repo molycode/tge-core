@@ -49,13 +49,13 @@ All public headers use `<tge/...>` prefix:
 | TgeMemory | STATIC | TgeBase, TgeLogging, rpmalloc (with the global allocator) | Memory allocators and tracking |
 | TgeMath | STATIC | TgeBase, GLM | Math library |
 | TgeThreading | STATIC | TgeBase, TgeMemory | Job system, thread pool and event loop |
-| TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows) | Files, paths, user folders and folder watches; Linux and Windows, and of it the web has `ReadWholeFile` alone |
+| TgeIO | STATIC | TgeBase (shell32 and ole32 on Windows, TgeLogging and IDBFS on the web) | Files, paths, user folders and folder watches; Linux and Windows, and of it the web has `ReadWholeFile`, `WriteFileAtomically` and `GetUserFolder` |
 | TgeProcess | STATIC | TgeBase | Child processes: start them and see them end; Linux and Windows only, outside TgeCore, linked by name |
 | TgeCommand | STATIC | TgeBase, TgeMemory, TgeLogging | Command registry: registration + dispatch, no frontend |
-| TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand | Initialization/termination |
+| TgeInit | STATIC | TgeBase, TgeMemory, TgeThreading, TgeLogging, TgeCommand, TgeIO | Initialization/termination and the frame tick (`Tge::Update`) |
 | TgeProfiling | INTERFACE | TgeBase, TgeMemory, TgeThreading, Tracy (optional) | `TGE_PROFILE_*` markers; no-ops without a Tracy client target |
 | TgeModule | STATIC | TgeBase | Module contract: IModule, IModuleId, SDependency, EFramePhase, SRunContext |
-| TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling | Dependency ordering + phase dispatch (IRuntime); linked by a composition root |
+| TgeLifecycle | STATIC | TgeModule, TgeLogging, TgeInit, TgeProfiling (TgeIO on the web) | Dependency ordering + phase dispatch (IRuntime) and the frame loop (`RunFrameLoop`, `IApp`); linked by a composition root |
 | TgeEventsPublic | STATIC | TgeModule | The event interface, `gEvents` and the module's identity |
 | TgeEvents | STATIC | TgeEventsPublic | The dispatcher and the module that drains its queue |
 | TgeAssetsPublic | STATIC | TgeModule, TgeModel | The asset-provider contract, `gAssetProvider`, `gSettings` and the identity its provider reports |
@@ -138,11 +138,19 @@ cmake --build --preset linux-gcc_16-debug
 which chain-loads emsdk's toolchain from `TGE_EMSDK_PATH` (or `EMSDK`); a user preset sets the path.
 - **Platform code is a file per platform**, picked in CMake (`posix/`, `windows/`, `linux/`, `web/` beside the shared
   file), never `#ifdef`s in shared code; likewise the thread variants (`thread_support/threads.cpp`, `none.cpp`).
-- **Not built for the web yet**: TgeProcess, the event loop and all of TgeIO but `ReadWholeFile` (nothing there uses
-  the rest); rpmalloc never (`TGE_ENABLE_GLOBAL_ALLOCATOR` defaults off there and refuses on).
+- **Not built for the web yet**: TgeProcess, the event loop and all of TgeIO but `ReadWholeFile`, `WriteFileAtomically`
+  and `GetUserFolder` (nothing there uses the rest); rpmalloc never (`TGE_ENABLE_GLOBAL_ALLOCATOR` defaults off there
+  and refuses on).
+- **JavaScript glue is a library of its target** (`private/io/web/user_folders.js`), named by the target's link options and
+  installed beside the package's CMake files. It overrides `IDBFS.queuePersist`, Emscripten's own: an emsdk that
+  renames it fails `TgeCoreUserFolders*`.
 - **The suites run under Node** (`node <suite>.js`, or ctest through Emscripten's emulator), against a googletest
-  built with the same toolchain and thread setting. Threadless: Unit 91 (the six tests that start threads have files
-  of their own), ZeroWorker 3 and IO 7; threaded: Unit 97, Threading 15 (no event loop tests), ZeroWorker 3 and IO 7.
+  built with the same toolchain and thread setting. Threadless: Unit 91 (the six tests that start threads and the four of
+  the native frame loop have files of their own), ZeroWorker 3 and IO 17; threaded: Unit 97, Threading 16 (no event loop
+  tests), ZeroWorker 3 and IO 17.
+- **`tests/frame_loop` and `tests/user_folders` are programs, not suites**: a browser's frames come once `main` has returned,
+  so the exit status is the result. The second runs again and again over one store, each run a page load, against an
+  IndexedDB of the test's own (Node has none); Firefox was driven by hand on 2026-11-25.
 
 ### Tests and benchmarks
 Core vendors neither googletest nor Google Benchmark, so both are off by default and whoever supplies a

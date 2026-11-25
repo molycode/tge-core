@@ -561,7 +561,7 @@ uint32_t val = reader.Read<uint32_t>();
 
 What follows is newer: errors are `std::error_code`, compared with `std::errc`, paths are
 `std::filesystem::path`, nothing throws or logs, and it runs on Linux and Windows. Of all of `Tge::IO` the web
-has `ReadWholeFile`, which reads the file system in the browser's memory.
+has `GetUserFolder`, `ReadWholeFile` and `WriteFileAtomically`, on the file system in the browser's memory.
 
 #### User folders — `<tge/io/get_user_folder.hpp>`
 
@@ -570,10 +570,14 @@ has `ReadWholeFile`, which reads the file system in the browser's memory.
 std::expected<std::filesystem::path, std::error_code> const data{ Tge::IO::GetUserFolder(Tge::IO::EUserFolder::Data) };
 ```
 
-An absolute `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME` or `XDG_CACHE_HOME` wins on both platforms (a
+An absolute `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME` or `XDG_CACHE_HOME` wins on every platform (a
 relative one is ignored, as the XDG specification says). Otherwise Linux uses `$HOME/.config`, `.local/share`,
 `.local/state` and `.cache` (an error when `HOME` is not absolute), and Windows the Known Folders: Config and Data in
 roaming AppData, State and Cache in local AppData.
+
+On the web they are folders the browser keeps in the page's IndexedDB: there before `main` runs, stored by `Tge::Update`
+after a change and by `RunFrameLoop` at the end. A page whose browser keeps nothing runs without, and one warning says so.
+[docs/web-platform.md](docs/web-platform.md) has the rest.
 
 #### Whole files — `<tge/io/read_whole_file.hpp>`, `<tge/io/write_file_atomically.hpp>`, `<tge/io/is_busy.hpp>`
 
@@ -585,7 +589,7 @@ std::expected<void, std::error_code> const saved{ Tge::IO::WriteFileAtomically("
 `ReadWholeFile` reads regular files only (`is_a_directory`, `invalid_argument` for anything else) and refuses one
 larger than its cap before reading it (`file_too_large`); a FIFO cannot hang it. `WriteFileAtomically` writes a file
 beside the target, flushes it and renames it over the target, so neither a crash nor a second writer can tear it; a
-symlinked target stays linked, and on Linux it keeps its mode. On Windows the rename replaces a target that a virus
+symlinked target stays linked, and on Linux and the web it keeps its mode. On Windows the rename replaces a target that a virus
 scanner or an indexer holds open with delete sharing; one held without it fails, and so does a read-only one. The
 replacement takes the folder's permissions there.
 

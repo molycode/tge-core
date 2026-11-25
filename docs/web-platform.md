@@ -5,7 +5,7 @@ extends [modular-architecture.md](modular-architecture.md): nothing here changes
 third platform goes inside it.
 
 Status: **design agreed and the platform layer shipped 2026-11-23** (Core and Window build for the web); a spike
-answered the backend's questions, listed at the end. The WebGPU backend itself is not started.
+answered the backend's questions, listed at the end. Core's frame-loop host and user folders followed on 2026-11-25.
 
 ## Two axes, never one
 
@@ -81,9 +81,34 @@ Lifecycle, beside `IRuntime`**: a host that runs the loop on the desktop and reg
 the web. The app keeps everything it does per frame; it stops owning the mechanism. App state must then not live on
 `main`'s stack, which the browser unwinds.
 
+The host is `RunFrameLoop(std::unique_ptr<IApp>)` (`tge/module/frame_loop.hpp`): the app is handed over, and
+`Initialize`, `Update` while `CanRun`, and `Terminate` are called on it, whose status is the program's. On the web the
+call returns once the app is initialized, so nothing that outlives it may hang on it, a destructor in `main` included.
+
 Startup and shutdown follow from it. Acquiring a WebGPU device completes asynchronously, so a backend accepts work
 before its device exists and defers it, the same deferral that lets workers hand it data (GPU objects live on one
-thread in a browser). Shutdown waits for the last persistence flush.
+thread in a browser); what starts late starts across the app's updates. Shutdown waits for the last persistence flush,
+then ends the program, which a page sees (`onExit`) when it is linked with `-sEXIT_RUNTIME`.
+
+## User folders and persistence
+
+A browser has no disk: files live in memory, where reads and writes are synchronous as everywhere, and what is to
+outlive the page goes to its IndexedDB. `GetUserFolder` answers with folders of a mount of Emscripten's **IDBFS**:
+
+- it is **loaded before `main`**, so the app's first read finds what the last run wrote;
+- it is **stored by Core's frame tick** (`Tge::Update`) after a change and by `RunFrameLoop` at the end, each time in one
+  IndexedDB transaction: a page that dies leaves the state before a store or after it, and `WriteFileAtomically` keeps
+  a store from meeting half a file;
+- a page whose browser keeps nothing (no IndexedDB, refused, out of quota) runs on the folders in memory and says so
+  once; a store that could not be loaded is never written to.
+
+**IDBFS rather than OPFS**: Emscripten reaches OPFS through WasmFS alone, by a thread of its own or the browser's promise
+integration, which the threadless default has neither of; and it has no transaction over several files. IDBFS costs the
+folders' size in memory, small for settings and saves.
+
+Only a program that calls `GetUserFolder` loads them. Two pages of one origin share the store, and the last to store wins,
+whole; caches and logs that grow belong outside the user folders there. `WriteFileAtomically` does not `fsync` on the web:
+Emscripten's would store by itself, and deadlock a main thread that waits for the worker calling it.
 
 ## Content delivery
 
