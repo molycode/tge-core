@@ -288,11 +288,23 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
 	)
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-		target_sources(TgeIO PRIVATE private/io/windows/read_whole_file.cpp)
-	elseif(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Emscripten)$")
+		target_sources(TgeIO PRIVATE
+			private/io/windows/default_user_folder.cpp
+			private/io/windows/environment_path.cpp
+			private/io/windows/read_whole_file.cpp
+		)
+	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		target_sources(TgeIO PRIVATE
+			private/io/linux/default_user_folder.cpp
+			private/io/linux/user_folder_error_category.cpp
+			private/io/linux/user_folder_error_category.hpp
+			private/io/posix/environment_path.cpp
+			private/io/posix/read_whole_file.cpp
+		)
+	elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		target_sources(TgeIO PRIVATE private/io/posix/read_whole_file.cpp)
 	else()
-		message(FATAL_ERROR "TgeIO: no whole-file read for ${CMAKE_SYSTEM_NAME}")
+		message(FATAL_ERROR "TgeIO: no files or user folders for ${CMAKE_SYSTEM_NAME}")
 	endif()
 endif()
 

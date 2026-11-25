@@ -1,6 +1,5 @@
-#include "user_folder_error_category.hpp"
+#include "io/linux/user_folder_error_category.hpp"
 
-#if defined(TGE_PLATFORM_LINUX)
 namespace Tge::IO
 {
 //////////////////////////////////////////////////////////////////////////
@@ -22,4 +21,3 @@ std::error_category const& GetUserFolderErrorCategory()
 	return category;
 }
 } // namespace Tge::IO
-#endif // defined(TGE_PLATFORM_LINUX)

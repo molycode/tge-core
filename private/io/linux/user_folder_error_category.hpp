@@ -1,10 +1,8 @@
 #pragma once
 
-#include <tge/platform.hpp>
 #include <string>
 #include <system_error>
 
-#if defined(TGE_PLATFORM_LINUX)
 namespace Tge::IO
 {
 inline constexpr int NoHomeError{ 1 };
@@ -22,4 +20,3 @@ public:
 
 std::error_category const& GetUserFolderErrorCategory();
 } // namespace Tge::IO
-#endif // defined(TGE_PLATFORM_LINUX)

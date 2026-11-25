@@ -10,6 +10,7 @@ add_executable(TgeCoreIOTests
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	target_sources(TgeCoreIOTests
 		PRIVATE
+			environment.cpp
 			test_directory_watch.cpp
 			test_file.cpp
 			test_is_busy.cpp
@@ -19,9 +20,19 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	target_sources(TgeCoreIOTests PRIVATE windows/test_read_whole_file.cpp)
+	target_sources(TgeCoreIOTests
+		PRIVATE
+			windows/environment.cpp
+			windows/test_read_whole_file.cpp
+			windows/test_user_folder.cpp
+	)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	target_sources(TgeCoreIOTests PRIVATE linux/test_read_whole_file.cpp)
+	target_sources(TgeCoreIOTests
+		PRIVATE
+			linux/test_read_whole_file.cpp
+			linux/test_user_folder.cpp
+			posix/environment.cpp
+	)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	target_sources(TgeCoreIOTests PRIVATE web/test_read_whole_file.cpp)
 else()
