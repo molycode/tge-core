@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include <tge/io/write_file_atomically.hpp>
 #include <filesystem>
+#include <fstream>
+#include <string>
 #include <system_error>
 
 using namespace Tge::IO;
@@ -33,4 +35,17 @@ TEST_F(CWriteFileAtomicallyTest, KeepsASymlinkedFileLinked)
 	ASSERT_TRUE(WriteFileAtomically(m_file, "second").has_value());
 	EXPECT_TRUE(std::filesystem::is_symlink(m_file, error));
 	EXPECT_EQ(ReadText(target), "second");
+}
+
+//////////////////////////////////////////////////////////////////////////
+TEST_F(CWriteFileAtomicallyTest, OpenReaderKeepsTheFileItOpened)
+{
+	WriteText(m_file, "first");
+
+	std::ifstream reader{ m_file, std::ios::binary };
+	std::string text{};
+
+	ASSERT_TRUE(WriteFileAtomically(m_file, "second").has_value());
+	std::getline(reader, text);
+	EXPECT_EQ(text, "first");
 }

@@ -264,9 +264,14 @@ endif()
 # TgeIO (STATIC - files, paths, user folders and folder watches)
 # ============================================================================
 if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
-	# The web has the whole-file read alone: nothing built for it uses the rest.
+	# The web has whole-file reads and atomic writes: nothing built for it uses the rest.
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-		set(TgeIO_FILES public/tge/io/read_whole_file.hpp)
+		set(TgeIO_FILES
+			private/io/resolve_link.cpp
+			private/io/resolve_link.hpp
+			public/tge/io/read_whole_file.hpp
+			public/tge/io/write_file_atomically.hpp
+		)
 	else()
 		file(GLOB TgeIO_FILES CONFIGURE_DEPENDS
 			private/io/*.cpp
@@ -306,7 +311,12 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
 			private/io/posix/write_file_atomically.cpp
 		)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
-		target_sources(TgeIO PRIVATE private/io/posix/read_whole_file.cpp)
+		target_sources(TgeIO PRIVATE
+			private/io/posix/flush_file.hpp
+			private/io/posix/read_whole_file.cpp
+			private/io/posix/write_file_atomically.cpp
+			private/io/web/flush_file.cpp
+		)
 	else()
 		message(FATAL_ERROR "TgeIO: no files or user folders for ${CMAKE_SYSTEM_NAME}")
 	endif()
