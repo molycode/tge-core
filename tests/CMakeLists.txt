@@ -1,7 +1,8 @@
 # Core's own proof. Nothing here may name a module: core sits below every one of them, so a test that needs
 # a renderer, a scene or a window belongs to whoever composes those.
 
-# Node runs a web test, and only exits once the runtime does: a threaded one's idle workers would keep it alive.
+# Under Node a web test ends as a native one does, static destructors included, and a threaded one starts with its
+# workers there, as a page must.
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	add_link_options(-sEXIT_RUNTIME=1)
 
