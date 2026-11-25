@@ -292,14 +292,18 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
 			private/io/windows/default_user_folder.cpp
 			private/io/windows/environment_path.cpp
 			private/io/windows/read_whole_file.cpp
+			private/io/windows/write_file_atomically.cpp
 		)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 		target_sources(TgeIO PRIVATE
 			private/io/linux/default_user_folder.cpp
+			private/io/linux/flush_file.cpp
 			private/io/linux/user_folder_error_category.cpp
 			private/io/linux/user_folder_error_category.hpp
 			private/io/posix/environment_path.cpp
+			private/io/posix/flush_file.hpp
 			private/io/posix/read_whole_file.cpp
+			private/io/posix/write_file_atomically.cpp
 		)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		target_sources(TgeIO PRIVATE private/io/posix/read_whole_file.cpp)

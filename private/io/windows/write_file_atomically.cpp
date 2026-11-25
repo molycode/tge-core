@@ -1,7 +1,5 @@
 #include <tge/io/write_file_atomically.hpp>
-#include <tge/platform.hpp>
-
-#if defined(TGE_PLATFORM_WINDOWS)
+#include "io/resolve_link.hpp"
 #include <algorithm>
 #include <cstddef>
 #include <cstring>
@@ -16,32 +14,11 @@
 #define NOMINMAX
 #endif // NOMINMAX
 #include <windows.h>
-#elif defined(TGE_PLATFORM_LINUX)
-#include <cerrno>
-#include <cstdlib>
-#include <fcntl.h>
-#include <string>
-#include <sys/stat.h>
-#include <unistd.h>
-#else
-#error "Unsupported platform"
-#endif // defined(TGE_PLATFORM_WINDOWS)
 
 namespace Tge::IO
 {
 namespace
 {
-//////////////////////////////////////////////////////////////////////////
-// A link a dotfile manager put in the file's place survives, since the rename replaces its target instead.
-std::filesystem::path ResolveLink(std::filesystem::path const& path)
-{
-	std::error_code error{};
-	std::filesystem::path const target{ std::filesystem::canonical(path, error) };
-
-	return (error == std::error_code{}) ? target : path;
-}
-
-#if defined(TGE_PLATFORM_WINDOWS)
 constexpr size_t NumTemporaryNameTries{ 100 };
 constexpr std::wstring_view TemporaryNameCharacters{ L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" };
 
@@ -156,55 +133,6 @@ void DeleteOpenFile(HANDLE file)
 		SetFileInformationByHandle(file, FileDispositionInfo, &classic, sizeof(classic));
 	}
 }
-#elif defined(TGE_PLATFORM_LINUX)
-constexpr std::string_view TemporarySuffix{ ".XXXXXX" };
-constexpr mode_t NewFileMode{ 0644 };
-constexpr mode_t PermissionBits{ 07777 };
-
-//////////////////////////////////////////////////////////////////////////
-std::error_code GetLastSystemError()
-{
-	return std::error_code{ errno, std::system_category() };
-}
-
-//////////////////////////////////////////////////////////////////////////
-std::error_code WriteAll(int file, std::string_view content)
-{
-	std::error_code error{};
-	size_t numWritten{ 0 };
-
-	while (error == std::error_code{} && numWritten < content.size())
-	{
-		ssize_t const count{ ::write(file, content.data() + numWritten, content.size() - numWritten) };
-
-		if (count > 0)
-		{
-			numWritten += static_cast<size_t>(count);
-		}
-		else if (count == 0)
-		{
-			error = std::make_error_code(std::errc::io_error);
-		}
-		else if (errno != EINTR)
-		{
-			error = GetLastSystemError();
-		}
-	}
-
-	return error;
-}
-
-//////////////////////////////////////////////////////////////////////////
-// An existing file keeps its permissions: it may hold a password.
-mode_t GetFileMode(std::filesystem::path const& path)
-{
-	struct stat status{};
-
-	return (::stat(path.c_str(), &status) == 0) ? (status.st_mode & PermissionBits) : NewFileMode;
-}
-#else
-#error "Unsupported platform"
-#endif // defined(TGE_PLATFORM_WINDOWS)
 } // namespace
 
 //////////////////////////////////////////////////////////////////////////
@@ -212,8 +140,6 @@ mode_t GetFileMode(std::filesystem::path const& path)
 std::expected<void, std::error_code> WriteFileAtomically(std::filesystem::path const& path, std::string_view content)
 {
 	std::error_code error{};
-
-#if defined(TGE_PLATFORM_WINDOWS)
 	std::filesystem::path const resolved{ ResolveLink(path) };
 	std::filesystem::path const target{ std::filesystem::absolute(resolved, error) };
 	HANDLE const file{ (error == std::error_code{}) ? CreateTemporaryFile(target, error) : INVALID_HANDLE_VALUE };
@@ -239,46 +165,6 @@ std::expected<void, std::error_code> WriteFileAtomically(std::filesystem::path c
 
 		CloseHandle(file);
 	}
-#elif defined(TGE_PLATFORM_LINUX)
-	std::filesystem::path const target{ ResolveLink(path) };
-	std::string temporaryPath{ target.string() + std::string{ TemporarySuffix } };
-	int const file{ ::mkostemp(temporaryPath.data(), O_CLOEXEC) };
-
-	if (file >= 0)
-	{
-		if (::fchmod(file, GetFileMode(target)) != 0)
-		{
-			error = GetLastSystemError();
-		}
-		else if (error = WriteAll(file, content); error == std::error_code{} && ::fsync(file) != 0)
-		{
-			error = GetLastSystemError();
-		}
-
-		if (::close(file) != 0 && error == std::error_code{})
-		{
-			error = GetLastSystemError();
-		}
-
-		if (error == std::error_code{})
-		{
-			std::filesystem::rename(temporaryPath, target, error);
-		}
-
-		if (error != std::error_code{})
-		{
-			std::error_code ignored{};
-
-			std::filesystem::remove(temporaryPath, ignored);
-		}
-	}
-	else
-	{
-		error = GetLastSystemError();
-	}
-#else
-#error "Unsupported platform"
-#endif // defined(TGE_PLATFORM_WINDOWS)
 
 	return (error == std::error_code{}) ? std::expected<void, std::error_code>{} : std::unexpected{ error };
 }
