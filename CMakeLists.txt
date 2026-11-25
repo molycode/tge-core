@@ -428,7 +428,7 @@ target_link_libraries(TgeModule
 )
 
 # ============================================================================
-# TgeLifecycle (STATIC - module ordering and phase dispatch, for a composition root)
+# TgeLifecycle (STATIC - module ordering, phase dispatch and the frame loop, for a composition root)
 # ============================================================================
 add_library(TgeLifecycle STATIC
 	private/module/module.hpp
@@ -448,6 +448,14 @@ target_link_libraries(TgeLifecycle
 target_include_directories(TgeLifecycle
 	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/private
 )
+
+if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
+	target_sources(TgeLifecycle PRIVATE private/module/native/frame_loop.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	target_sources(TgeLifecycle PRIVATE private/module/web/frame_loop.cpp)
+else()
+	message(FATAL_ERROR "TgeLifecycle: no frame loop for ${CMAKE_SYSTEM_NAME}")
+endif()
 
 # ============================================================================
 # TgeEventsPublic (STATIC - the event interface, its globals and the module's identity)

@@ -28,6 +28,11 @@ if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR TGE_WEB_THREADS)
 	target_sources(TgeCoreUnitTests PRIVATE test_event_system_threads.cpp test_mpsc_queue_threads.cpp)
 endif()
 
+# A browser's frame loop is no call a test can wait for: tests/frame_loop runs one under Node.
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	target_sources(TgeCoreUnitTests PRIVATE test_frame_loop.cpp)
+endif()
+
 # The listener test drives the log system itself, so a build without one has nothing for it to assert on.
 if(TGE_ENABLE_LOGGING)
 	target_sources(TgeCoreUnitTests PRIVATE test_log_listener.cpp)

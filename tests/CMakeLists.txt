@@ -13,6 +13,10 @@ endif()
 add_subdirectory(unit)
 add_subdirectory(zero_workers)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+	add_subdirectory(frame_loop)
+endif()
+
 # A build without threads has no workers for these to measure.
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten" OR TGE_WEB_THREADS)
 	add_subdirectory(threading)
