@@ -15,6 +15,7 @@ add_subdirectory(zero_workers)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	add_subdirectory(frame_loop)
+	add_subdirectory(user_folders)
 endif()
 
 # A build without threads has no workers for these to measure.

@@ -13,6 +13,7 @@ bool Initialize(size_t numThreads = Threading::AutoThreadCount);
 // Terminate them in reverse order.
 void Terminate();
 
-// Once per frame: runs a share of the queued jobs when there are no workers, then delivers queued log lines.
+// Once per frame: runs a share of the queued jobs when there are no workers, makes what was written to the user folders
+// outlive the run, then delivers queued log lines.
 void Update();
 } // namespace Tge

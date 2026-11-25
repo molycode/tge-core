@@ -1,4 +1,5 @@
 #include <tge/init/init.hpp>
+#include "io/flush_user_folders.hpp"
 #include <tge/logging/log_system.hpp>
 
 namespace Tge
@@ -53,6 +54,7 @@ void Terminate()
 void Update()
 {
 	Threading::Internal::RunMainThreadWork();
+	IO::FlushUserFolders();
 	Logging::GetLogSystem().DispatchListeners();
 }
 } // namespace Tge

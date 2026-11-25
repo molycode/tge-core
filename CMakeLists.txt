@@ -264,12 +264,18 @@ endif()
 # TgeIO (STATIC - files, paths, user folders and folder watches)
 # ============================================================================
 if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
-	# The web has whole-file reads and atomic writes: nothing built for it uses the rest.
+	# The web has whole-file reads, atomic writes and user folders: nothing built for it uses the rest.
 	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		set(TgeIO_FILES
+			private/io/default_user_folder.hpp
+			private/io/environment_path.hpp
+			private/io/flush_user_folders.hpp
+			private/io/get_user_folder.cpp
 			private/io/resolve_link.cpp
 			private/io/resolve_link.hpp
+			public/tge/io/get_user_folder.hpp
 			public/tge/io/read_whole_file.hpp
+			public/tge/io/user_folder.hpp
 			public/tge/io/write_file_atomically.hpp
 		)
 	else()
@@ -294,6 +300,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
 
 	if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		target_sources(TgeIO PRIVATE
+			private/io/native/flush_user_folders.cpp
 			private/io/windows/default_user_folder.cpp
 			private/io/windows/environment_path.cpp
 			private/io/windows/read_whole_file.cpp
@@ -305,6 +312,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
 			private/io/linux/flush_file.cpp
 			private/io/linux/user_folder_error_category.cpp
 			private/io/linux/user_folder_error_category.hpp
+			private/io/native/flush_user_folders.cpp
 			private/io/posix/environment_path.cpp
 			private/io/posix/flush_file.hpp
 			private/io/posix/read_whole_file.cpp
@@ -312,10 +320,28 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows|Emscripten)$")
 		)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 		target_sources(TgeIO PRIVATE
+			private/io/posix/environment_path.cpp
 			private/io/posix/flush_file.hpp
 			private/io/posix/read_whole_file.cpp
 			private/io/posix/write_file_atomically.cpp
+			private/io/web/default_user_folder.cpp
+			private/io/web/finish_user_folders.hpp
 			private/io/web/flush_file.cpp
+			private/io/web/flush_user_folders.cpp
+			private/io/web/user_folders.hpp
+			private/io/web/user_folders.js
+		)
+
+		target_link_libraries(TgeIO PRIVATE Tge::Logging)
+
+		target_link_options(TgeIO INTERFACE
+			-lidbfs.js
+			$<BUILD_INTERFACE:--js-library=${CMAKE_CURRENT_SOURCE_DIR}/private/io/web/user_folders.js>
+			$<INSTALL_INTERFACE:--js-library=$<INSTALL_PREFIX>/${CMAKE_INSTALL_LIBDIR}/cmake/TgeCore/user_folders.js>
+		)
+
+		set_property(TARGET TgeIO PROPERTY INTERFACE_LINK_DEPENDS
+			$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private/io/web/user_folders.js>
 		)
 	else()
 		message(FATAL_ERROR "TgeIO: no files or user folders for ${CMAKE_SYSTEM_NAME}")
@@ -380,7 +406,7 @@ add_library(Tge::Init ALIAS TgeInit)
 
 target_link_libraries(TgeInit
 	PUBLIC Tge::Base
-	PRIVATE Tge::Memory Tge::Threading Tge::Logging Tge::Command
+	PRIVATE Tge::Memory Tge::Threading Tge::Logging Tge::Command Tge::IO
 )
 
 target_include_directories(TgeInit
@@ -479,6 +505,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "^(Linux|Windows)$")
 	target_sources(TgeLifecycle PRIVATE private/module/native/frame_loop.cpp)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	target_sources(TgeLifecycle PRIVATE private/module/web/frame_loop.cpp)
+	target_link_libraries(TgeLifecycle PRIVATE Tge::IO)
 else()
 	message(FATAL_ERROR "TgeLifecycle: no frame loop for ${CMAKE_SYSTEM_NAME}")
 endif()

@@ -1,4 +1,5 @@
 #include <tge/module/frame_loop.hpp>
+#include "io/web/finish_user_folders.hpp"
 #include <tge/module/app.hpp>
 #include <emscripten/emscripten.h>
 #include <chrono>
@@ -10,16 +11,23 @@ namespace
 {
 std::unique_ptr<IApp>                 gApp{};
 std::chrono::steady_clock::time_point gLastFrame{};
+int                                   gExitStatus{ 0 };
+
+//////////////////////////////////////////////////////////////////////////
+void Exit()
+{
+	emscripten_force_exit(gExitStatus);
+}
 
 //////////////////////////////////////////////////////////////////////////
 void EndRun()
 {
 	emscripten_cancel_main_loop();
 
-	int const status{ gApp->Terminate() };
-
+	gExitStatus = gApp->Terminate();
 	gApp.reset();
-	emscripten_force_exit(status);
+
+	IO::FinishUserFolders(Exit);
 }
 
 //////////////////////////////////////////////////////////////////////////

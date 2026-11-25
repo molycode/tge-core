@@ -87,6 +87,11 @@ if(TARGET TgeIO)
 		ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 	)
+
+	# The link options TgeIO exports name it.
+	if(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+		install(FILES private/io/web/user_folders.js DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/TgeCore)
+	endif()
 endif()
 
 # Built only as the global allocator.

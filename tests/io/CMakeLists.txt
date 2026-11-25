@@ -1,9 +1,11 @@
 # A binary of its own, like the threading suite: the folder watch runs on an event loop, which needs Tge::Initialize.
 
 add_executable(TgeCoreIOTests
+	environment.cpp
 	main.cpp
 	test_read_whole_file.cpp
 	test_support.cpp
+	test_user_folder.cpp
 	test_write_file_atomically.cpp
 )
 
@@ -11,12 +13,10 @@ add_executable(TgeCoreIOTests
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	target_sources(TgeCoreIOTests
 		PRIVATE
-			environment.cpp
 			native/test_write_file_atomically.cpp
 			test_directory_watch.cpp
 			test_file.cpp
 			test_is_busy.cpp
-			test_user_folder.cpp
 	)
 endif()
 
@@ -39,8 +39,10 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
 	target_sources(TgeCoreIOTests
 		PRIVATE
+			posix/environment.cpp
 			posix/test_write_file_atomically.cpp
 			web/test_read_whole_file.cpp
+			web/test_user_folder.cpp
 	)
 else()
 	message(FATAL_ERROR "TgeCoreIOTests: no special file to read for ${CMAKE_SYSTEM_NAME}")
