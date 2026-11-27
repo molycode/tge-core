@@ -184,7 +184,6 @@ struct SMeshData final
 	uint32_t sourceMaterialIndex{ InvalidIndex };
 
 	Geometry::EPrimitiveTopology topology{ Geometry::EPrimitiveTopology::TriangleList };
-	uint32_t vertexCount{ 0 };  // Vertex count for non-indexed rendering
 
 	std::vector<SMeshLODLevel> reducedLods; // [0]=LOD1 (~50% triangles), [1]=LOD2 (~12.5%)
 	std::vector<SMeshletDesc>  clusters;    // LOD0 meshlets; firstIndex local to `indices`
